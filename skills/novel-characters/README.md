@@ -1,3 +1,5 @@
+**中文** · [English](README.en.md)
+
 # novel-characters
 
 丢一本小说或一篇短故事进去，输出每个角色的完整设定：

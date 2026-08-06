@@ -1,3 +1,5 @@
+**中文** · [English](README.en.md)
+
 # shuohao-skills
 
 给 AI 编码 agent 用的 skill 集合。**Claude Code 和 codex 都能跑。**
