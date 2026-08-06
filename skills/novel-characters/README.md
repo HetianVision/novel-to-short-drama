@@ -101,4 +101,4 @@ node scripts/selftest.mjs
 
 73 项断言，覆盖分块 / 别名归并 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
-只在 macOS + Node 24 上实测过；Linux 靠 CI。
+**只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**——仓库里的 CI（`ci/selftest.yml`）还没启用。

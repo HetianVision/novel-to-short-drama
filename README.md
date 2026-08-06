@@ -53,10 +53,12 @@ skills/<skill-name>/
 └── assets/           截图
 ```
 
-两条硬要求，CI 会检查：
+两条硬要求：
 
 - 每个 skill 必须有 `SKILL.md`
 - 每个 skill 必须有 `scripts/selftest.mjs`，**不调用模型、不花额度**，覆盖全部确定性逻辑
+
+（`ci/selftest.yml` 会检查这两条，但那个 workflow **还没启用**——见下。）
 
 本地跑全部自测：
 
@@ -64,9 +66,11 @@ skills/<skill-name>/
 for f in skills/*/scripts/selftest.mjs; do node "$f"; done
 ```
 
-### 启用 CI
+### 启用 CI（尚未启用）
 
-`ci/selftest.yml` 是现成的 GitHub Actions workflow（Ubuntu + macOS × Node 18/22/24，自动发现 `skills/*/scripts/selftest.mjs`，加新 skill 不用改它）。它没放在 `.github/workflows/` 下，因为推送那个路径需要 token 的 `workflow` 权限。要启用：
+`ci/selftest.yml` 是现成的 GitHub Actions workflow：Ubuntu + macOS × Node 18/22/24，自动发现 `skills/*/scripts/selftest.mjs`，加新 skill 不用改它。
+
+它**没有**放在 `.github/workflows/` 下，所以现在不会运行——推送那个路径需要 token 的 `workflow` 权限。也就是说：**目前所有测试只在 macOS + Node 24 上跑过。** 启用：
 
 ```bash
 gh auth refresh -h github.com -s workflow   # 授权一次
