@@ -141,7 +141,7 @@ const STRINGS = {
     image: {
       style: '画风', copyTags: '复制标签',
       prompt: '出图提示词 EN', promptLocal: '出图提示词',
-      negative: '反向提示词', turnaround: '三视图提示词 EN', face: '面部提示词 EN',
+      negative: '反向提示词', sheet: '角色设定图提示词 EN',
     },
     voice: {
       timbre: '音色', pitch: '音高', pace: '语速', accent: '口音',
@@ -150,8 +150,7 @@ const STRINGS = {
     },
     importance: { protagonist: '主角', major: '主要角色', supporting: '配角', minor: '龙套' },
     copy: '复制', copied: '已复制', copyFailed: '复制失败', copyJson: '复制整份角色 JSON',
-    turnaroundCaption: '三视图 · 正 侧 背（面部留空）',
-    faceCaption: '面部细节',
+    sheetCaption: '左：半身像　右：三视图（面部留空）',
     noImage: '尚未出图',
     noImageHint: '用下方提示词生成',
     colophonA: '画像与提示词由模型依据原文生成，',
@@ -178,7 +177,7 @@ const STRINGS = {
     image: {
       style: 'Style', copyTags: 'Copy tags',
       prompt: 'Image prompt', promptLocal: 'Image prompt (local)',
-      negative: 'Negative prompt', turnaround: 'Turnaround prompt', face: 'Face prompt',
+      negative: 'Negative prompt', sheet: 'Model sheet prompt',
     },
     voice: {
       timbre: 'Timbre', pitch: 'Pitch', pace: 'Pace', accent: 'Accent',
@@ -187,8 +186,7 @@ const STRINGS = {
     },
     importance: { protagonist: 'Lead', major: 'Major', supporting: 'Supporting', minor: 'Minor' },
     copy: 'Copy', copied: 'Copied', copyFailed: 'Failed', copyJson: 'Copy full JSON',
-    turnaroundCaption: 'Turnaround · front side back (face left blank)',
-    faceCaption: 'Face detail',
+    sheetCaption: 'Left: bust　Right: turnaround (faces left blank)',
     noImage: 'Not generated yet',
     noImageHint: 'use the prompts below',
     colophonA: 'Profiles and prompts are model-generated from the source text; ',
@@ -214,7 +212,7 @@ const STRINGS = {
     image: {
       style: '画風', copyTags: 'タグをコピー',
       prompt: '画像プロンプト EN', promptLocal: '画像プロンプト',
-      negative: 'ネガティブプロンプト', turnaround: '三面図プロンプト EN', face: '顔プロンプト EN',
+      negative: 'ネガティブプロンプト', sheet: 'キャラ設定画プロンプト EN',
     },
     voice: {
       timbre: '声質', pitch: '音域', pace: '話速', accent: '訛り',
@@ -223,8 +221,7 @@ const STRINGS = {
     },
     importance: { protagonist: '主役', major: '主要人物', supporting: '脇役', minor: '端役' },
     copy: 'コピー', copied: 'コピー済み', copyFailed: '失敗', copyJson: 'JSON をコピー',
-    turnaroundCaption: '三面図 · 正面 側面 背面（顔は空白）',
-    faceCaption: '顔の詳細',
+    sheetCaption: '左：バストアップ　右：三面図（顔は空白）',
     noImage: '未生成',
     noImageHint: '下のプロンプトで生成',
     colophonA: '人物像とプロンプトは原文をもとにモデルが生成したものです。',
@@ -289,7 +286,7 @@ const KANA = /[぀-ヿ]/;
 
 const PERSONA_STRINGS = ['gender', 'ageRange', 'identity', 'appearance', 'temperament', 'motivation', 'arc'];
 /** 机器输入，永远英文——图像和 TTS 引擎都吃英文最稳，跟报告语言无关。 */
-const MACHINE_FIELDS = { image: ['prompt', 'negativePrompt', 'turnaround', 'face'], voice: ['prompt'] };
+const MACHINE_FIELDS = { image: ['prompt', 'negativePrompt', 'sheet'], voice: ['prompt'] };
 /** 给人读的，跟随报告语言。 */
 const HUMAN_VOICE_FIELDS = ['timbre', 'pitch', 'pace', 'accent', 'emotion', 'referenceHint'];
 
@@ -339,11 +336,8 @@ export function validateCast(characters, sourceText, lang = DEFAULT_LANG) {
       for (const f of ['style', 'prompt', 'negativePrompt']) {
         if (typeof image[f] !== 'string' || !image[f].trim()) at(name, `image.${f} 缺失或为空`);
       }
-      if (typeof image.turnaround !== 'string' || !image.turnaround.trim()) {
-        at(name, 'image.turnaround 缺失或为空（三视图提示词）');
-      }
-      if (typeof image.face !== 'string' || !image.face.trim()) {
-        at(name, 'image.face 缺失或为空（面部细节提示词）');
+      if (typeof image.sheet !== 'string' || !image.sheet.trim()) {
+        at(name, 'image.sheet 缺失或为空（角色设定图提示词）');
       }
       if (!Array.isArray(image.tags)) at(name, 'image.tags 必须是数组');
     }
@@ -373,7 +367,7 @@ export function validateCast(characters, sourceText, lang = DEFAULT_LANG) {
       const names = [c?.name, ...(Array.isArray(c?.aliases) ? c.aliases : [])].filter(
         (n) => typeof n === 'string' && n.trim(),
       );
-      for (const field of ['prompt', 'promptLocal', 'turnaround', 'face']) {
+      for (const field of ['prompt', 'promptLocal', 'sheet']) {
         const value = image[field];
         if (typeof value !== 'string') continue;
         for (const n of names) {
@@ -432,8 +426,7 @@ export function renderMarkdown(characters, source, summary = '', lang = DEFAULT_
     out.push(`## ${c.name}${c.aliases.length ? `（${c.aliases.join('、')}）` : ''}`, '');
     out.push(`> ${t.importance[c.importance] ?? c.importance} · ${c.oneLiner}`, '');
 
-    if (c.faceImage) out.push(`![${c.name} ${t.faceCaption}](${c.faceImage})`, '');
-    if (c.turnaroundImage) out.push(`![${c.name} ${t.turnaroundCaption}](${c.turnaroundImage})`, '');
+    if (c.sheetImage) out.push(`![${c.name} ${t.sheetCaption}](${c.sheetImage})`, '');
 
     out.push(`### ${t.groups.persona}`, '');
     out.push(`- **${t.persona.gender}**：${persona.gender}`);
@@ -462,8 +455,7 @@ export function renderMarkdown(characters, source, summary = '', lang = DEFAULT_
     out.push(`**${t.image.prompt}**`, '', '```text', image.prompt, '```', '');
     if (image.promptLocal) out.push(`${image.promptLocal}`, '');
     out.push(`**${t.image.negative}**`, '', '```text', image.negativePrompt, '```', '');
-    out.push(`**${t.image.face}**`, '', '```text', image.face, '```', '');
-    out.push(`**${t.image.turnaround}**`, '', '```text', image.turnaround, '```', '');
+    out.push(`**${t.image.sheet}**`, '', '```text', image.sheet, '```', '');
 
     out.push(`### ${t.groups.voice}`, '');
     for (const f of HUMAN_VOICE_FIELDS) out.push(`- **${t.voice[f]}**：${voice[f]}`);
@@ -521,13 +513,9 @@ function renderEntry(c, index, t) {
        <span class="plate-c">${esc(caption)}</span>
      </a>`;
 
-  const sheets =
-    c.faceImage || c.turnaroundImage
-      ? `<div class="sheets">
-           ${c.faceImage ? plate(c.faceImage, t.faceCaption, `${c.name} ${t.faceCaption}`) : ''}
-           ${c.turnaroundImage ? plate(c.turnaroundImage, t.turnaroundCaption, `${c.name} ${t.turnaroundCaption}`) : ''}
-         </div>`
-      : `<div class="plate plate-empty"><span>${esc(t.noImage)}<br><em>${esc(t.noImageHint)}</em></span></div>`;
+  const sheets = c.sheetImage
+    ? plate(c.sheetImage, t.sheetCaption, `${c.name} ${t.sheetCaption}`)
+    : `<div class="plate plate-empty"><span>${esc(t.noImage)}<br><em>${esc(t.noImageHint)}</em></span></div>`;
 
   return `<article class="entry" id="p-${slug(c.name)}">
   <header class="entry-h">
@@ -578,8 +566,7 @@ function renderEntry(c, index, t) {
       ${promptBlock(t.image.prompt, image.prompt)}
       ${promptBlock(t.image.promptLocal, image.promptLocal, 'local')}
       ${promptBlock(t.image.negative, image.negativePrompt)}
-      ${promptBlock(t.image.face, image.face)}
-      ${promptBlock(t.image.turnaround, image.turnaround)}
+      ${promptBlock(t.image.sheet, image.sheet)}
     </section>
 
     <section class="group">
@@ -599,7 +586,7 @@ function renderEntry(c, index, t) {
 
 export function renderHtml(characters, source, summary = '', lang = DEFAULT_LANG, ui = null) {
   const t = strings(lang, ui);
-  const shots = characters.filter((c) => c.turnaroundImage || c.faceImage).length;
+  const shots = characters.filter((c) => c.sheetImage).length;
   const ordered = [...characters].sort(
     (a, b) => IMPORTANCE_ORDER.indexOf(a.importance) - IMPORTANCE_ORDER.indexOf(b.importance),
   );
@@ -690,7 +677,7 @@ body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.75 var(--sans
 .oneliner{font:400 15.5px/1.75 var(--serif);color:var(--ink-2);margin:12px 0 24px}
 
 /* ---- 设定图：面部细节 + 三视图 ---- */
-.sheets{display:flex;flex-direction:column;gap:12px;margin-bottom:28px}
+.plate{margin-bottom:28px}
 /* 白底的印张，深色模式下也保持白底——它是一张纸，不是 UI 面板 */
 .plate{display:block;position:relative;background:#fff;border:1px solid var(--rule);
   border-radius:2px;overflow:hidden}
@@ -831,7 +818,7 @@ const USAGE = `novel-characters.mjs — novel-characters skill 的确定性工�
 render 选项：
   --source <name>   报告标题用的书名（默认取 cast.json 的 source 或文件名）
   --images <dir>    图片目录名，默认 images
-                    会去找 <dir>/<slug>-face.png 和 <dir>/<slug>-turnaround.png`;
+                    会去找 <dir>/<slug>-sheet.png`;
 
 function readJson(path) {
   return JSON.parse(readFileSync(resolve(path), 'utf8'));
@@ -940,12 +927,11 @@ function main(argv) {
     const lang = flag(rest, '--lang', castLang);
     const title = sourceFlag ?? source ?? basename(castPath).replace(/\.[^.]+$/, '');
 
-    // 图存在才挂上去：面部细节图和三视图各自独立，缺哪张都不影响另一张。
+    // 图存在才挂上去；没有就渲染成占位，不影响其余内容。
     const outDir = resolve(castPath, '..');
     for (const c of characters) {
       const stem = `${imagesDir}/${slug(c.name)}`;
-      if (existsSync(join(outDir, `${stem}-face.png`))) c.faceImage = `${stem}-face.png`;
-      if (existsSync(join(outDir, `${stem}-turnaround.png`))) c.turnaroundImage = `${stem}-turnaround.png`;
+      if (existsSync(join(outDir, `${stem}-sheet.png`))) c.sheetImage = `${stem}-sheet.png`;
     }
 
     process.stdout.write(

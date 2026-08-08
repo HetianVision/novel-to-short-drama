@@ -1,25 +1,27 @@
-# 出图 · codex `$imagegen`
+# 角色设定图出图 · codex `$imagegen`
 
 出图走 codex 内置的 `$imagegen` 系统 skill。**这条路不需要任何 API key**——用的是本机 codex 登录态（订阅额度）。
 
 **没有 codex 就跳过整个第 8 步**，只交提示词，其余产出照常。这是可选能力，不是硬依赖。
 
-## 每个角色两张，顺序不能反
+## 每个角色一张图
 
-| 顺序 | 图 | 提示词字段 | 落到 |
-| --- | --- | --- | --- |
-| 1 | 面部细节图 | `image.face` | `./images/<slug>-face.png` |
-| 2 | 全身三视图（脸留空） | `image.turnaround` | `./images/<slug>-turnaround.png` |
+一张横构图，内部左右分栏：
 
-**先脸后身**：第二张要拿第一张当参考图（`-i`）压住画风和头身比例。反过来做参考就没意义了。
+```
+┌──────────────┬──────────────────────────────┐
+│              │                              │
+│   半身像      │    正视    侧视    背视        │
+│  （证件照式）  │                              │
+│   脸画全       │      三个全身像，脸留空        │
+│              │                              │
+│   ~38%       │           ~62%               │
+└──────────────┴──────────────────────────────┘
+```
 
-分成两张的原因：全身三视里同一张脸要画三遍，模型很难画一致；把五官抽到单独一张定死，全身图专心管剪影、比例和服装。改服装不用重画脸，改表情不用重画身体。
+提示词字段 `image.sheet`，落到 `./images/<slug>-sheet.png`。
 
-### 留空脸的实际效果 ⚠️
-
-实测：**正面和背面能干净留空**（只剩发型、发际线、耳朵），**侧面模型经常还是会画上五官**——侧脸轮廓对它来说似乎太像「必须有内容」的区域。
-
-这是模型遵从度的问题，不是提示词写得不够明确（提示词里已经逐项列了 no eyes / no eyebrows / no nose / no mouth）。能接受就用；不能接受只有两条路：拿到图之后手动擦掉侧脸，或者干脆放弃留空、让全身图也画脸。**别为了这个反复重生成**，多跑几次结果差不多。
+左栏定死五官，右栏专心管剪影、比例和服装。全身三视里同一张脸画三遍模型很难画一致，右栏留空就绕开了。
 
 ---
 
@@ -27,7 +29,7 @@
 
 直接用 `$imagegen`，**不要再 shell 出去调 `codex exec`**——那是自己套自己。
 
-把 `image.turnaround` 的内容作为图像规格交给 `$imagegen`，生成后把选定的 PNG 复制到 `<输出目录>/images/<slug>-turnaround.png`。
+把 `image.sheet` 的内容作为图像规格交给 `$imagegen`，生成后把选定的 PNG 复制到 `<输出目录>/images/<slug>-sheet.png`。
 
 ## 情况 B：跑在 Claude Code 或其他环境里
 
@@ -62,27 +64,17 @@ CODEX=$(find_codex)
 
 ### 调用
 
-**一张图一次调用，绝不批量。** built-in 通路会把 PNG 字节写进 rollout，批量会把上下文撑爆——这是官方 `hatch-pet` skill 踩出来的经验。两张图就是两次调用。
-
-**第一次 · 面部细节图**（无参考图，prompt 可以走位置参数）：
+**一个角色一次调用，绝不批量。** built-in 通路会把 PNG 字节写进 rollout，批量会把上下文撑爆——这是官方 `hatch-pet` skill 踩出来的经验。
 
 ```bash
 cd <输出目录> && mkdir -p images
-"$CODEX" exec --skip-git-repo-check --sandbox workspace-write \
-  'Use $imagegen to generate this character face sheet, then copy the final selected PNG to ./images/<slug>-face.png in the current working directory. Reply with only the file path — no base64, no markdown image preview.
+env -u NODE_OPTIONS "$CODEX" exec --skip-git-repo-check --sandbox workspace-write \
+  'Use $imagegen to generate this character model sheet, then copy the final selected PNG to ./images/<slug>-sheet.png in the current working directory. Reply with only the file path — no base64, no markdown image preview.
 
-<image.face 的内容>' < /dev/null
+<image.sheet 的内容>' < /dev/null
 ```
 
-**第二次 · 全身三视图**（拿面部图当参考，**prompt 必须走 stdin**）：
-
-```bash
-printf '%s' 'Use $imagegen to generate this full-body character turnaround, then copy the final selected PNG to ./images/<slug>-turnaround.png in the current working directory. Match the art style, line weight, shading, colour treatment and head-to-body proportion of the reference image. The reference shows the face design — but on THIS sheet the face must be left blank as described below. Reply with only the file path — no base64, no markdown image preview.
-
-<image.turnaround 的内容>' \
-| "$CODEX" exec --skip-git-repo-check --sandbox workspace-write \
-    -i ./images/<slug>-face.png
-```
+想让一批角色画风统一，就拿第一个角色出好的图当参考图喂给后面几个——**用 `-i` 时 prompt 必须走 stdin**，见下面「变长参数」。
 
 三个参数都是必需的，缺一个就挂：
 
@@ -107,7 +99,7 @@ printf '%s' "$PROMPT
 Match the art style, line weight, shading and colour treatment of the reference
 image exactly — these characters must belong to the same production." \
 | "$CODEX" exec --skip-git-repo-check --sandbox workspace-write \
-    -i ./images/<第一个角色>-turnaround.png
+    -i ./images/<第一个角色>-sheet.png
 ```
 
 代价是第一张的画风就定了全片基调，出得不好就得重来。用户在意统一性就上参考图，只是要几张草图就不必。
@@ -133,7 +125,7 @@ env -u NODE_OPTIONS "$CODEX" exec --skip-git-repo-check --sandbox workspace-writ
 
 ## 背景：白底
 
-三视图一律**纯白背景**。理由有三个：抠图干净、印出来是设定表该有的样子、在深色报告里也能读。`image.turnaround` 的提示词里已经写死了 `plain pure white background`，不要改成灰底或场景背景。
+设定图一律**纯白背景**。理由有三个：抠图干净、印出来是设定表该有的样子、在深色报告里也能读。`image.sheet` 的提示词里已经写死了 `plain pure white background`，不要改成灰底或场景背景。
 
 ### 想要真透明背景
 
@@ -158,4 +150,4 @@ python3 "$CODEX_HOME/skills/.system/imagegen/scripts/remove_chroma_key.py" <in.p
 
 ## 文件名
 
-用 `node scripts/novel-characters.mjs slug "<角色名>"` 生成安全文件名（中文会保留）。`render` 会自动去 `images/<slug>-turnaround.png` 找图，找到就嵌进 report.html——所以**先出图，再 render**。
+用 `node scripts/novel-characters.mjs slug "<角色名>"` 生成安全文件名（中文会保留）。`render` 会自动去 `images/<slug>-sheet.png` 找图，找到就嵌进 report.html——所以**先出图，再 render**。

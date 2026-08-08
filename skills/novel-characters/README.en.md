@@ -8,7 +8,7 @@ Feed it a novel or a short story, and get a complete design bible for every char
 - **Profile** — gender, age, standing, appearance, temperament, motivation, arc, relationships, each backed by **verbatim quotes from the source**
 - **Cartoon-design prompts** — bilingual image prompt + negative prompt + style tags, ready for Midjourney / SD / GPT-Image
 - **Voice prompts** — timbre, pitch, pace, accent, emotion, plus a voice-design prompt for Qwen3-TTS / ElevenLabs Voice Design
-- **Two design sheets** — a face sheet (front / three-quarter / profile plus expression studies) and a full-body turnaround with **the face deliberately left blank**, both on white for clean cut-out, generated through codex's built-in image tool (optional)
+- **A character model sheet** — one image: an ID-photo-style bust on the left with the face fully drawn, and a full-body turnaround filling the right ~62% with **the faces deliberately left blank**. White background for clean cut-out, generated through codex's built-in image tool (optional)
 
 Outputs `cast.json`, a Markdown report, and a self-contained `report.html` you can just double-click.
 
@@ -23,9 +23,9 @@ Chinese, English and Japanese UI strings ship built in. **Other languages work t
 
 ![report.html](assets/report.png)
 
-A turnaround sheet (Shen Zhiwei, from the bundled sample story):
+A character model sheet (Shen Zhiwei, from the bundled sample story):
 
-![turnaround](assets/turnaround.jpg)
+![model sheet](assets/sheet.jpg)
 
 ## Use
 
@@ -79,7 +79,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem
 - Caps at 24 chunks (~330k characters) per run. Beyond that it reports `truncated` explicitly — it does **not** silently drop the tail
 - Human-readable fields follow `--lang`; image and TTS prompts are **always English**, since those engines work best that way regardless of report language
 - Sheets are generated automatically only for `protagonist` and `major`; everyone else gets the prompts only
-- **Art style drifts across a cast.** Each character is generated independently, and in practice the same `flat vector cartoon style` instruction produced anime-ish, semi-realistic, and ink-wash-realistic results in one run. Feeding the first sheet back as a style reference helps (see `references/turnaround.md`) but does not fully fix it
+- **Art style drifts across a cast.** Each character is generated independently, and in practice the same `flat vector cartoon style` instruction produced anime-ish, semi-realistic, and ink-wash-realistic results in one run. Feeding the first sheet back as a style reference helps (see `references/sheet.md`) but does not fully fix it
 
 > ⚠️ **If you have more than one codex installed, mind the version.** An older one fails outright with `requires a newer version of Codex` instead of degrading. The skill probes for the highest version it can find; if yours is simply old, run `npm i -g @openai/codex`.
 
@@ -89,12 +89,12 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem
 SKILL.md                 the workflow the agent reads
 scripts/
   novel-characters.mjs   chunk / merge / validate / render / slug
-  selftest.mjs           128 assertions, never calls a model
+  selftest.mjs           129 assertions, never calls a model
 references/
   roster-pass.md         pass 1: scanning for characters
   profile-pass.md        pass 2: building a character sheet (8 hard rules)
   schema.md              sheet structure and which language each field takes
-  turnaround.md          the codex contract for both image sheets
+  sheet.md               the codex contract for model-sheet generation
   report-style.md        design conventions for report.html
 examples/
   渡口.txt                bundled short story, 4 characters
@@ -110,6 +110,6 @@ In `examples/渡口.txt` the peddler is only ever referred to by a nickname and 
 node scripts/selftest.mjs
 ```
 
-128 assertions across chunking, alias merging, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
+129 assertions across chunking, alias merging, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
 
 **Only tested on macOS with Node 24.** There is no platform-specific code, so Linux and older Node releases should be fine, but that is **unverified** — the repository's CI (`ci/selftest.yml`) is not enabled yet.

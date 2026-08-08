@@ -128,32 +128,24 @@ bad[0].image.promptLocal = `${bad[0].aliases[0]}的设定图`;
 ok(hits(bad, '人名') > 0, '抓住本地语言出图提示词里的别名');
 
 bad = clone();
-bad[0].image.face = `${bad[0].name}, a face sheet`;
-ok(hits(bad, '人名') > 0, '抓住面部提示词里的人名');
-
-bad = clone();
-bad[0].image.turnaround = `${bad[0].name}, a turnaround`;
-ok(hits(bad, '人名') > 0, '抓住三视图提示词里的人名');
+bad[0].image.sheet = `${bad[0].name}, a model sheet`;
+ok(hits(bad, '人名') > 0, '抓住设定图提示词里的人名');
 
 bad = clone();
 bad[0].voice.timbre = 'warm husky alto';
 ok(hits(bad, '应为中文') > 0, '抓住该中文却写成英文的字段');
 
 bad = clone();
-bad[0].image.turnaround = '中文三视图描述';
+bad[0].image.sheet = '中文设定图描述';
 ok(hits(bad, '必须英文') > 0, '抓住该英文却含中文的字段');
-
-bad = clone();
-delete bad[0].image.face;
-ok(hits(bad, 'image.face') > 0, '抓住缺失的面部提示词');
 
 bad = clone();
 bad[0].importance = 'sidekick';
 ok(hits(bad, 'importance') > 0, '抓住 importance 枚举越界');
 
 bad = clone();
-delete bad[0].image.turnaround;
-ok(hits(bad, 'turnaround') > 0, '抓住缺失的三视图提示词');
+delete bad[0].image.sheet;
+ok(hits(bad, 'image.sheet') > 0, '抓住缺失的设定图提示词');
 
 bad = clone();
 delete bad[0].persona;
@@ -167,15 +159,14 @@ eq(validateCast(CAST, null).length, 0, '不给原文时跳过引文校验');
 const md = renderMarkdown(CAST, '渡口');
 ok(md.includes('# 渡口 — 角色表'), 'Markdown 有标题');
 for (const c of CAST) ok(md.includes(`## ${c.name}`), `Markdown 包含 ${c.name}`);
-ok(md.includes('三视图提示词'), 'Markdown 含三视图提示词');
-ok(md.includes('面部提示词'), 'Markdown 含面部提示词');
+ok(md.includes('角色设定图提示词'), 'Markdown 含设定图提示词');
 ok(renderMarkdown(CAST, 'Ferry', '', 'en').includes('# Ferry — Cast'), 'Markdown 跟随语言参数');
 
 const html = renderHtml(CAST, '渡口');
 ok(html.startsWith('<!doctype html>'), 'HTML 是完整文档');
 eq((html.match(/class="entry"/g) || []).length, CAST.length, `HTML 有 ${CAST.length} 个条目`);
-// 每人 9 个复制按钮：标签 + 出图 EN/本地/反向/面部/三视图 + 音色 EN/本地 + 整份 JSON
-eq((html.match(/class="copy"/g) || []).length, CAST.length * 9, '每段提示词都有复制按钮');
+// 每人 8 个复制按钮：标签 + 出图 EN/本地/反向/设定图 + 音色 EN/本地 + 整份 JSON
+eq((html.match(/class="copy"/g) || []).length, CAST.length * 8, '每段提示词都有复制按钮');
 ok(html.includes('<nav aria-label="角色索引"'), '有角色索引');
 eq((html.match(/class="ix-name"/g) || []).length, CAST.length, '索引列出全部角色');
 ok(html.includes('<blockquote>'), '原文依据用 blockquote');
@@ -198,7 +189,7 @@ ok(!/@import|url\(https?:/.test(html), 'CSS 不拉外部资源');
 // 没有三视图时要有占位而不是空白
 ok(renderHtml(CAST, 'x').includes('plate-empty'), '缺图时显示占位');
 const withShot = clone();
-withShot[0].turnaroundImage = 'images/x.png';
+withShot[0].sheetImage = 'images/x.png';
 ok(renderHtml(withShot, 'x').includes('<img src="images/x.png"'), '有图时嵌入');
 
 // XSS：角色数据是模型生成的，不能直接拼进 HTML
@@ -304,23 +295,26 @@ for (const l of ['zh', 'en', 'fr']) {
   );
 }
 
-/* ---------------- 面部细节图 ---------------- */
+/* ---------------- 角色设定图（左半身像 + 右三视图，一张） ---------------- */
 
-ok(CAST.every((c) => c.image.face && c.image.face.trim()), '样例每个角色都有面部提示词');
+ok(CAST.every((c) => c.image.sheet && c.image.sheet.trim()), '样例每个角色都有设定图提示词');
+// 左右分栏和比例必须写死在提示词里，否则模型会自由发挥
+ok(CAST.every((c) => /LEFT ZONE/.test(c.image.sheet)), '提示词划出左栏');
+ok(CAST.every((c) => /RIGHT ZONE/.test(c.image.sheet)), '提示词划出右栏');
+ok(CAST.every((c) => /about 38% of the canvas width/.test(c.image.sheet)), '左栏比例写死 38%');
+ok(CAST.every((c) => /about 62% of the canvas width/.test(c.image.sheet)), '右栏比例写死 62%');
+ok(CAST.every((c) => /bust portrait/i.test(c.image.sheet)), '左栏是半身像');
+ok(CAST.every((c) => /three full-body views/i.test(c.image.sheet)), '右栏是三视图');
+// 只有右栏留空脸，左栏必须有脸——两边说反了整张图就废了
 ok(
-  CAST.every((c) => /no eyes|leave the face blank|NO facial features/i.test(c.image.turnaround)),
-  '三视图提示词要求面部留空',
+  CAST.every((c) => /NO eyes[\s\S]*Only the LEFT ZONE bust portrait shows the face/i.test(c.image.sheet)),
+  '右栏留空脸、左栏保留脸',
 );
-const both = clone();
-both[0].faceImage = 'images/x-face.png';
-both[0].turnaroundImage = 'images/x-turnaround.png';
-const bothHtml = renderHtml(both, 'x');
-ok(bothHtml.includes('images/x-face.png'), '面部图被嵌入');
-ok(bothHtml.includes('images/x-turnaround.png'), '三视图被嵌入');
-eq((bothHtml.match(/class="plate"/g) || []).length, 2, '两张图各自一个印张');
-// 只有其中一张时也要能正常渲染
-const faceOnly = clone();
-faceOnly[0].faceImage = 'images/x-face.png';
-ok(renderHtml(faceOnly, 'x').includes('images/x-face.png'), '只有面部图也能渲染');
+
+const withSheet = clone();
+withSheet[0].sheetImage = 'images/x-sheet.png';
+const sheetHtml = renderHtml(withSheet, 'x');
+ok(sheetHtml.includes('images/x-sheet.png'), '设定图被嵌入');
+eq((sheetHtml.match(/class="plate"/g) || []).length, 1, '一个角色只有一个印张');
 
 console.log(`✓ ${passed} 项自测全部通过`);

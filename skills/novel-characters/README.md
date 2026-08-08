@@ -8,7 +8,7 @@
 - **人物画像** — 性别、年龄、身份、外貌、性情、动机、人物弧光、关系网，每条附**原文逐字引文**
 - **卡通形象提示词** — 中英双语出图 prompt + negative prompt + 风格标签，直接喂 Midjourney / SD / GPT-Image
 - **音色提示词** — 音色、音高、语速、口音、情绪，双语 voice-design prompt，直接喂 Qwen3-TTS / ElevenLabs Voice Design
-- **两张设定图** — 面部细节图（正面/四分之三侧/正侧 + 表情习作）和全身三视图（**脸留空**），白底方便抠图，走 codex 内置出图（可选）
+- **角色设定图** — 一张图：左侧证件照式半身像（脸画全），右侧约 62% 是全身三视图（**脸留空**）。白底方便抠图，走 codex 内置出图（可选）
 
 产出 `cast.json` + Markdown + 一个双击就能开的 `report.html`。
 
@@ -29,9 +29,9 @@ node scripts/novel-characters.mjs ui-template fr   # 打印待翻译的骨架
 
 ![report.html](assets/report.png)
 
-面部细节图与三视图（自带样例《渡口》的沈知微）：
+角色设定图（自带样例《渡口》的沈知微）：
 
-![三视图](assets/turnaround.jpg)
+![角色设定图](assets/sheet.jpg)
 
 ## 用
 
@@ -85,7 +85,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文�
 - 单次上限 24 块（约 33 万字符）。超了会明确报 `truncated`，**不静默截断**
 - 人类可读字段跟随 `--lang`；出图和 TTS 提示词**永远英文**，那些引擎吃英文最稳，跟报告语言无关
 - 设定图只自动给 `protagonist` 和 `major`，其余只给提示词
-- **同一批角色画风会漂**——各自独立出图，实测同样写着 `flat vector cartoon style`，会出成动画感 / 半写实 / 水墨写实三种。可以拿第一张当参考图压一压（见 `references/turnaround.md`），但压不死
+- **同一批角色画风会漂**——各自独立出图，实测同样写着 `flat vector cartoon style`，会出成动画感 / 半写实 / 水墨写实三种。可以拿第一张当参考图压一压（见 `references/sheet.md`），但压不死
 
 > ⚠️ **机器上装了多个 codex 要注意版本。** 旧版本会直接报 `requires a newer version of Codex` 而不是降级。skill 里带了自动挑最高版本的探测逻辑，整体太旧就 `npm i -g @openai/codex`。
 
@@ -95,12 +95,12 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文�
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-characters.mjs   chunk / merge / validate / render / slug
-  selftest.mjs           128 项断言，不调模型
+  selftest.mjs           129 项断言，不调模型
 references/
   roster-pass.md         第一趟：扫描角色
   profile-pass.md        第二趟：生成角色卡（8 条硬规则）
   schema.md              角色卡结构 + 字段语言归属
-  turnaround.md          出图的 codex 调用契约（面部图 + 三视图）
+  sheet.md               角色设定图出图的 codex 调用契约
   report-style.md        report.html 的设计约定
 examples/
   渡口.txt                自带短故事，4 个角色
@@ -116,6 +116,6 @@ examples/
 node scripts/selftest.mjs
 ```
 
-128 项断言，覆盖分块 / 别名归并 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+129 项断言，覆盖分块 / 别名归并 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**——仓库里的 CI（`ci/selftest.yml`）还没启用。

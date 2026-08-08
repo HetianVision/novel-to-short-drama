@@ -3,7 +3,7 @@ name: novel-characters
 version: 1.1.0
 description: |
   从小说或短故事里拆出角色表、人物画像、卡通形象提示词、音色提示词，
-  并给主要角色出面部细节图和全身三视图，产出 JSON + Markdown + 可交互的 report.html。
+  并给主要角色出角色设定图（左半身像 + 右全身三视图），产出 JSON + Markdown + 可交互的 report.html。
   报告语言可指定（--lang），默认中文，任意语言都支持。
   零依赖、零 API key，用当前会话额度；出图走 codex 内置 $imagegen（可选）。
   Use when asked to 拆小说角色、分析人物、生成角色卡、character sheets from a novel。
@@ -36,11 +36,11 @@ metadata:
 
 ## novel-characters
 
-输入一篇小说/短故事，输出每个角色的：人物画像、卡通形象提示词、音色提示词、面部细节图与全身三视图。
+输入一篇小说/短故事，输出每个角色的：人物画像、卡通形象提示词、音色提示词、角色设定图。
 
 `{baseDir}` = 本文件所在目录。脚本 `{baseDir}/scripts/novel-characters.mjs`，零依赖，`node` 直接跑。
 
-**运行环境**：Claude Code 和 codex 都能跑。差别只在第 8 步出图——见 `references/turnaround.md`。
+**运行环境**：Claude Code 和 codex 都能跑。差别只在第 8 步出图——见 `references/sheet.md`。
 
 ---
 
@@ -137,22 +137,25 @@ node {baseDir}/scripts/novel-characters.mjs validate <cast.json> <book.txt>
 
 ### Step 8 — 出图（可选，只给 protagonist 和 major）
 
-**每个角色两张**，各管一件事：
+**每个角色一张**，用 `image.sheet`，落到 `./images/<slug>-sheet.png`。一张横构图内部左右分栏：
 
-| 图 | 提示词 | 落到 | 内容 |
-| --- | --- | --- | --- |
-| 面部细节图 | `image.face` | `./images/<slug>-face.png` | 正面/四分之三侧/正侧三个头部特写 + 一排表情 |
-| 全身三视图 | `image.turnaround` | `./images/<slug>-turnaround.png` | 正/侧/背全身，**脸留空**（只有发型发际线耳朵，无五官） |
+```
+┌──────────────┬──────────────────────────────┐
+│   半身像      │    正视    侧视    背视        │
+│ （证件照式）   │      三个全身像，脸留空        │
+│   脸画全       │                              │
+│   ~38%       │           ~62%               │
+└──────────────┴──────────────────────────────┘
+```
 
-分两张是因为：全身三视里同一张脸画三遍，模型很难画一致；分开之后五官只在面部图里定一次，全身图专心管剪影、比例和服装。改服装不用重画脸，改表情不用重画身体。
+左栏定死五官，右栏专心管剪影、比例和服装——全身三视里同一张脸画三遍模型很难画一致，右栏留空就绕开了。
 
-读 `{baseDir}/references/turnaround.md`，照它的调用契约做。要点：
+读 `{baseDir}/references/sheet.md`，照它的调用契约做。要点：
 
 - **没有 codex 就整步跳过**，只交提示词，后面照常走
 - 跑在 codex 里就直接用 `$imagegen`；跑在别处就 shell 调 codex，先按那里的脚本探测版本最高的 binary（旧版会直接报错）
-- **一张图一次调用，绝不批量**——两张图就是两次
-- **先出面部图，再出三视图**，三视图用面部图当参考（`-i`）压画风
-- 单张失败就跳过，不阻断；最后汇总说明
+- **一个角色一次调用，绝不批量**
+- 单个失败就跳过，不阻断；最后汇总说明
 
 `supporting` / `minor` 只给提示词不出图。用户明确要求全出就全出。
 
@@ -166,7 +169,7 @@ node {baseDir}/scripts/novel-characters.mjs render <cast.json> --html > report.h
 
 语言取 `cast.json` 里的 `lang`，要临时覆盖就加 `--lang <code>`。
 
-`render` 会自动去 `images/` 找 `<slug>-face.png` 和 `<slug>-turnaround.png`，找到哪张嵌哪张。所以**先出图再 render**。
+`render` 会自动去 `images/<slug>-sheet.png` 找图。所以**先出图再 render**。
 
 report.html 的样式约定见 `{baseDir}/references/report-style.md`——要改样式先读它，别把它改回通用卡片墙。
 
@@ -178,8 +181,7 @@ report.html 的样式约定见 `{baseDir}/references/report-style.md`——要�
 ├── <书名>-cast.md
 ├── report.html                    ← 双击就能开
 └── images/
-    ├── <slug>-face.png            ← 有 codex 才有
-    └── <slug>-turnaround.png
+    └── <slug>-sheet.png           ← 有 codex 才有
 ```
 
 ### Step 10 — 汇报
@@ -192,7 +194,7 @@ report.html 的样式约定见 `{baseDir}/references/report-style.md`——要�
 
 - 单次上限 24 块（约 33 万字符），超了会明确报 `truncated`，不静默截断
 - 人类可读字段跟随 `--lang`（默认中文）；出图和 TTS 提示词**永远英文**，那些引擎吃英文最稳
-- 三视图的「面部留空」模型只做到七成：**正面背面能干净留空，侧面经常还是会画上五官**，见 `references/turnaround.md`
+- 右栏的「面部留空」模型只做到七成：**正面背面能干净留空，侧面经常还是会画上五官**，见 `references/sheet.md`
 - 出图只走 codex built-in `$imagegen`。**不用它的 CLI fallback**（要 `OPENAI_API_KEY`）
 - 想要能实时编辑、边跑边看的交互界面，那是另一个东西，不在这个 skill 里
 
@@ -202,7 +204,7 @@ report.html 的样式约定见 `{baseDir}/references/report-style.md`——要�
 node {baseDir}/scripts/selftest.mjs
 ```
 
-128 项断言，不调模型、不花额度，覆盖分块 / 归并 / 多语言 / 校验 / 渲染的全部确定性逻辑。改完脚本先跑这个。
+129 项断言，不调模型、不花额度，覆盖分块 / 归并 / 多语言 / 校验 / 渲染的全部确定性逻辑。改完脚本先跑这个。
 
 ## 自带样例
 
