@@ -1,7 +1,7 @@
 **中文** · [English](README.en.md)
 
 > 我建了一个 **AI 短剧交流群**（付费），聊 AI 短剧的工作流、工具和实操。
-> 有兴趣的加我：**微信 `TODO_微信号`**，添加时**备注 `github`**。
+> 有兴趣的加我：**微信 `hao_dev`**，添加时**备注 `github`**。
 
 # shuohao-skills
 
@@ -9,7 +9,7 @@
 
 | Skill | 做什么 |
 | --- | --- |
-| [**novel-characters**](skills/novel-characters) | 把一篇小说拆成角色设定集：人物画像、卡通形象提示词、音色提示词、三视图 |
+| [**novel-characters**](skills/novel-characters) | 把一篇小说拆成角色设定集：人物画像、卡通形象提示词、音色提示词、面部图与三视图 |
 
 ## 装
 

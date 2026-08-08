@@ -1,7 +1,7 @@
 [中文](README.md) · **English**
 
 > I run a **paid community for AI short-form drama** — workflows, tooling, and hands-on practice.
-> If that's your thing, add me on **WeChat `TODO_微信号`** and mention **`github`** in the request.
+> If that's your thing, add me on **WeChat `hao_dev`** and mention **`github`** in the request.
 
 # shuohao-skills
 
@@ -9,7 +9,7 @@ A collection of skills for AI coding agents. **Runs in both Claude Code and code
 
 | Skill | What it does |
 | --- | --- |
-| [**novel-characters**](skills/novel-characters/README.en.md) | Turns a novel into a character bible: profiles, cartoon-design prompts, voice prompts, turnaround sheets |
+| [**novel-characters**](skills/novel-characters/README.en.md) | Turns a novel into a character bible: profiles, cartoon-design prompts, voice prompts, face and turnaround sheets |
 
 ## Install
 
