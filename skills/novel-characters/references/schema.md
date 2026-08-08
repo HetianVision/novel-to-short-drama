@@ -49,7 +49,7 @@
     "promptLocal": "角色设定图：约七十岁的中国老船夫……",
     "negativePrompt": "photorealistic, 3d render, young face, ...",
     "tags": ["flat vector", "character sheet", "ink wash palette"],
-    "sheet": "Single character model sheet ... LEFT ZONE, occupying about 38% ... one bust portrait ... RIGHT ZONE, occupying about 62% ... three full-body views ... in the RIGHT ZONE the faces must be left completely blank ..."
+    "sheet": "Single character model sheet ... LEFT ZONE, occupying about 38% ... one bust portrait ... RIGHT ZONE, occupying about 62% ... three full-body views ... faces fully drawn and must match the bust portrait exactly ..."
   },
 
   "voice": {
@@ -82,7 +82,7 @@
 | `image.promptLocal` | string | 本地语言 | 上面那条的译文；`lang=en` 时省略；**同样禁止人名** |
 | `image.negativePrompt` | string | **英文** | 逗号分隔 |
 | `image.tags` | string[] | **英文** | 4–8 个风格标签 |
-| `image.sheet` | string | **英文** | **角色设定图**：左栏约 38% 是证件照式半身像（脸画全），右栏约 62% 是全身三视图（**脸留空**）；**禁止出现人名** |
+| `image.sheet` | string | **英文** | **角色设定图**：左栏约 38% 是证件照式半身像（面部基准），右栏约 62% 是全身三视图（脸也画，**须与左栏一致**）；**禁止出现人名** |
 | `voice.timbre/pitch/pace/accent/emotion/referenceHint` | string | **本地语言** | 最容易写漂的地方，注意 |
 | `voice.prompt` | string | **英文** | 给 TTS 音色设计引擎 |
 | `voice.promptLocal` | string | 本地语言 | 上面那条的译文；`lang=en` 时省略 |
@@ -91,9 +91,10 @@
 
 ## 为什么设定图要左右分栏
 
-- 五官在左栏的半身像里定死一次，右栏专心管剪影、比例和服装
-- 全身三视里同一张脸要画三遍，模型很难画一致；右栏留空就绕开了这个问题
-- 左右比例（38% / 62%）和「只有左栏显示面部」必须写死在提示词里，**说反了整张图就废了**
+- 左栏的半身像当**面部设计基准**，尺寸大、五官画得细，可以直接拿去做表情设计
+- 右栏三视图管剪影、比例、服装，脸照左栏画
+- 左右比例（38% / 62%）必须写死在提示词里，**说反了整张图就废了**
+- 最容易出的问题是**一张图里两个长相**，提示词里要明确要求两边一致
 
 ## 校验
 

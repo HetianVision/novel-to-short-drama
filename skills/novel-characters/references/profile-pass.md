@@ -31,16 +31,16 @@
 
    | 栏 | 宽度 | 内容 |
    | --- | --- | --- |
-   | **左栏** | **约 38%** | **一张半身像**：头肩，正面，居中，像证件照。**脸画全、画细** |
-   | **右栏** | **约 62%** | **全身三视图**：正视 / 侧视 / 背视并排，共用一条地平线，三视身高比例和服装细节完全一致，中性站姿、双臂自然下垂 |
+   | **左栏** | **约 38%** | **一张半身像**：头肩，正面，居中，像证件照。脸画全、画细，这是面部设计的基准。**两侧肩膀要完整**，底边**齐平直切**收口 |
+   | **右栏** | **约 62%** | **全身三视图**：正视 / 侧视 / 背视并排，共用一条地平线，三视身高比例和服装细节完全一致，中性站姿、双臂自然下垂。**脸也要画** |
 
    两栏之间用一条细竖线分隔。整张纯白背景、均匀漫射光、无投影。
 
-   **右栏的脸必须留空**：头部只画发型、发际线和耳朵，**不画眼睛、眉毛、鼻子、嘴**，脸部区域保持平整空白。**只有左栏的半身像显示面部。**
+   **一张图里只能有一个长相。** 提示词里要明确要求三视图的面部与左栏半身像一致——同样的五官、同样的发型、同样的表情。左栏是基准，右栏照着它画。
 
-   这么排的原因：五官在左栏定死一次，右栏专心管剪影、比例和服装。全身三视里同一张脸画三遍，模型很难画一致，留空就绕开了这个问题。
+   **左栏的收口要写死**：模型默认会把两侧肩膀裁掉、底边做成圆角或渐隐，看着很别扭。提示词里要明说 `BOTH SHOULDERS ARE FULLY VISIBLE with clear space on either side` 和 `do not fade, vignette or round off the bottom edge — the portrait ends in a clean straight horizontal cut just below the chest`。
 
-   提示词里必须逐条写明：`LEFT ZONE, occupying about 38% of the canvas width`、`RIGHT ZONE, occupying about 62%`、以及 `Only the LEFT ZONE bust portrait shows the face`。**说反了整张图就废了。**
+   提示词里必须逐条写明：`LEFT ZONE, occupying about 38% of the canvas width`、`RIGHT ZONE, occupying about 62%`、以及 `The faces on all three full-body views are fully drawn and must match the bust portrait exactly`。**比例说反了整张图就废了。**
 
 6. `voice.prompt` 是给 TTS 音色设计引擎的：描述**乐器本身**，不是某一句台词的演绎。性别、听感年龄、音色、音高区间、共鸣、气声、语速、节奏、口音、能量、默认情绪。
 

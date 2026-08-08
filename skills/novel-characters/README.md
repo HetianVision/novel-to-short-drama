@@ -8,7 +8,7 @@
 - **人物画像** — 性别、年龄、身份、外貌、性情、动机、人物弧光、关系网，每条附**原文逐字引文**
 - **卡通形象提示词** — 中英双语出图 prompt + negative prompt + 风格标签，直接喂 Midjourney / SD / GPT-Image
 - **音色提示词** — 音色、音高、语速、口音、情绪，双语 voice-design prompt，直接喂 Qwen3-TTS / ElevenLabs Voice Design
-- **角色设定图** — 一张图：左侧证件照式半身像（脸画全），右侧约 62% 是全身三视图（**脸留空**）。白底方便抠图，走 codex 内置出图（可选）
+- **角色设定图** — 一张图：左侧约 38% 是证件照式半身像（面部基准），右侧约 62% 是全身三视图。白底方便抠图，走 codex 内置出图（可选）
 
 产出 `cast.json` + Markdown + 一个双击就能开的 `report.html`。
 
@@ -95,7 +95,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文�
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-characters.mjs   chunk / merge / validate / render / slug
-  selftest.mjs           129 项断言，不调模型
+  selftest.mjs           132 项断言，不调模型
 references/
   roster-pass.md         第一趟：扫描角色
   profile-pass.md        第二趟：生成角色卡（8 条硬规则）
@@ -116,6 +116,6 @@ examples/
 node scripts/selftest.mjs
 ```
 
-129 项断言，覆盖分块 / 别名归并 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+132 项断言，覆盖分块 / 别名归并 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**——仓库里的 CI（`ci/selftest.yml`）还没启用。

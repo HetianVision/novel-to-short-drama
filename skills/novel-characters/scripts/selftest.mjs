@@ -304,11 +304,25 @@ ok(CAST.every((c) => /RIGHT ZONE/.test(c.image.sheet)), '提示词划出右栏')
 ok(CAST.every((c) => /about 38% of the canvas width/.test(c.image.sheet)), '左栏比例写死 38%');
 ok(CAST.every((c) => /about 62% of the canvas width/.test(c.image.sheet)), '右栏比例写死 62%');
 ok(CAST.every((c) => /bust portrait/i.test(c.image.sheet)), '左栏是半身像');
-ok(CAST.every((c) => /three full-body views/i.test(c.image.sheet)), '右栏是三视图');
-// 只有右栏留空脸，左栏必须有脸——两边说反了整张图就废了
+// 模型默认会把肩膀裁掉、底边做成圆角渐隐，必须显式禁掉
 ok(
-  CAST.every((c) => /NO eyes[\s\S]*Only the LEFT ZONE bust portrait shows the face/i.test(c.image.sheet)),
-  '右栏留空脸、左栏保留脸',
+  CAST.every((c) => /BOTH SHOULDERS ARE FULLY VISIBLE/.test(c.image.sheet)),
+  '左栏要求肩膀完整',
+);
+ok(
+  CAST.every((c) => /do not fade, vignette or round off the bottom edge/.test(c.image.sheet)),
+  '左栏禁止底边圆角渐隐',
+);
+ok(CAST.every((c) => /three full-body views/i.test(c.image.sheet)), '右栏是三视图');
+// 两栏的脸必须画成同一个人，否则一张图里出现两个长相
+ok(
+  CAST.every((c) => /must match the bust portrait/i.test(c.image.sheet)),
+  '三视图的脸要求与半身像一致',
+);
+// 「留空脸」是上一版的做法，已废弃——提示词里不该再出现
+ok(
+  CAST.every((c) => !/left completely blank|NO eyes|NO facial features/i.test(c.image.sheet)),
+  '提示词里没有残留的留空脸要求',
 );
 
 const withSheet = clone();
