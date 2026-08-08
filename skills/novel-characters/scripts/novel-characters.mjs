@@ -525,9 +525,9 @@ function renderRosterItem(c, index, t) {
     .join(' ');
 
   return `<button class="rost${index === 0 ? ' on' : ''}" data-target="p-${slug(c.name)}" data-hay="${esc(hay)}">
-  <span class="rost-thumb">${
-    c.sheetImage ? `<img src="${esc(c.sheetImage)}" alt="" loading="lazy">` : ''
-  }</span>
+  <span class="rost-thumb"${
+    c.sheetImage ? ` style="background-image:url('${esc(c.sheetImage)}')"` : ''
+  }></span>
   <span class="rost-body">
     <span class="rost-top">
       <em class="rost-n">${String(index + 1).padStart(2, '0')}</em>
@@ -706,10 +706,11 @@ button{font-family:inherit}
 .rost:hover{background:#00000006}
 .rost.on{background:var(--panel);border-left-color:var(--seal)}
 .rost:focus-visible{outline:2px solid var(--seal);outline-offset:-2px}
-.rost-thumb{display:block;width:76px;height:60px;border:1px solid var(--rule-2);border-radius:2px;
-  background:#fff;overflow:hidden}
-/* 设定图左半边正好是半身像，缩略图取左侧 */
-.rost-thumb img{width:200%;height:100%;object-fit:cover;object-position:left center;display:block}
+/* 缩略图 = 设定图的左栏切片。设定图固定 16:9、左栏占约 34%，
+   所以把整图按 1/0.34 ≈ 294% 放大再左上对齐，裁出来正好是半身像。
+   比 <img> + object-position 可控：不依赖浏览器怎么 cover。 */
+.rost-thumb{display:block;width:76px;height:76px;border:1px solid var(--rule-2);border-radius:2px;
+  background:#fff no-repeat left top;background-size:294% auto}
 .rost-body{min-width:0}
 .rost-top{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
 .rost-n{font:500 10px/1 var(--mono);color:var(--ink-3);font-style:normal}
@@ -724,7 +725,7 @@ button{font-family:inherit}
 .rost.on .badge,.char-h .badge{border-color:var(--seal);color:var(--seal)}
 
 /* ---------- 主区 ---------- */
-.main{padding:26px 28px 72px;min-width:0}
+.main{padding:26px 28px 72px;min-width:0;max-width:1500px}
 .char{display:none}
 .char.on{display:block}
 .char-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;

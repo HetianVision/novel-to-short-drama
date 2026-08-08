@@ -206,7 +206,9 @@ ok(!/@import|url\(https?:/.test(html), 'CSS 不拉外部资源');
 ok(renderHtml(CAST, 'x').includes('plate-empty'), '缺图时显示占位');
 const withShot = clone();
 withShot[0].sheetImage = 'images/x.png';
-ok(renderHtml(withShot, 'x').includes('<img src="images/x.png"'), '有图时嵌入');
+const shotHtml = renderHtml(withShot, 'x');
+ok(shotHtml.includes('<img src="images/x.png"'), '主区嵌入设定图');
+ok(shotHtml.includes("background-image:url('images/x.png')"), '左栏缩略图用同一张图的切片');
 
 // XSS：角色数据是模型生成的，不能直接拼进 HTML
 const evil = clone();
@@ -228,6 +230,11 @@ ok(/\.shell\{[^}]*grid-template-columns:var\(--side-w\)/.test(css), '左栏 + �
 ok(/\.upper\{[^}]*grid-template-columns:minmax\(0,1fr\) 340px/.test(css), '主区内是内容 + 信息卡两栏');
 ok(/\.prompts\{[^}]*grid-template-columns:1fr 1fr/.test(css), '提示词分左右两组');
 ok(css.includes('.char{display:none}'), '默认只显示选中的角色');
+ok(/\.main\{[^}]*max-width:1500px/.test(css), '主区最大宽度 1500px');
+// 缩略图用精灵图裁设定图左栏——设定图 16:9、左栏约 34%，放大 1/0.34≈294% 左上对齐
+ok(/\.rost-thumb\{[^}]*background-size:294% auto/.test(css), '缩略图按 294% 裁左栏');
+ok(/\.rost-thumb\{[^}]*no-repeat left top/.test(css), '缩略图左上对齐');
+ok(!/\.rost-thumb img/.test(css), '缩略图不再用 img 拉伸');
 // 屏幕上一次一个，打印时必须全展开，否则打出来只有一个角色
 ok(/@media print\{[\s\S]*\.char\{display:block!important/.test(css), '打印时展开全部角色');
 ok(/@media print\{[\s\S]*\.pr p\{display:block!important/.test(css), '打印时展开全部提示词');
@@ -340,6 +347,51 @@ ok(
 ok(
   CAST.every((c) => /continue them in a narrow vertical column down the right-hand edge/.test(c.image.sheet)),
   '细节放不下可延伸到右侧',
+);
+
+/* ---------------- 真实感 ---------------- */
+
+// 一边要真实感一边在反向提示词里禁真实感，是自相矛盾的
+ok(
+  CAST.every((c) => !/photorealistic|3d render/i.test(c.image.negativePrompt)),
+  'negativePrompt 不再禁 photorealistic / 3d render',
+);
+ok(
+  CAST.every((c) => /plastic or waxy skin|poreless doll face/i.test(c.image.negativePrompt)),
+  'negativePrompt 改禁「假」而不是禁「真」',
+);
+// 「扁平矢量卡通」跟写实拧巴，会导致同一批角色画风飘
+ok(
+  CAST.every((c) => !/flat vector cartoon/i.test(c.image.sheet + c.image.prompt)),
+  '不再用扁平矢量卡通',
+);
+ok(
+  CAST.every((c) => /Semi-realistic character illustration, painterly rendering/.test(c.image.sheet)),
+  '画风统一到半写实厚涂',
+);
+// 真实感来自不完美
+for (const [k, label] of [
+  [/visible pores/i, '可见毛孔'],
+  [/wet specular highlight/i, '眼睛湿润高光'],
+  [/asymmetric/i, '左右不对称'],
+  [/flyaway hair strands/i, '碎发破轮廓'],
+  [/visible weave/i, '布料织纹'],
+  [/self-shadow/i, '褶皱自阴影'],
+]) {
+  ok(CAST.every((c) => k.test(c.image.sheet)), `设定图提示词含${label}`);
+}
+// 分区光照：左栏要体积，右侧要平光——合并成一句全局光照就废了
+ok(
+  CAST.every((c) => /LIGHTING IN THE LEFT ZONE ONLY/.test(c.image.sheet)),
+  '左栏单独打方向光',
+);
+ok(
+  CAST.every((c) => /LIGHTING IN THE RIGHT ZONES: flat even orthographic/.test(c.image.sheet)),
+  '右侧保持平光正交',
+);
+ok(
+  CAST.every((c) => /ambient occlusion/i.test(c.image.sheet)),
+  '左栏有环境遮蔽',
 );
 ok(CAST.every((c) => /bust portrait/i.test(c.image.sheet)), '左栏是半身像');
 // 模型默认会把肩膀裁掉、底边做成圆角渐隐，必须显式禁掉

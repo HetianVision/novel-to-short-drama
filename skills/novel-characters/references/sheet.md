@@ -127,6 +127,10 @@ env -u NODE_OPTIONS "$CODEX" exec --skip-git-repo-check --sandbox workspace-writ
 
 设定图一律**纯白背景**。理由有三个：抠图干净、印出来是设定表该有的样子、在深色报告里也能读。
 
+### 分区光照
+
+设定表要平光（抠图、量比例），写实要方向光（体积感）。两者矛盾，所以**分区解决**：左栏半身像给柔和方向主光 + 环境遮蔽，右侧三视图和细节条保持平光正交。提示词里是两句独立的 `LIGHTING IN THE LEFT ZONE ONLY` / `LIGHTING IN THE RIGHT ZONES`，不要合并成一句全局光照。
+
 ### 比例 ⚠️
 
 这个版面最容易崩的就是比例——模型为了把细节条塞进去，会把三个全身像压扁或拉长。提示词里已经写死了 `PROPORTIONS ARE CRITICAL`、`no stretching, squashing or foreshortening`、`the detail studies give way, not the figures`。**拿到图先量一眼三个全身像是不是等高、头身比正不正常。**
