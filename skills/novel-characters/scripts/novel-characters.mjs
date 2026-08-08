@@ -123,6 +123,58 @@ export function slug(name) {
 
 export const DEFAULT_LANG = 'zh';
 
+/* ------------------------------------------------------------------ */
+/* 画风预设                                                             */
+/* ------------------------------------------------------------------ */
+/*
+ * 换风格是整套换，不是只换一句「画风」。
+ *
+ * 最容易踩的坑：两个预设的 negativePrompt 几乎是相反的。写实那套刚把
+ * photorealistic 从反向词里删掉，吉卜力恰恰要禁它。毛孔、皮下散射、
+ * 顺表情肌的皱纹在写实里是加分项，在吉卜力里是反效果。
+ *
+ * 所以每个预设自带五块：render / surface / lighting / negative / tags，
+ * 生成角色卡时整块取用，不要混搭。
+ */
+
+export const DEFAULT_STYLE = 'realistic';
+
+export const STYLE_PRESETS = {
+  realistic: {
+    label: { zh: '半写实厚涂', en: 'Semi-realistic painterly', ja: '半写実・厚塗り' },
+    render:
+      'Semi-realistic character illustration, painterly rendering with soft blended edges and visible brush texture, anatomically grounded',
+    surface:
+      'Skin with visible pores and uneven tone, faint capillaries at the nostrils and ear rims, subtle subsurface scattering; eyes with a wet specular highlight, moist lower lid, visible iris fibres and a limbal ring; eyelids and eyebrows slightly asymmetric — no two sides identical; individual flyaway hair strands breaking the silhouette. Fabric with a visible weave, wear and shine at elbows, cuffs and knees, cloth falling with real weight and self-shadowing in the folds',
+    // 设定表要平光才好抠图，写实要方向光才有体积——分区解决
+    lighting:
+      'LIGHTING IN THE LEFT ZONE ONLY: a soft directional key light from the upper left with gentle falloff, subtle ambient occlusion under the chin, in the eye sockets and where the collar meets the neck, giving the head real volume. LIGHTING IN THE RIGHT ZONES: flat even orthographic lighting with no directional key and no cast shadows, so the figures stay measurable and cleanly cut out',
+    // 注意：这里绝不能禁 photorealistic
+    negative:
+      'plastic or waxy skin, over-smoothed airbrushed complexion, poreless doll face, perfectly symmetrical face, dead flat eyes without specular highlight, helmet-like hair with no loose strands, flat untextured fabric with no weave or wear, stiff mannequin posing, extra fingers, malformed hands, text, watermark, signature, busy or patterned background, harsh cast shadows on the backdrop',
+    tags: ['semi-realistic', 'painterly', 'character sheet', 'subsurface skin', 'directional key light'],
+  },
+
+  ghibli: {
+    label: { zh: '吉卜力动画', en: 'Ghibli-like animation', ja: 'ジブリ風アニメ' },
+    render:
+      'Hand-painted anime cel illustration in the manner of classic Studio Ghibli feature animation: clean confident ink linework of even weight, simple flat cel shading with a single soft shadow tone, gentle rounded forms, warm naturalistic palette, watercolour-like softness',
+    // 写实那套的表面细节在这里全是反效果，整块换掉
+    surface:
+      'Skin as clean flat tone with one soft shadow shape and a warm blush at the cheeks and nose — no pores, no skin texture, no subsurface detail; large clear expressive eyes with a simple round highlight and flat iris colour; hair drawn as grouped strands and clumps with clean silhouettes rather than individual hairs; clothing in simple flat colour with a few decisive fold lines, no fabric weave and no micro-texture',
+    // 平光就是这个风格本身的一部分，不需要分区
+    lighting:
+      'Even, gentle daylight across the whole sheet with a single soft shadow tone; no dramatic key light, no ambient occlusion, no cast shadows — the flat lighting is part of the style and keeps the figures cleanly cut out',
+    // 这里反过来，必须禁写实
+    negative:
+      'photorealistic, 3d render, hyperrealistic skin texture, visible pores, subsurface scattering, harsh contrast, heavy painterly rendering, muddy or desaturated colours, gritty texture overlay, extra fingers, malformed hands, text, watermark, signature, busy or patterned background',
+    tags: ['ghibli-like', 'cel shading', 'hand-painted', 'character sheet', 'flat daylight'],
+  },
+};
+
+export const SUPPORTED_STYLES = Object.keys(STYLE_PRESETS);
+export const stylePreset = (id) => STYLE_PRESETS[id] ?? STYLE_PRESETS[DEFAULT_STYLE];
+
 const STRINGS = {
   zh: {
     kicker: '角色设定集',
@@ -164,6 +216,9 @@ const STRINGS = {
     noMatch: '没有匹配的角色',
     voiceTag: 'VOICE',
     expandAll: '全部展开',
+    zoomImage: '放大查看',
+    copyImage: '复制图片',
+    closeImage: '关闭',
   },
   en: {
     kicker: 'CHARACTER BIBLE',
@@ -206,6 +261,9 @@ const STRINGS = {
     noMatch: 'No matching character',
     voiceTag: 'VOICE',
     expandAll: 'Expand all',
+    zoomImage: 'View larger',
+    copyImage: 'Copy image',
+    closeImage: 'Close',
   },
   ja: {
     kicker: 'キャラクター設定集',
@@ -247,6 +305,9 @@ const STRINGS = {
     noMatch: '該当するキャラクターがいません',
     voiceTag: 'VOICE',
     expandAll: 'すべて展開',
+    zoomImage: '拡大表示',
+    copyImage: '画像をコピー',
+    closeImage: '閉じる',
   },
 };
 
@@ -315,7 +376,7 @@ const normalise = (s) => String(s).replace(/\s+/g, '');
  * @param sourceText 原文；null 则跳过逐字引文校验
  * @param lang       报告语言，决定人类可读字段该是什么语言
  */
-export function validateCast(characters, sourceText, lang = DEFAULT_LANG) {
+export function validateCast(characters, sourceText, lang = DEFAULT_LANG, style = DEFAULT_STYLE) {
   const problems = [];
   const flatSource = sourceText === null ? null : normalise(sourceText);
   const at = (name, msg) => problems.push(`[${name}] ${msg}`);
@@ -411,6 +472,23 @@ export function validateCast(characters, sourceText, lang = DEFAULT_LANG) {
         if (typeof t === 'string' && CJK.test(t)) at(name, `image.tags 必须英文，但「${t}」含中日韩字符`);
       }
     }
+    // --- 风格与提示词必须匹配 ---
+    // 两个预设的反向提示词几乎是相反的，搞反了整批图都毁。
+    if (image && SUPPORTED_STYLES.includes(style)) {
+      const neg = typeof image.negativePrompt === 'string' ? image.negativePrompt : '';
+      const bansRealism = /photorealistic|3d render/i.test(neg);
+      if (style === 'realistic' && bansRealism) {
+        at(name, 'style=realistic 却在 negativePrompt 里禁 photorealistic／3d render——自相矛盾');
+      }
+      if (style === 'ghibli' && !bansRealism) {
+        at(name, 'style=ghibli 的 negativePrompt 必须禁 photorealistic／3d render');
+      }
+      const preset = stylePreset(style);
+      if (typeof image.sheet === 'string' && !image.sheet.includes(preset.render)) {
+        at(name, `image.sheet 里没有 style=${style} 的渲染句，画风会飘`);
+      }
+    }
+
     // 只有这三种能可靠自动判别，其他语言不猜、跳过——误报比漏报更烦人。
     if (voice) {
       for (const f of HUMAN_VOICE_FIELDS) {
@@ -563,9 +641,12 @@ function renderCharacter(c, index, t) {
     !body ? '' : `<section class="blk"><h3>${esc(label)}</h3><p>${marked(body)}</p></section>`;
 
   const plate = c.sheetImage
-    ? `<a class="plate" href="${esc(c.sheetImage)}" target="_blank" rel="noopener">
-         <img src="${esc(c.sheetImage)}" alt="${esc(c.name)} ${esc(t.sheetCaption)}" loading="lazy">
-       </a>
+    ? `<figure class="plate-wrap">
+         <button class="plate zoom" data-src="${esc(c.sheetImage)}" aria-label="${esc(t.zoomImage)}">
+           <img src="${esc(c.sheetImage)}" alt="${esc(c.name)} ${esc(t.sheetCaption)}" loading="lazy">
+         </button>
+         <button class="copy-img" data-img="${esc(c.sheetImage)}" title="${esc(t.copyImage)}">${esc(t.copyImage)}</button>
+       </figure>
        <p class="plate-c">${esc(t.sheetCaption)}</p>`
     : `<div class="plate plate-empty">
          <span>${esc(c.name)} · ${esc(t.noImage)}<br><em>${esc(t.noImageHint)}</em></span>
@@ -709,7 +790,7 @@ button{font-family:inherit}
 /* 缩略图 = 设定图的左栏切片。设定图固定 16:9、左栏占约 34%，
    所以把整图按 1/0.34 ≈ 294% 放大再左上对齐，裁出来正好是半身像。
    比 <img> + object-position 可控：不依赖浏览器怎么 cover。 */
-.rost-thumb{display:block;width:76px;height:76px;border:1px solid var(--rule-2);border-radius:2px;
+.rost-thumb{display:block;width:76px;height:76px;border:1px solid var(--rule-2);border-radius:6px;
   background:#fff no-repeat left top;background-size:294% auto}
 .rost-body{min-width:0}
 .rost-top{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
@@ -740,8 +821,29 @@ button{font-family:inherit}
 @media(max-width:1240px){.upper{grid-template-columns:1fr}}
 
 /* 设定图是白底印张 */
-.plate{display:block;background:#fff;border:1px solid var(--rule-2);border-radius:2px;overflow:hidden}
+.plate-wrap{position:relative;margin:0}
+.plate{display:block;width:100%;padding:0;background:#fff;border:1px solid var(--rule-2);
+  border-radius:2px;overflow:hidden;cursor:zoom-in}
 .plate img{display:block;width:100%;height:auto}
+.plate:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+/* 右下角浮在图上，hover 才明显——别挡住画面 */
+.copy-img{position:absolute;right:10px;bottom:10px;font:500 11px/1 var(--sans);color:var(--ink-2);
+  background:var(--paper);border:1px solid var(--rule-2);border-radius:3px;padding:6px 10px;
+  cursor:pointer;opacity:.55;transition:.15s}
+.plate-wrap:hover .copy-img{opacity:1}
+.copy-img:hover{border-color:var(--seal);color:var(--seal)}
+.copy-img:focus-visible{opacity:1;outline:2px solid var(--seal);outline-offset:2px}
+.copy-img[data-done]{border-color:var(--seal);color:var(--seal);opacity:1}
+
+/* 弹层 */
+.lightbox{position:fixed;inset:0;z-index:50;display:none;place-items:center;
+  background:#191d21e6;padding:32px;cursor:zoom-out}
+.lightbox.on{display:grid}
+.lightbox img{max-width:100%;max-height:100%;background:#fff;border-radius:2px;
+  box-shadow:0 8px 40px #0006}
+.lightbox-x{position:absolute;top:18px;right:22px;font:500 13px/1 var(--sans);color:#fff;
+  background:none;border:1px solid #fff6;border-radius:3px;padding:8px 12px;cursor:pointer}
+.lightbox-x:hover{border-color:#fff}
 .plate-empty{display:grid;place-items:center;min-height:220px;text-align:center;
   border:1px dashed var(--rule-2);background:var(--panel);color:var(--ink-3);font-size:13px}
 .plate-empty em{font-style:normal;font-size:12px;opacity:.8}
@@ -846,6 +948,11 @@ button{font-family:inherit}
   </main>
 </div>
 
+<div class="lightbox" role="dialog" aria-modal="true">
+  <button class="lightbox-x" aria-label="${esc(t.closeImage)}">${esc(t.closeImage)}</button>
+  <img alt="">
+</div>
+
 <script>
 const L = ${JSON.stringify({ copied: t.copied, failed: t.copyFailed })};
 
@@ -869,6 +976,43 @@ document.getElementById('q').addEventListener('input', (e) => {
   });
   document.querySelector('.nomatch').classList.toggle('on', hits.length === 0);
   if (q && hits.length === 1) hits[0].click();
+});
+
+// 图片弹层
+const lb = document.querySelector('.lightbox');
+const lbImg = lb.querySelector('img');
+function closeLb() { lb.classList.remove('on'); lbImg.removeAttribute('src'); }
+document.addEventListener('click', (e) => {
+  const z = e.target.closest('.zoom');
+  if (z) { lbImg.src = z.dataset.src; lb.classList.add('on'); return; }
+  if (e.target.closest('.lightbox')) closeLb();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLb(); });
+
+// 复制图片本身到剪贴板（不是路径）
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.copy-img');
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const label = btn.textContent;
+  try {
+    const blob = await (await fetch(btn.dataset.img)).blob();
+    // Safari 只认 image/png，其它格式先过一遍 canvas
+    let png = blob;
+    if (blob.type !== 'image/png') {
+      const bmp = await createImageBitmap(blob);
+      const cv = Object.assign(document.createElement('canvas'), { width: bmp.width, height: bmp.height });
+      cv.getContext('2d').drawImage(bmp, 0, 0);
+      png = await new Promise((r) => cv.toBlob(r, 'image/png'));
+    }
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+    btn.textContent = L.copied;
+    btn.dataset.done = '1';
+  } catch {
+    btn.textContent = L.failed;
+  }
+  setTimeout(() => { btn.textContent = label; delete btn.dataset.done; }, 1600);
 });
 
 document.addEventListener('click', async (e) => {
@@ -901,6 +1045,7 @@ const USAGE = `novel-characters.mjs — novel-characters skill 的确定性工�
   render <cast.json> [--html|--md] 渲染报告到 stdout（默认 --md）
   slug <name>                      角色名转安全文件名
   ui-template [lang]               打印界面文案骨架，供翻译成内置表没有的语言
+  styles [id]                      打印画风预设的完整内容
 
 通用选项：
   --lang <code>     报告语言，默认取 cast.json 的 lang，再默认 ${DEFAULT_LANG}
@@ -932,6 +1077,7 @@ function loadCast(path) {
     summary: Array.isArray(raw) ? '' : (raw.summary ?? ''),
     lang: Array.isArray(raw) ? DEFAULT_LANG : (raw.lang ?? DEFAULT_LANG),
     ui: Array.isArray(raw) ? null : (raw.ui ?? null),
+    style: Array.isArray(raw) ? DEFAULT_STYLE : (raw.style ?? DEFAULT_STYLE),
   };
 }
 
@@ -981,11 +1127,15 @@ function main(argv) {
   if (cmd === 'validate') {
     const [castPath, bookPath] = rest;
     if (!castPath) throw new Error('用法：validate <cast.json> <book.txt>');
-    const { characters, summary, lang: castLang, ui } = loadCast(castPath);
+    const { characters, summary, lang: castLang, ui, style: castStyle } = loadCast(castPath);
     const lang = flag(rest, '--lang', castLang);
+    const style = flag(rest, '--style', castStyle);
     const source = bookPath ? readFileSync(resolve(bookPath), 'utf8') : null;
     if (!bookPath) console.error('⚠️ 没给原文，跳过逐字引文校验');
-    const problems = validateCast(characters, source, lang);
+    const problems = validateCast(characters, source, lang, style);
+    if (!SUPPORTED_STYLES.includes(style)) {
+      problems.unshift(`顶层 style=${style} 不是已知预设（${SUPPORTED_STYLES.join('/')}）`);
+    }
     // 顶层的故事摘要——报告要用，缺了就没法在顶部交代背景
     if (typeof summary !== 'string' || !summary.trim()) {
       problems.unshift('顶层缺少 summary（故事摘要），报告顶部会空着');
@@ -1003,7 +1153,7 @@ function main(argv) {
       for (const p of problems) console.error('  ' + p);
       process.exit(1);
     }
-    console.log(`✓ ${characters.length} 个角色全部通过校验（lang=${lang}）`);
+    console.log(`✓ ${characters.length} 个角色全部通过校验（lang=${lang}, style=${style}）`);
     return;
   }
 
@@ -1038,6 +1188,26 @@ function main(argv) {
     console.log(
       JSON.stringify(
         { note: `把下面每个值翻译成 ${lang}，整块放进 cast.json 的顶层 "ui"`, ui: uiTemplate() },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
+
+  if (cmd === 'styles') {
+    const only = rest[0];
+    if (only && !SUPPORTED_STYLES.includes(only)) {
+      throw new Error(`未知风格 ${only}（可用：${SUPPORTED_STYLES.join('/')}）`);
+    }
+    const ids = only ? [only] : SUPPORTED_STYLES;
+    console.log(
+      JSON.stringify(
+        {
+          default: DEFAULT_STYLE,
+          note: '整块取用，不要混搭；两个预设的 negative 几乎是相反的',
+          presets: Object.fromEntries(ids.map((id) => [id, STYLE_PRESETS[id]])),
+        },
         null,
         2,
       ),

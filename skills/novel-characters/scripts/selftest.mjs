@@ -15,8 +15,11 @@ import {
   mergeRoster,
   renderHtml,
   renderMarkdown,
+  STYLE_PRESETS,
+  SUPPORTED_STYLES,
   needsUiTranslation,
   slug,
+  stylePreset,
   strings,
   uiTemplate,
   validateCast,
@@ -349,6 +352,39 @@ ok(
   '细节放不下可延伸到右侧',
 );
 
+/* ---------------- 画风预设 ---------------- */
+
+for (const id of ['realistic', 'ghibli']) ok(SUPPORTED_STYLES.includes(id), `内置 ${id} 预设`);
+eq(stylePreset('nope').render, STYLE_PRESETS.realistic.render, '未知风格退回默认');
+// 每个预设都要五块齐全，缺一块就会跟另一个预设混搭出四不像
+for (const [id, p] of Object.entries(STYLE_PRESETS)) {
+  for (const k of ['render', 'surface', 'lighting', 'negative', 'tags']) {
+    ok(p[k] && p[k].length, `${id} 预设有 ${k}`);
+  }
+  ok(p.label.zh && p.label.en && p.label.ja, `${id} 预设有三语标签`);
+}
+// 这是整件事最容易搞反的地方：两个预设的反向提示词几乎相反
+ok(!/photorealistic|3d render/i.test(STYLE_PRESETS.realistic.negative), 'realistic 不禁写实');
+ok(/photorealistic/i.test(STYLE_PRESETS.ghibli.negative), 'ghibli 必须禁写实');
+// 写实的表面细节在吉卜力里是反效果，两边不能是同一段
+ok(/visible pores/i.test(STYLE_PRESETS.realistic.surface), 'realistic 要毛孔');
+ok(/no pores/i.test(STYLE_PRESETS.ghibli.surface), 'ghibli 明确不要毛孔');
+ok(STYLE_PRESETS.realistic.surface !== STYLE_PRESETS.ghibli.surface, '两个预设的表面处理不同');
+
+// 校验器要能抓住风格与反向提示词搞反
+const wrongStyle = clone();
+ok(
+  validateCast(wrongStyle, SOURCE, 'zh', 'ghibli').some((x) => x.includes('必须禁 photorealistic')),
+  '样例是 realistic，按 ghibli 校验会报错',
+);
+const ghibliish = clone();
+for (const c of ghibliish) c.image.negativePrompt = STYLE_PRESETS.ghibli.negative;
+ok(
+  validateCast(ghibliish, SOURCE, 'zh', 'realistic').some((x) => x.includes('自相矛盾')),
+  'realistic 却禁 photorealistic 会报错',
+);
+eq(validateCast(CAST, SOURCE, 'zh', 'realistic').length, 0, '样例按 realistic 校验通过');
+
 /* ---------------- 真实感 ---------------- */
 
 // 一边要真实感一边在反向提示词里禁真实感，是自相矛盾的
@@ -419,6 +455,12 @@ const withSheet = clone();
 withSheet[0].sheetImage = 'images/x-sheet.png';
 const sheetHtml = renderHtml(withSheet, 'x');
 ok(sheetHtml.includes('images/x-sheet.png'), '设定图被嵌入');
-eq((sheetHtml.match(/class="plate"/g) || []).length, 1, '一个角色只有一个印张');
+eq((sheetHtml.match(/class="plate zoom"/g) || []).length, 1, '一个角色只有一个印张');
+// 点图弹层 + 右下角一键复制图片
+ok(sheetHtml.includes('class="lightbox"'), '有图片弹层');
+ok(/data-src="images\/x-sheet\.png"/.test(sheetHtml), '弹层拿到图片地址');
+ok(/class="copy-img" data-img="images\/x-sheet\.png"/.test(sheetHtml), '图上有复制按钮');
+ok(sheetHtml.includes('ClipboardItem'), '复制的是图片本身而不是路径');
+ok(/blob\.type !== 'image\/png'/.test(sheetHtml), '非 PNG 先转码——Safari 只认 image/png');
 
 console.log(`✓ ${passed} 项自测全部通过`);

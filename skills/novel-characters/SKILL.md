@@ -1,6 +1,6 @@
 ---
 name: novel-characters
-version: 1.3.0
+version: 1.4.0
 description: |
   从小说或短故事里拆出角色表、人物画像、卡通形象提示词、音色提示词，
   并给主要角色出角色设定图（左半身像 + 右全身三视图），产出 JSON + Markdown + 可交互的 report.html。
@@ -65,6 +65,20 @@ metadata:
 
 支持的语言不受内置表限制，法语韩语西班牙语都能出完整报告。
 
+### Step 0.5 — 确定画风
+
+用户可以指定出图风格：**默认 `realistic`**（半写实厚涂），想要动画质感就用 `ghibli`（吉卜力式手绘赛璐璐）。
+
+```bash
+node {baseDir}/scripts/novel-characters.mjs styles   # 打印预设的完整内容
+```
+
+读 `{baseDir}/references/style-presets.md`。**换风格是整套换**——每个预设自带 render / surface / lighting / negative / tags 五块，整块取用，不要混搭。
+
+最容易搞反的是反向提示词：`realistic` 绝不能禁 `photorealistic`，`ghibli` 必须禁。`validate` 会拦这个。
+
+版面规则（16:9 三区、比例、细节让位）**不随风格变**，变的只有渲染质感。
+
 ### Step 1 — 定位输入
 
 用户给文件路径就直接用。直接粘正文的，**先落到一个临时 .txt**——后面校验「引文是否逐字」要拿原文比对，没有原文文件这步就没法做。
@@ -122,7 +136,7 @@ node {baseDir}/scripts/novel-characters.mjs merge <workdir>
 合成 `<输出目录>/<书名>-cast.json`：
 
 ```json
-{ "source": "书名", "lang": "zh", "summary": "……", "characters": [ ... ] }
+{ "source": "书名", "lang": "zh", "style": "realistic", "summary": "……", "characters": [ ... ] }
 ```
 
 ### Step 7 — 校验 ⛔ 不能跳
@@ -204,7 +218,7 @@ report.html 的样式约定见 `{baseDir}/references/report-style.md`——要�
 node {baseDir}/scripts/selftest.mjs
 ```
 
-192 项断言，不调模型、不花额度，覆盖分块 / 归并 / 多语言 / 校验 / 渲染的全部确定性逻辑。改完脚本先跑这个。
+220 项断言，不调模型、不花额度，覆盖分块 / 归并 / 多语言 / 校验 / 渲染的全部确定性逻辑。改完脚本先跑这个。
 
 ## 自带样例
 
