@@ -69,26 +69,14 @@ skills/<skill-name>/
 - 每个 skill 必须有 `SKILL.md`
 - 每个 skill 必须有 `scripts/selftest.mjs`，**不调用模型、不花额度**，覆盖全部确定性逻辑
 
-（`ci/selftest.yml` 会检查这两条，但那个 workflow **还没启用**——见下。）
-
-本地跑全部自测：
+加新 skill 之前，先把全部自测跑一遍：
 
 ```bash
 for f in skills/*/scripts/selftest.mjs; do node "$f"; done
 ```
 
-### 启用 CI（尚未启用）
+没有配 CI——自测足够快（1 秒），本地跑一次比等 CI 更省事。**只在 macOS + Node 24 上验过**；代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但没验。
 
-`ci/selftest.yml` 是现成的 GitHub Actions workflow：Ubuntu + macOS × Node 18/22/24，自动发现 `skills/*/scripts/selftest.mjs`，加新 skill 不用改它。
-
-它**没有**放在 `.github/workflows/` 下，所以现在不会运行——推送那个路径需要 token 的 `workflow` 权限。也就是说：**目前所有测试只在 macOS + Node 24 上跑过。** 启用：
-
-```bash
-gh auth refresh -h github.com -s workflow   # 授权一次
-mkdir -p .github/workflows
-git mv ci/selftest.yml .github/workflows/
-git commit -m "ci: enable selftest workflow" && git push
-```
 
 ## License
 

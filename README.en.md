@@ -71,26 +71,14 @@ Two hard requirements:
 - Every skill must have a `SKILL.md`
 - Every skill must have a `scripts/selftest.mjs` that **calls no model and costs no quota**, covering all deterministic logic
 
-(`ci/selftest.yml` enforces both, but that workflow **is not enabled yet** — see below.)
-
-Run every self-test locally:
+Run every self-test before adding a skill:
 
 ```bash
 for f in skills/*/scripts/selftest.mjs; do node "$f"; done
 ```
 
-### Enabling CI (not enabled yet)
+There is no CI — the self-tests run in about a second, so running them locally beats waiting on a pipeline. **Only tested on macOS with Node 24**; there is no platform-specific code, so Linux and older Node releases should be fine, but that is unverified.
 
-`ci/selftest.yml` is a ready-to-go GitHub Actions workflow: Ubuntu + macOS × Node 18/22/24, auto-discovering `skills/*/scripts/selftest.mjs` so adding a skill needs no change to it.
-
-It is **not** under `.github/workflows/`, so it does not run — pushing to that path requires the `workflow` token scope. Which means: **everything here has only been tested on macOS with Node 24.** To enable:
-
-```bash
-gh auth refresh -h github.com -s workflow   # authorize once
-mkdir -p .github/workflows
-git mv ci/selftest.yml .github/workflows/
-git commit -m "ci: enable selftest workflow" && git push
-```
 
 ## License
 
