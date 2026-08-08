@@ -49,7 +49,7 @@
     "promptLocal": "角色设定图：约七十岁的中国老船夫……",
     "negativePrompt": "photorealistic, 3d render, young face, ...",
     "tags": ["flat vector", "character sheet", "ink wash palette"],
-    "sheet": "Single character model sheet ... LEFT ZONE, occupying about 38% ... one bust portrait ... RIGHT ZONE, occupying about 62% ... three full-body views ... faces fully drawn and must match the bust portrait exactly ..."
+    "sheet": "Single character model sheet on ONE 16:9 landscape canvas ... LEFT ZONE ... about 34% ... one bust portrait ... RIGHT-TOP ZONE ... three FULL-BODY views ... PROPORTIONS ARE CRITICAL ... RIGHT-BOTTOM ZONE ... four to five small isolated close-up studies ..."
   },
 
   "voice": {
@@ -82,19 +82,22 @@
 | `image.promptLocal` | string | 本地语言 | 上面那条的译文；`lang=en` 时省略；**同样禁止人名** |
 | `image.negativePrompt` | string | **英文** | 逗号分隔 |
 | `image.tags` | string[] | **英文** | 4–8 个风格标签 |
-| `image.sheet` | string | **英文** | **角色设定图**：左栏约 38% 是证件照式半身像（面部基准），右栏约 62% 是全身三视图（脸也画，**须与左栏一致**）；**禁止出现人名** |
+| `image.sheet` | string | **英文** | **角色设定图**，16:9 三区版面：左约 34% 半身像（面部基准）／右上全身三视图／右下细节条，细线分隔；**禁止出现人名** |
 | `voice.timbre/pitch/pace/accent/emotion/referenceHint` | string | **本地语言** | 最容易写漂的地方，注意 |
 | `voice.prompt` | string | **英文** | 给 TTS 音色设计引擎 |
 | `voice.promptLocal` | string | 本地语言 | 上面那条的译文；`lang=en` 时省略 |
 
 **英文字段不跟随 `lang`。** 图像模型和 TTS 引擎吃英文最稳，跟报告用什么语言无关。
 
-## 为什么设定图要左右分栏
+## 设定图的三区版面
 
-- 左栏的半身像当**面部设计基准**，尺寸大、五官画得细，可以直接拿去做表情设计
-- 右栏三视图管剪影、比例、服装，脸照左栏画
-- 左右比例（38% / 62%）必须写死在提示词里，**说反了整张图就废了**
-- 最容易出的问题是**一张图里两个长相**，提示词里要明确要求两边一致
+16:9 横构图，细线分成三块：
+
+- **左（约 34%）** 半身像当**面部设计基准**，尺寸大、五官画得细，可以直接拿去做表情设计
+- **右上** 三视图管剪影、比例、服装，脸照左栏画
+- **右下** 细节条，4–5 个关键细节的小特写（配饰、道具、疤痕、鞋履……）
+
+两个最容易崩的点：**一张图里出现两个长相**，以及**为了塞下细节把人物压扁**。提示词里都要写死——细节放不下就往右缘延伸，**永远是细节让位，不是人物让位**。
 
 ## 校验
 

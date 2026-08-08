@@ -8,7 +8,7 @@ Feed it a novel or a short story, and get a complete design bible for every char
 - **Profile** — gender, age, standing, appearance, temperament, motivation, arc, relationships, each backed by **verbatim quotes from the source**
 - **Cartoon-design prompts** — bilingual image prompt + negative prompt + style tags, ready for Midjourney / SD / GPT-Image
 - **Voice prompts** — timbre, pitch, pace, accent, emotion, plus a voice-design prompt for Qwen3-TTS / ElevenLabs Voice Design
-- **A character model sheet** — one image: an ID-photo-style bust on the left (~38%, the reference for the face design) and a full-body turnaround filling the right ~62%. White background for clean cut-out, generated through codex's built-in image tool (optional)
+- **A character model sheet** — one 16:9 image in three zones: an ID-photo-style bust on the left (~34%, the reference for the face design), a full-body turnaround top-right, and a strip of key-detail close-ups bottom-right. White background for clean cut-out, generated through codex's built-in image tool (optional)
 
 Outputs `cast.json`, a Markdown report, and a self-contained `report.html` you can just double-click.
 
@@ -89,7 +89,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem
 SKILL.md                 the workflow the agent reads
 scripts/
   novel-characters.mjs   chunk / merge / validate / render / slug
-  selftest.mjs           132 assertions, never calls a model
+  selftest.mjs           174 assertions, never calls a model
 references/
   roster-pass.md         pass 1: scanning for characters
   profile-pass.md        pass 2: building a character sheet (8 hard rules)
@@ -110,6 +110,6 @@ In `examples/渡口.txt` the peddler is only ever referred to by a nickname and 
 node scripts/selftest.mjs
 ```
 
-132 assertions across chunking, alias merging, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
+174 assertions across chunking, alias merging, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
 
 **Only tested on macOS with Node 24.** There is no platform-specific code, so Linux and older Node releases should be fine, but that is **unverified**.

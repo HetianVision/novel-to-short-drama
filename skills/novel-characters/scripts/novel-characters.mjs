@@ -158,6 +158,12 @@ const STRINGS = {
     mdTitle: (s) => `# ${s} — 角色表`,
     mdCast: (n, names) => `共 ${n} 位角色：${names}`,
     mdSynopsis: '## 故事摘要',
+    searchPlaceholder: '搜索角色、特质、身份',
+    rosterTitle: '角色 · 按戏份排序',
+    footnote: '标注（推断）的条目为原文未明写、依据文本推演。',
+    noMatch: '没有匹配的角色',
+    voiceTag: 'VOICE',
+    expandAll: '全部展开',
   },
   en: {
     kicker: 'CHARACTER BIBLE',
@@ -194,6 +200,12 @@ const STRINGS = {
     mdTitle: (s) => `# ${s} — Cast`,
     mdCast: (n, names) => `${n} characters: ${names}`,
     mdSynopsis: '## Synopsis',
+    searchPlaceholder: 'Search characters, traits, roles',
+    rosterTitle: 'Cast · by prominence',
+    footnote: 'Anything marked (inferred) is not stated in the text and was reasoned from it.',
+    noMatch: 'No matching character',
+    voiceTag: 'VOICE',
+    expandAll: 'Expand all',
   },
   ja: {
     kicker: 'キャラクター設定集',
@@ -229,6 +241,12 @@ const STRINGS = {
     mdTitle: (s) => `# ${s} — 登場人物`,
     mdCast: (n, names) => `全${n}人：${names}`,
     mdSynopsis: '## あらすじ',
+    searchPlaceholder: 'キャラクター・特徴・立場を検索',
+    rosterTitle: '登場人物 · 出番順',
+    footnote: '（推断）の箇所は原文に明記がなく、本文から推し量ったものです。',
+    noMatch: '該当するキャラクターがいません',
+    voiceTag: 'VOICE',
+    expandAll: 'すべて展開',
   },
 };
 
@@ -471,11 +489,11 @@ export function renderMarkdown(characters, source, summary = '', lang = DEFAULT_
 /* render — html                                                       */
 /* ------------------------------------------------------------------ */
 /*
- * 设计约定见 references/report-style.md。四条不能破的：
+ * 三栏工作台。设计约定见 references/report-style.md。不能破的：
  *   1. 双字域：衬线=叙事与原文，无衬线=分析，等宽=喂给机器的提示词
- *   2. 不藏内容——没有页签、没有折叠，整页可以 Cmd+F
- *   3. 「（推断）」自动高亮，让读者一眼分清有据和补全
- *   4. 页宽 1800、一排最多三个角色（靠 minmax 卡住，三个数联动）
+ *   2. 「（推断）」自动高亮，让读者一眼分清有据和补全
+ *   3. 一次只看一个角色，靠左栏切换 + 顶栏搜索找人
+ *   4. 打印时全部展开——屏幕上一次一个，纸上要是完整的一份
  */
 
 const esc = (s) =>
@@ -491,95 +509,137 @@ const marked = (s) => esc(s).replace(INFERRED, (m) => `<span class="inf">${m}</s
 
 const IMPORTANCE_ORDER = ['protagonist', 'major', 'supporting', 'minor'];
 
-function renderEntry(c, index, t) {
-  const { persona, image, voice } = c;
-  const rank = String(index + 1).padStart(2, '0');
+/** 左栏的一条角色。缩略图取设定图的左半边——那里正好是半身像。 */
+function renderRosterItem(c, index, t) {
+  const meta = [c.persona?.gender, c.persona?.ageRange].filter(Boolean).join(' · ');
+  const hay = [
+    c.name,
+    ...(c.aliases ?? []),
+    c.persona?.identity,
+    c.persona?.gender,
+    c.persona?.ageRange,
+    ...(c.persona?.personality ?? []),
+    c.oneLiner,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-  const promptBlock = (label, value, cls = 'mono') =>
+  return `<button class="rost${index === 0 ? ' on' : ''}" data-target="p-${slug(c.name)}" data-hay="${esc(hay)}">
+  <span class="rost-thumb">${
+    c.sheetImage ? `<img src="${esc(c.sheetImage)}" alt="" loading="lazy">` : ''
+  }</span>
+  <span class="rost-body">
+    <span class="rost-top">
+      <em class="rost-n">${String(index + 1).padStart(2, '0')}</em>
+      <b class="rost-name">${esc(c.name)}</b>
+      <span class="badge">${esc(t.importance[c.importance] ?? c.importance)}</span>
+      ${meta ? `<span class="rost-meta">${esc(meta)}</span>` : ''}
+    </span>
+    <span class="rost-one">${esc(c.oneLiner)}</span>
+    ${
+      c.persona?.personality?.length
+        ? `<span class="rost-chips">${c.persona.personality.map((x) => `<i>${esc(x)}</i>`).join('')}</span>`
+        : ''
+    }
+  </span>
+</button>`;
+}
+
+function renderCharacter(c, index, t) {
+  const { persona, image, voice } = c;
+
+  const promptRow = (label, value) =>
     !value
       ? ''
-      : `<div class="pb">
-<div class="pb-h"><span class="pb-l">${esc(label)}</span><button class="copy" data-copy="${esc(value)}">${esc(t.copy)}</button></div>
-<p class="${cls}">${esc(value)}</p>
-</div>`;
-  const row = (label, value) =>
-    !value ? '' : `<div class="row"><dt>${esc(label)}</dt><dd>${marked(value)}</dd></div>`;
-  const para = (label, body) =>
-    !body ? '' : `<div class="para"><h4>${esc(label)}</h4><p>${marked(body)}</p></div>`;
+      : `<details class="pr">
+  <summary><span>${esc(label)}</span><button class="copy" data-copy="${esc(value)}">${esc(t.copy)}</button></summary>
+  <p>${esc(value)}</p>
+</details>`;
 
-  const plate = (src, caption, alt) =>
-    `<a class="plate" href="${esc(src)}" target="_blank" rel="noopener">
-       <img src="${esc(src)}" alt="${esc(alt)}" loading="lazy">
-       <span class="plate-c">${esc(caption)}</span>
-     </a>`;
+  const kv = (label, value) =>
+    !value ? '' : `<div class="kv"><dt>${esc(label)}</dt><dd>${marked(value)}</dd></div>`;
 
-  const sheets = c.sheetImage
-    ? plate(c.sheetImage, t.sheetCaption, `${c.name} ${t.sheetCaption}`)
-    : `<div class="plate plate-empty"><span>${esc(t.noImage)}<br><em>${esc(t.noImageHint)}</em></span></div>`;
+  const block = (label, body) =>
+    !body ? '' : `<section class="blk"><h3>${esc(label)}</h3><p>${marked(body)}</p></section>`;
 
-  return `<article class="entry" id="p-${slug(c.name)}">
-  <header class="entry-h">
-    <span class="rank">${rank}</span>
-    <h2 class="name">${esc(c.name)}</h2>
-    <span class="tag tag-${esc(c.importance)}">${esc(t.importance[c.importance] ?? c.importance)}</span>
-    ${c.aliases.length ? `<span class="aka">${esc(t.aka)} ${esc(c.aliases.join(' · '))}</span>` : ''}
+  const plate = c.sheetImage
+    ? `<a class="plate" href="${esc(c.sheetImage)}" target="_blank" rel="noopener">
+         <img src="${esc(c.sheetImage)}" alt="${esc(c.name)} ${esc(t.sheetCaption)}" loading="lazy">
+       </a>
+       <p class="plate-c">${esc(t.sheetCaption)}</p>`
+    : `<div class="plate plate-empty">
+         <span>${esc(c.name)} · ${esc(t.noImage)}<br><em>${esc(t.noImageHint)}</em></span>
+       </div>`;
+
+  return `<article class="char${index === 0 ? ' on' : ''}" id="p-${slug(c.name)}">
+  <header class="char-h">
+    <span class="char-n">${String(index + 1).padStart(2, '0')}</span>
+    <h2>${esc(c.name)}</h2>
+    <span class="badge">${esc(t.importance[c.importance] ?? c.importance)}</span>
+    ${c.aliases.length ? `<span class="aka">${esc(t.aka)}　${esc(c.aliases.join(' · '))}</span>` : ''}
+    <span class="char-one">${marked(c.oneLiner)}</span>
   </header>
-  <p class="oneliner">${marked(c.oneLiner)}</p>
 
-  ${sheets}
+  <div class="upper">
+    <div class="stage">
+      ${plate}
 
-  <div class="groups">
-    <section class="group">
-      <h3 class="group-h">${esc(t.groups.persona)}</h3>
-      <dl class="rows">
-        ${row(t.persona.gender, persona.gender)}${row(t.persona.ageRange, persona.ageRange)}${row(t.persona.identity, persona.identity)}
-      </dl>
-      ${persona.personality.length ? `<ul class="traits">${persona.personality.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-      ${para(t.persona.appearance, persona.appearance)}
-      ${para(t.persona.temperament, persona.temperament)}
-      ${para(t.persona.motivation, persona.motivation)}
-      ${para(t.persona.arc, persona.arc)}
-      ${
-        persona.relationships.length
-          ? `<div class="para"><h4>${esc(t.persona.relationships)}</h4><dl class="rows">${persona.relationships
-              .map((r) => `<div class="row"><dt>${esc(r.name)}</dt><dd>${marked(r.relation)}</dd></div>`)
-              .join('')}</dl></div>`
-          : ''
-      }
+      <div class="grid2">
+        ${block(t.persona.appearance, persona.appearance)}
+        ${block(t.persona.temperament, persona.temperament)}
+        ${block(t.persona.motivation, persona.motivation)}
+        ${block(t.persona.arc, persona.arc)}
+      </div>
+
       ${
         persona.evidence.length
-          ? `<div class="source"><h4>${esc(t.persona.evidence)}</h4>${persona.evidence
-              .map((q) => `<blockquote>${esc(q)}</blockquote>`)
-              .join('')}</div>`
+          ? `<section class="blk source"><h3>${esc(t.persona.evidence)}</h3>
+               <div class="quotes">${persona.evidence.map((q) => `<blockquote>${esc(q)}</blockquote>`).join('')}</div>
+             </section>`
           : ''
       }
-    </section>
+    </div>
 
-    <section class="group">
-      <h3 class="group-h">${esc(t.groups.image)}</h3>
-      ${row(t.image.style, image.style)}
-      ${
-        image.tags.length
-          ? `<div class="tagrow"><ul class="tags">${image.tags.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><button class="copy" data-copy="${esc(image.tags.join(', '))}">${esc(t.image.copyTags)}</button></div>`
-          : ''
-      }
-      ${promptBlock(t.image.prompt, image.prompt)}
-      ${promptBlock(t.image.promptLocal, image.promptLocal, 'local')}
-      ${promptBlock(t.image.negative, image.negativePrompt)}
-      ${promptBlock(t.image.sheet, image.sheet)}
-    </section>
-
-    <section class="group">
-      <h3 class="group-h">${esc(t.groups.voice)}</h3>
-      <dl class="rows">
-        ${HUMAN_VOICE_FIELDS.map((f) => row(t.voice[f], voice[f])).join('')}
-      </dl>
-      ${promptBlock(t.voice.prompt, voice.prompt)}
-      ${promptBlock(t.voice.promptLocal, voice.promptLocal, 'local')}
-      <div class="entry-f">
-        <button class="copy" data-copy="${esc(JSON.stringify(c, null, 2))}">${esc(t.copyJson)}</button>
+    <aside class="side-cards">
+      <div class="card">
+        <dl>${kv(t.persona.gender, persona.gender)}${kv(t.persona.ageRange, persona.ageRange)}${kv(t.persona.identity, persona.identity)}</dl>
       </div>
-    </section>
+
+      ${
+        persona.relationships.length
+          ? `<div class="card"><h4>${esc(t.persona.relationships)}</h4>
+               <dl>${persona.relationships.map((r) => `<div class="kv"><dt class="rel-n">${esc(r.name)}</dt><dd>${marked(r.relation)}</dd></div>`).join('')}</dl>
+             </div>`
+          : ''
+      }
+
+      <div class="card">
+        <h4>${esc(t.groups.voice)}<i class="tag-en">${esc(t.voiceTag)}</i></h4>
+        <dl>${HUMAN_VOICE_FIELDS.map((f) => kv(t.voice[f], voice[f])).join('')}</dl>
+      </div>
+
+      <div class="card">
+        <h4>${esc(t.image.style)}</h4>
+        <p class="style">${esc(image.style)}</p>
+        ${image.tags.length ? `<ul class="tags">${image.tags.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      </div>
+    </aside>
+  </div>
+
+  <div class="prompts">
+    <div class="pgroup">
+      ${promptRow(t.image.promptLocal, image.promptLocal)}
+      ${promptRow(t.image.prompt, image.prompt)}
+      ${promptRow(t.image.sheet, image.sheet)}
+      ${promptRow(t.image.negative, image.negativePrompt)}
+    </div>
+    <div class="pgroup">
+      ${promptRow(t.voice.promptLocal, voice.promptLocal)}
+      ${promptRow(t.voice.prompt, voice.prompt)}
+      <div class="pgroup-f">
+        <button class="copy wide" data-copy="${esc(JSON.stringify(c, null, 2))}">${esc(t.copyJson)}</button>
+      </div>
+    </div>
   </div>
 </article>`;
 }
@@ -591,199 +651,229 @@ export function renderHtml(characters, source, summary = '', lang = DEFAULT_LANG
     (a, b) => IMPORTANCE_ORDER.indexOf(a.importance) - IMPORTANCE_ORDER.indexOf(b.importance),
   );
 
-  const index = ordered
-    .map(
-      (c, i) => `<li style="--i:${i}">
-        <a href="#p-${slug(c.name)}">
-          <span class="ix-n">${String(i + 1).padStart(2, '0')}</span>
-          <span class="ix-name">${esc(c.name)}</span>
-          <span class="ix-rule"></span>
-          <span class="ix-tag">${esc(t.importance[c.importance] ?? c.importance)}</span>
-        </a></li>`,
-    )
-    .join('');
-
   return `<!doctype html>
 <html lang="${esc(lang)}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(t.docTitle(source))}</title>
 <style>
-/* 冷灰印张 + 铁锈红印记。红色只用在与原文有关的地方。 */
+/* 冷灰印张 + 铁锈红印记。红色只用在与原文有关的地方和当前选中态。 */
 :root{
-  --paper:#e9eae5; --panel:#e1e3dd; --ink:#191d21; --ink-2:#5b636a; --ink-3:#8c9298;
-  --rule:#cdd0c9; --seal:#8a3324; --seal-soft:#8a332412;
+  --paper:#eceded; --panel:#f5f6f5; --side:#e4e6e3; --ink:#191d21; --ink-2:#5b636a; --ink-3:#8c9298;
+  --rule:#d2d5d0; --rule-2:#c2c6bf; --seal:#8a3324; --seal-soft:#8a332412;
   --serif:"Songti SC","STSong","Source Han Serif SC","Noto Serif CJK SC",Georgia,"Iowan Old Style",serif;
   --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --paper:#14171a; --panel:#1c2024; --ink:#e6e8e4; --ink-2:#9aa1a7; --ink-3:#6d757c;
-    --rule:#2c3237; --seal:#c96a4f; --seal-soft:#c96a4f16;
-  }
+  --top:60px; --side-w:400px;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.75 var(--sans);
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.7 var(--sans);
   -webkit-font-smoothing:antialiased}
-.wrap{max-width:1800px;margin:0 auto;padding:clamp(32px,5vw,64px) clamp(20px,3vw,40px) 96px}
+h1,h2,h3,h4{margin:0;font-weight:400}
+button{font-family:inherit}
 
-/* ---- 头 ---- */
-.masthead{border-bottom:2px solid var(--ink);padding-bottom:20px}
-.eyebrow{font:500 11px/1 var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
-.title{font:400 clamp(34px,6vw,58px)/1.1 var(--serif);margin:0;letter-spacing:.02em}
-.title em{font-style:normal;color:var(--ink-3)}
-.meta{margin:14px 0 0;font-size:13px;color:var(--ink-2)}
-.meta b{font-weight:500;color:var(--ink)}
+/* ---------- 顶栏 ---------- */
+.top{position:sticky;top:0;z-index:20;height:var(--top);display:flex;align-items:center;gap:24px;
+  padding:0 20px;background:var(--panel);border-bottom:1px solid var(--rule-2)}
+.brand{display:flex;align-items:baseline;gap:10px;flex:none}
+.brand h1{font:400 22px/1 var(--serif);letter-spacing:.04em}
+.brand em{font:italic 12px/1 var(--serif);color:var(--ink-3)}
+.search{flex:1;max-width:720px;position:relative}
+.search input{width:100%;height:34px;padding:0 12px 0 32px;border:1px solid var(--rule-2);
+  border-radius:3px;background:var(--paper);color:var(--ink);font:14px/1 var(--sans);outline:none}
+.search input:focus{border-color:var(--seal)}
+.search svg{position:absolute;left:10px;top:9px;width:14px;height:14px;stroke:var(--ink-3);fill:none}
+.topmeta{margin-left:auto;font-size:12px;color:var(--ink-3);display:flex;gap:10px;flex:none}
+.topmeta i{font-style:normal;color:var(--rule-2)}
 
-/* ---- 摘要 + 目录并排，把 1800px 的宽度用起来 ---- */
-.brief{display:grid;gap:40px;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
-  align-items:start;margin-top:28px}
-@media(max-width:1100px){.brief{grid-template-columns:1fr;gap:24px}}
+/* ---------- 骨架 ---------- */
+.shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);align-items:start}
+@media(max-width:1080px){:root{--side-w:100%}.shell{grid-template-columns:1fr}}
 
-/* 摘要说的是故事本身，用叙事字域 */
-.synopsis{padding:22px 26px;background:var(--panel);border:1px solid var(--rule);
-  border-radius:2px;border-left:2px solid var(--ink)}
-.synopsis h2{font:500 11px/1 var(--sans);letter-spacing:.28em;color:var(--ink-3);margin:0 0 10px}
-.synopsis p{margin:0;font:400 clamp(15px,1.1vw,16.5px)/1.95 var(--serif)}
+/* ---------- 左栏 ---------- */
+.side{position:sticky;top:var(--top);height:calc(100vh - var(--top));overflow-y:auto;
+  background:var(--side);border-right:1px solid var(--rule-2)}
+@media(max-width:1080px){.side{position:static;height:auto}}
+.synopsis{padding:18px 20px;border-bottom:1px solid var(--rule)}
+.lbl{font:500 10px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3)}
+.synopsis p{margin:10px 0 0;font:400 14px/1.95 var(--serif)}
+.roster-h{padding:14px 20px 8px}
+.roster{display:block}
+.rost{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;width:100%;text-align:left;
+  padding:12px 20px;background:none;border:0;border-bottom:1px solid var(--rule);
+  border-left:2px solid transparent;cursor:pointer;color:inherit}
+.rost:hover{background:#00000006}
+.rost.on{background:var(--panel);border-left-color:var(--seal)}
+.rost:focus-visible{outline:2px solid var(--seal);outline-offset:-2px}
+.rost-thumb{display:block;width:76px;height:60px;border:1px solid var(--rule-2);border-radius:2px;
+  background:#fff;overflow:hidden}
+/* 设定图左半边正好是半身像，缩略图取左侧 */
+.rost-thumb img{width:200%;height:100%;object-fit:cover;object-position:left center;display:block}
+.rost-body{min-width:0}
+.rost-top{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.rost-n{font:500 10px/1 var(--mono);color:var(--ink-3);font-style:normal}
+.rost-name{font:400 17px/1.2 var(--serif);letter-spacing:.03em}
+.rost-meta{font-size:11px;color:var(--ink-3)}
+.rost-one{display:block;margin-top:5px;font-size:12.5px;line-height:1.65;color:var(--ink-2)}
+.rost-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px}
+.rost-chips i{font-style:normal;font-size:11px;padding:1px 6px;border:1px solid var(--rule-2);
+  border-radius:2px;color:var(--ink-2);background:var(--paper)}
+.side-foot{padding:14px 20px 28px;font-size:11px;line-height:1.7;color:var(--ink-3)}
+.badge{font-size:11px;padding:1px 7px;border:1px solid var(--rule-2);border-radius:2px;color:var(--ink-2)}
+.rost.on .badge,.char-h .badge{border-color:var(--seal);color:var(--seal)}
 
-/* ---- 目录：戏份排序，序号是排名不是装饰 ---- */
-.index{margin:0;padding:0;list-style:none}
-.index li{border-bottom:1px solid var(--rule);animation:rise .5s both;animation-delay:calc(var(--i)*45ms)}
-.index a{display:flex;align-items:baseline;gap:14px;padding:11px 2px;text-decoration:none;color:inherit}
-.index a:hover .ix-name{color:var(--seal)}
-.ix-n{font:500 11px/1 var(--mono);color:var(--ink-3);width:20px;flex:none}
-.ix-name{font:400 21px/1.2 var(--serif);letter-spacing:.03em;transition:color .15s}
-.ix-rule{flex:1;border-bottom:1px dotted var(--rule);transform:translateY(-4px)}
-.ix-tag{font-size:12px;color:var(--ink-2);flex:none}
-@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* ---------- 主区 ---------- */
+.main{padding:26px 28px 72px;min-width:0}
+.char{display:none}
+.char.on{display:block}
+.char-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+  padding-bottom:14px;border-bottom:1px solid var(--rule-2)}
+.char-n{font:500 13px/1 var(--mono);color:var(--seal)}
+.char-h h2{font:400 clamp(24px,2.4vw,30px)/1.1 var(--serif);letter-spacing:.05em}
+.aka{font-size:12px;color:var(--ink-3)}
+.char-one{margin-left:auto;font:400 14px/1.7 var(--serif);color:var(--ink-2);text-align:right;max-width:44ch}
+@media(max-width:900px){.char-one{margin-left:0;text-align:left}}
 
-/* ---- 角色墙：一排最多三个 ----
-   minmax 下限 460px 配 1800px 上限，天然卡在三列：
-   3×460+2×28=1436 装得下，4×460+3×28=1924 装不下。 */
-.cast{display:grid;gap:28px;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));
-  align-items:start;margin-top:40px}
+.upper{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:26px;align-items:start;margin-top:20px}
+@media(max-width:1240px){.upper{grid-template-columns:1fr}}
 
-/* ---- 条目 ---- */
-.entry{border:1px solid var(--rule);border-radius:2px;background:var(--panel);
-  padding:24px;scroll-margin-top:24px}
-.entry-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.rank{font:500 12px/1 var(--mono);color:var(--ink-3)}
-.name{font:400 clamp(24px,2.2vw,32px)/1.15 var(--serif);margin:0;letter-spacing:.04em}
-.tag{font-size:12px;padding:2px 9px;border:1px solid var(--rule);border-radius:2px;color:var(--ink-2)}
-.tag-protagonist{border-color:var(--seal);color:var(--seal)}
-.aka{font-size:13px;color:var(--ink-3)}
-.oneliner{font:400 15.5px/1.75 var(--serif);color:var(--ink-2);margin:12px 0 24px}
-
-/* ---- 设定图：面部细节 + 三视图 ---- */
-.plate{margin-bottom:28px}
-/* 白底的印张，深色模式下也保持白底——它是一张纸，不是 UI 面板 */
-.plate{display:block;position:relative;background:#fff;border:1px solid var(--rule);
-  border-radius:2px;overflow:hidden}
+/* 设定图是白底印张 */
+.plate{display:block;background:#fff;border:1px solid var(--rule-2);border-radius:2px;overflow:hidden}
 .plate img{display:block;width:100%;height:auto}
-.plate-c{position:absolute;left:0;bottom:0;background:var(--paper);border-top:1px solid var(--rule);
-  border-right:1px solid var(--rule);padding:5px 12px;font:500 11px/1 var(--sans);
-  letter-spacing:.14em;color:var(--ink-2)}
-.plate-empty{display:grid;place-items:center;min-height:160px;text-align:center;
-  color:var(--ink-3);font-size:13px;background:var(--paper);margin-bottom:28px}
-.plate-empty em{font-style:normal;font-size:12px;opacity:.75}
+.plate-empty{display:grid;place-items:center;min-height:220px;text-align:center;
+  border:1px dashed var(--rule-2);background:var(--panel);color:var(--ink-3);font-size:13px}
+.plate-empty em{font-style:normal;font-size:12px;opacity:.8}
+.plate-c{margin:7px 0 0;font-size:11px;letter-spacing:.1em;color:var(--ink-3)}
 
-/* ---- 卡内三组竖排：画像 → 形象 → 声音 ---- */
-.groups{display:block}
-.group{margin-top:30px}
-.group:first-child{margin-top:0}
-.group-h{font:500 11px/1 var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3);
-  margin:0 0 16px;padding-bottom:8px;border-bottom:1px solid var(--rule)}
-.rows{margin:0 0 16px}
-.row{display:flex;gap:14px;padding:3px 0;font-size:14px}
-.row dt{color:var(--ink-3);flex:none;min-width:52px}
-.row dd{margin:0}
-.traits{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px;padding:0;list-style:none}
-.traits li{border:1px solid var(--rule);background:var(--paper);border-radius:2px;padding:2px 9px;font-size:13px}
-.para{margin-bottom:18px}
-.para h4,.source h4{font:500 11px/1 var(--sans);letter-spacing:.2em;color:var(--ink-3);margin:0 0 6px}
-.para p{margin:0;font-size:14px;line-height:1.8}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 30px;margin-top:24px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.blk{margin-bottom:20px}
+.blk h3{font:500 11px/1 var(--sans);letter-spacing:.2em;color:var(--seal);margin-bottom:7px}
+.blk p{margin:0;font-size:13.5px;line-height:1.85}
 
-/* ---- 签名：推断标记 ---- */
-.inf{color:var(--ink-3);font-size:.88em;background:var(--seal-soft);padding:0 3px;border-radius:2px}
+/* 原文：衬线体，铁锈红边栏。这里是书自己在说话 */
+.source .quotes{display:grid;grid-template-columns:1fr 1fr;gap:10px 30px}
+@media(max-width:700px){.source .quotes{grid-template-columns:1fr}}
+.source blockquote{margin:0;padding-left:13px;border-left:2px solid var(--seal);
+  font:400 13.5px/1.85 var(--serif)}
 
-/* ---- 原文：衬线体，铁锈红边栏。这里是书自己在说话 ---- */
-.source{border-left:2px solid var(--seal);padding-left:16px;margin-top:22px}
-.source blockquote{margin:0 0 10px;font:400 14.5px/1.85 var(--serif);color:var(--ink)}
-.source blockquote:last-child{margin-bottom:0}
-.source blockquote::before{content:"「";color:var(--seal)}
-.source blockquote::after{content:"」";color:var(--seal)}
+/* ---------- 右侧信息卡 ---------- */
+.side-cards{display:flex;flex-direction:column;gap:14px}
+.card{border:1px solid var(--rule);border-radius:2px;background:var(--panel);padding:14px 16px}
+.card h4{font:500 11px/1 var(--sans);letter-spacing:.2em;color:var(--ink-3);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px}
+.tag-en{font:500 9px/1 var(--mono);letter-spacing:.22em;color:var(--rule-2);font-style:normal}
+.card dl{margin:0}
+.kv{display:flex;gap:12px;padding:2.5px 0;font-size:13px}
+.kv dt{color:var(--ink-3);flex:none;width:46px}
+.kv dd{margin:0;min-width:0}
+.rel-n{color:var(--ink)!important;width:auto!important;min-width:46px}
+.style{margin:0;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 0;padding:0;list-style:none}
+.tags li{font:400 11px/1.5 var(--mono);color:var(--ink-2);border:1px solid var(--rule-2);
+  background:var(--paper);border-radius:2px;padding:1px 6px}
 
-/* ---- 提示词：等宽，机器的输入 ---- */
-.tagrow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:18px}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
-.tags li{font:400 12px/1.5 var(--mono);color:var(--ink-2);border:1px solid var(--rule);
-  background:var(--paper);border-radius:2px;padding:1px 7px}
-.pb{border:1px solid var(--rule);border-radius:2px;background:var(--paper);margin-bottom:14px}
-.pb-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 11px;
-  border-bottom:1px solid var(--rule)}
-.pb-l{font:500 10px/1 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
-.pb p{margin:0;padding:11px;white-space:pre-wrap;word-break:break-word}
-.pb .mono{font:400 12.5px/1.7 var(--mono)}
-.pb .local{font:400 14px/1.8 var(--sans)}
+/* ---------- 提示词 ---------- */
+.prompts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:28px}
+@media(max-width:900px){.prompts{grid-template-columns:1fr}}
+.pgroup{border:1px solid var(--rule);border-radius:2px;background:var(--panel);padding:6px 14px 10px}
+.pr{border-bottom:1px solid var(--rule)}
+.pgroup .pr:last-of-type{border-bottom:0}
+.pr summary{display:flex;align-items:center;gap:10px;padding:11px 0;cursor:pointer;list-style:none;
+  font:500 12px/1 var(--sans);letter-spacing:.04em}
+.pr summary::-webkit-details-marker{display:none}
+.pr summary::before{content:"▸";color:var(--seal);font-size:11px;transition:transform .15s}
+.pr[open] summary::before{transform:rotate(90deg)}
+.pr summary span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr p{margin:0 0 12px;padding:11px 12px;background:var(--paper);border:1px solid var(--rule);
+  border-radius:2px;font:400 12px/1.75 var(--mono);white-space:pre-wrap;word-break:break-word}
+.pgroup-f{padding:12px 0 4px}
 
-.copy{flex:none;font:500 11px/1 var(--sans);color:var(--ink-2);background:transparent;
-  border:1px solid var(--rule);border-radius:2px;padding:4px 10px;cursor:pointer;transition:.15s}
+.copy{flex:none;font:500 11px/1 var(--sans);color:var(--ink-2);background:var(--paper);
+  border:1px solid var(--rule-2);border-radius:2px;padding:4px 10px;cursor:pointer;transition:.15s}
 .copy:hover{border-color:var(--seal);color:var(--seal)}
 .copy:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 .copy[data-done]{border-color:var(--seal);color:var(--seal)}
-.entry-f{margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)}
-.entry-f .copy{width:100%;padding:9px}
+.copy.wide{width:100%;padding:9px}
 
-.colophon{margin-top:72px;padding-top:20px;border-top:2px solid var(--ink);
-  font-size:12px;color:var(--ink-3);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+/* 签名：推断标记 */
+.inf{color:var(--ink-3);font-size:.88em;background:var(--seal-soft);padding:0 3px;border-radius:2px}
 
-@media(max-width:640px){
-  .cast{gap:20px;grid-template-columns:1fr}
-  .entry{padding:18px}
-  .index a{gap:10px}
-  .ix-name{font-size:18px}
-}
-@media(prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important}
-  html{scroll-behavior:auto}
-}
+.nomatch{display:none;padding:20px;font-size:13px;color:var(--ink-3)}
+.nomatch.on{display:block}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 屏幕上一次一个角色，纸上要完整 */
 @media print{
-  .copy,.index{display:none}
-  .entry{page-break-inside:avoid;border:none;border-top:1px solid #000;background:none}
+  .top,.side,.copy{display:none!important}
+  .shell{display:block}
+  .main{padding:0}
+  .char{display:block!important;page-break-after:always}
+  .pr p{display:block!important}
+  .pr summary::before{content:""}
   body{background:#fff}
-  .cast{display:block}
 }
 </style></head><body>
-<div class="wrap">
 
-<header class="masthead">
-  <p class="eyebrow">${esc(t.kicker)}</p>
-  <h1 class="title">${esc(source)}<em>${esc(t.titleTail)}</em></h1>
-  <p class="meta">${esc(t.counts(characters.length, shots))}</p>
+<header class="top">
+  <div class="brand"><h1>${esc(source)}</h1></div>
+  <div class="search">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" stroke-width="1.5"/><path d="M11 11l4 4" stroke-width="1.5"/></svg>
+    <input id="q" type="search" placeholder="${esc(t.searchPlaceholder)}" aria-label="${esc(t.searchPlaceholder)}" autocomplete="off">
+  </div>
+  <div class="topmeta">
+    <span>${esc(t.kicker)}</span><i>·</i>
+    <span>${esc(t.counts(characters.length, shots))}</span>
+  </div>
 </header>
 
-<div class="brief">
-${summary ? `<section class="synopsis"><h2>${esc(t.synopsis)}</h2><p>${marked(summary)}</p></section>` : ''}
-<nav aria-label="${esc(t.indexLabel)}"><ol class="index">${index}</ol></nav>
+<div class="shell">
+  <aside class="side">
+    ${summary ? `<section class="synopsis"><div class="lbl">${esc(t.synopsis)}</div><p>${marked(summary)}</p></section>` : ''}
+    <div class="roster-h lbl">${esc(t.rosterTitle)}</div>
+    <nav class="roster" aria-label="${esc(t.indexLabel)}">
+      ${ordered.map((c, i) => renderRosterItem(c, i, t)).join('\n')}
+    </nav>
+    <p class="nomatch">${esc(t.noMatch)}</p>
+    <p class="side-foot">${esc(t.footnote)}</p>
+  </aside>
+
+  <main class="main">
+    ${ordered.map((c, i) => renderCharacter(c, i, t)).join('\n')}
+  </main>
 </div>
 
-<div class="cast">
-${ordered.map((c, i) => renderEntry(c, i, t)).join('\n')}
-</div>
-
-<footer class="colophon">
-  <span>${esc(t.colophonA)}<span class="inf">${lang === 'zh' ? '（推断）' : '(inferred)'}</span>${esc(t.colophonB)}</span>
-  <span>novel-characters</span>
-</footer>
-
-</div>
 <script>
 const L = ${JSON.stringify({ copied: t.copied, failed: t.copyFailed })};
+
+// 左栏切换：一次只显示一个角色
+document.querySelector('.roster').addEventListener('click', (e) => {
+  const btn = e.target.closest('.rost');
+  if (!btn) return;
+  document.querySelectorAll('.rost').forEach((b) => b.classList.toggle('on', b === btn));
+  document.querySelectorAll('.char').forEach((a) => a.classList.toggle('on', a.id === btn.dataset.target));
+  document.querySelector('.main').scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
+
+// 搜索：过滤左栏；结果只剩一个就直接切过去
+document.getElementById('q').addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  let hits = [];
+  document.querySelectorAll('.rost').forEach((b) => {
+    const hit = !q || b.dataset.hay.toLowerCase().includes(q);
+    b.style.display = hit ? '' : 'none';
+    if (hit) hits.push(b);
+  });
+  document.querySelector('.nomatch').classList.toggle('on', hits.length === 0);
+  if (q && hits.length === 1) hits[0].click();
+});
+
 document.addEventListener('click', async (e) => {
   const btn = e.target.closest('.copy');
   if (!btn) return;
+  e.preventDefault();
   const label = btn.textContent;
   try {
     await navigator.clipboard.writeText(btn.dataset.copy);
