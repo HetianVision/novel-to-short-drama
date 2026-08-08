@@ -1,5 +1,6 @@
 {
   "source": "渡口",
+  "lang": "zh",
   "summary": "民国年间的清晨，一条河的渡口浓雾未散。摆渡四十年的老船夫照常开船，先后上船的是抱着旧皮箱、独自要过河北上县城的女学生沈知微，穿褪色军呢大衣、右手始终揣在口袋里的男人陆行远，以及挑着货担、嗓门能穿透雾气的货郎胡二爷。四个人同船过河，各自揣着没有说出口的来路与去处，雾越来越浓，船离岸时河面上什么都看不见。",
   "characters": [
     {
@@ -47,7 +48,7 @@
       "image": {
         "style": "Flat vector cartoon with clean linework and muted period palette",
         "prompt": "Character design sheet of a nineteen-year-old Chinese girl from the 1930s, slender build with shoulders drawn slightly inward, oval face with soft cheeks and large wary dark eyes, two long black braids tied at the tips with faded red string, wearing a dark navy-blue student tunic with a plain white collar, clutching a battered brown leather suitcase against her chest with white-knuckled fingers, three-quarter view full body, plain warm-grey background, flat vector cartoon style, clean confident linework, muted palette of navy, cream and faded rose, soft overcast light, quiet apprehensive expression with lips slightly parted, readable silhouette",
-        "promptZh": "角色设定图：一九三〇年代的中国少女，十九岁，身形单薄、肩膀微微内收，鹅蛋脸颊线柔和，一双警觉的大眼睛，两条乌黑长辫，辫梢系褪色红绳，穿藏青色学生装配素白衣领，双手发白地把一只磨旧的棕色皮箱抱在胸前，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条干净利落，藏青、米白与褪色玫瑰的低饱和配色，柔和阴天光线，安静而不安的表情，嘴唇微启，剪影清晰可辨。",
+        "promptLocal": "角色设定图：一九三〇年代的中国少女，十九岁，身形单薄、肩膀微微内收，鹅蛋脸颊线柔和，一双警觉的大眼睛，两条乌黑长辫，辫梢系褪色红绳，穿藏青色学生装配素白衣领，双手发白地把一只磨旧的棕色皮箱抱在胸前，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条干净利落，藏青、米白与褪色玫瑰的低饱和配色，柔和阴天光线，安静而不安的表情，嘴唇微启，剪影清晰可辨。",
         "negativePrompt": "photorealistic, 3d render, glossy skin, anime moe style, oversized eyes, sexualized pose, modern clothing, busy background, extra fingers, text, watermark, harsh shadows",
         "tags": [
           "flat vector",
@@ -57,7 +58,8 @@
           "clean linework",
           "overcast light"
         ],
-        "turnaround": "A slender nineteen-year-old Chinese girl of the 1930s with shoulders drawn slightly inward, oval face, two long black braids tied at the tips with faded red string, wearing a dark navy-blue student tunic with a plain white collar and a mid-calf skirt, holding a battered brown leather suitcase in one hand. Muted palette of navy, cream and faded rose. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle."
+        "face": "Character face sheet of a nineteen-year-old Chinese girl of the 1930s: three head studies side by side — front view, three-quarter view and left profile — plus one row of four small expression studies below (neutral, wary, tentative half-smile, downcast). Oval face with soft rounded cheeks and a delicate jaw, large dark wary eyes with slightly heavy lower lids, straight fine eyebrows, small straight nose, thin lips held lightly closed. Centre-parted black hair drawn back into two long braids, tied at the tips with faded red string; a few loose strands at the temples. Consistent features and proportions across every view. Plain pure white background (#FFFFFF), even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading.",
+        "turnaround": "A slender nineteen-year-old Chinese girl of the 1930s with shoulders drawn slightly inward, oval face, two long black braids tied at the tips with faded red string, wearing a dark navy-blue student tunic with a plain white collar and a mid-calf skirt, holding a battered brown leather suitcase in one hand. Muted palette of navy, cream and faded rose. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle. IMPORTANT — leave the face blank: on all three views the head is drawn as a clean bare shape with hairline, hair and ears rendered, but NO facial features at all — no eyes, no eyebrows, no nose, no mouth. The face area stays flat, empty and unshaded. The facial design lives on a separate face sheet; this sheet is for silhouette, proportion and costume only."
       },
       "voice": {
         "timbre": "轻而带气声的年轻女声，胸腔支撑薄",
@@ -66,8 +68,8 @@
         "accent": "标准官话，无明显地域色彩",
         "emotion": "试探、戒备，有所保留",
         "prompt": "A young female voice, nineteen years old. Light airy soprano in a mid-to-high register, noticeably breathy with thin chest support and a narrow dynamic range. Speaks quietly, as if wary of being overheard. Slight rising inflection at the end of most phrases, turning statements into half-questions. Gentle, slightly hesitant pace with small pauses before consequential words. Neutral educated Mandarin with no strong regional colour. Emotional default: tentative and watchful, holding something back.",
-        "promptZh": "十九岁年轻女声。中高音区，轻盈带气声，胸腔支撑较薄，音量动态范围窄，说话很轻，像是怕被人听见。多数短语句尾略微上扬，把陈述句说成半个问句。语速偏慢略带迟疑，在关键的词之前会有一个小停顿。标准官话，无明显地域口音。情绪基调：试探、警觉，有所保留。",
-        "referenceHint": "像一个在陌生地方问路、又怕对方追问下去的人"
+        "referenceHint": "像一个在陌生地方问路、又怕对方追问下去的人",
+        "promptLocal": "十九岁年轻女声。中高音区，轻盈带气声，胸腔支撑较薄，音量动态范围窄，说话很轻，像是怕被人听见。多数短语句尾略微上扬，把陈述句说成半个问句。语速偏慢略带迟疑，在关键的词之前会有一个小停顿。标准官话，无明显地域口音。情绪基调：试探、警觉，有所保留。"
       }
     },
     {
@@ -115,7 +117,7 @@
       "image": {
         "style": "Flat vector cartoon with sharp linework and a cold restrained palette",
         "prompt": "Character design sheet of a lean Chinese man in his late twenties, tall with rigid upright posture, gaunt angular face with high sharp cheekbones and a hard flat gaze, a two-inch pale old scar cutting across the right brow ridge, short cropped black hair, wearing a washed-out grey military wool greatcoat with the collar turned up over the lower half of his face, right hand buried in the coat pocket, scuffed leather boots, three-quarter view full body, plain warm-grey background, flat vector cartoon style, clean sharp linework, cold restrained palette of grey, charcoal and dull olive, hard directional side light, tense guarded expression, readable silhouette",
-        "promptZh": "角色设定图：二十七八岁的精瘦中国男子，身形挺拔僵直，脸颊消瘦、颧骨高而锋利，眼神平直冷硬，右眉骨横着一道两寸长的旧疤，短寸黑发，身穿洗得发灰的军呢大衣、领子竖起遮住下半张脸，右手插在大衣口袋里，皮靴磨损，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条锐利干净，灰、炭黑与暗橄榄的冷峻配色，硬质侧向光，紧绷戒备的表情，剪影清晰可辨。",
+        "promptLocal": "角色设定图：二十七八岁的精瘦中国男子，身形挺拔僵直，脸颊消瘦、颧骨高而锋利，眼神平直冷硬，右眉骨横着一道两寸长的旧疤，短寸黑发，身穿洗得发灰的军呢大衣、领子竖起遮住下半张脸，右手插在大衣口袋里，皮靴磨损，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条锐利干净，灰、炭黑与暗橄榄的冷峻配色，硬质侧向光，紧绷戒备的表情，剪影清晰可辨。",
         "negativePrompt": "photorealistic, 3d render, smiling, warm friendly expression, soft rounded features, bright saturated colours, modern clothing, busy background, extra fingers, text, watermark",
         "tags": [
           "flat vector",
@@ -125,7 +127,8 @@
           "hard side light",
           "sharp linework"
         ],
-        "turnaround": "A lean, rigidly upright Chinese man in his late twenties, gaunt angular face with high cheekbones and a two-inch pale scar across the right brow ridge, short cropped black hair, wearing a washed-out grey military wool greatcoat with the collar turned up, worn leather boots, right hand in the coat pocket. Cold restrained palette of grey, charcoal and dull olive. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle."
+        "face": "Character face sheet of a Chinese man in his late twenties: three head studies side by side — front view, three-quarter view and left profile — plus one row of four small expression studies below (neutral, hard stare, clipped command, guarded glance). Gaunt angular face, high sharp cheekbones, hollow cheeks, square set jaw, flat unblinking dark eyes under a heavy brow, a two-inch pale old scar cutting across the right brow ridge, straight thin mouth. Short cropped black hair, high shaved sides. Consistent features and proportions across every view. Plain pure white background (#FFFFFF), even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading.",
+        "turnaround": "A lean, rigidly upright Chinese man in his late twenties, gaunt angular face with high cheekbones and a two-inch pale scar across the right brow ridge, short cropped black hair, wearing a washed-out grey military wool greatcoat with the collar turned up, worn leather boots, right hand in the coat pocket. Cold restrained palette of grey, charcoal and dull olive. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle. IMPORTANT — leave the face blank: on all three views the head is drawn as a clean bare shape with hairline, hair and ears rendered, but NO facial features at all — no eyes, no eyebrows, no nose, no mouth. The face area stays flat, empty and unshaded. The facial design lives on a separate face sheet; this sheet is for silhouette, proportion and costume only."
       },
       "voice": {
         "timbre": "干涩、聚焦的男中音，共鸣窄，几乎没有暖度",
@@ -134,8 +137,8 @@
         "accent": "带北方腔的官话，咬字清脆",
         "emotion": "表面无波澜，底下绷着",
         "prompt": "A male voice, twenty-seven to twenty-eight years old. Dry tightly-focused baritone with a narrow resonant core and very little warmth. Mid-low pitch, clipped and forward-placed, consonants landing hard. Fast clipped pace with almost no filler words and abrupt full stops — phrasing built like orders rather than conversation. Northern-inflected Mandarin, crisp and unornamented. Low breathiness, tightly controlled volume, minimal emotional colour on the surface with tension held underneath.",
-        "promptZh": "二十七八岁男声。干涩、聚焦的男中音，共鸣腔窄，几乎没有暖度。中低音区，咬字靠前、辅音落得重。语速快而短促，几乎没有语气词，句子戛然而止——措辞像下命令而不是聊天。带北方腔的官话，清脆、不加修饰。气声少，音量控制得紧，表面几乎没有情绪起伏，底下绷着一股张力。",
-        "referenceHint": "像一个习惯了下达指令、不需要对方回话的人"
+        "referenceHint": "像一个习惯了下达指令、不需要对方回话的人",
+        "promptLocal": "二十七八岁男声。干涩、聚焦的男中音，共鸣腔窄，几乎没有暖度。中低音区，咬字靠前、辅音落得重。语速快而短促，几乎没有语气词，句子戛然而止——措辞像下命令而不是聊天。带北方腔的官话，清脆、不加修饰。气声少，音量控制得紧，表面几乎没有情绪起伏，底下绷着一股张力。"
       }
     },
     {
@@ -183,7 +186,7 @@
       "image": {
         "style": "Flat vector cartoon with ink-wash colouring and weathered detail",
         "prompt": "Character design sheet of an elderly Chinese ferryman around seventy, hunched back curved like a drawn bow, weathered leathery face carved with deep wind-worn creases, left eye clouded by a pale white cataract film, sparse grey stubble and a nearly toothless mouth caught in a rare crooked smile, wearing a faded indigo padded jacket with frayed cuffs and worn straw sandals, thick gnarled hands gripping a long bamboo punting pole, three-quarter view full body, plain warm-grey background, flat vector cartoon style with clean confident linework, muted ink-wash palette of slate blue, ochre and bone white, soft diffused morning light through mist, readable silhouette",
-        "promptZh": "角色设定图：约七十岁的中国老船夫，背驼得像一张拉满的弓，面皮粗糙如皮革、刻满被风吹出的深纹，左眼蒙着一层灰白翳，灰白胡茬稀疏，几乎无牙的嘴咧出一个难得的歪笑，穿褪色靛蓝棉袄、袖口磨破，脚踏旧草鞋，粗糙变形的双手握着一根长竹篙，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条干净利落，青灰、赭石与骨白的水墨低饱和配色，晨雾中的柔和漫射光，剪影清晰可辨。",
+        "promptLocal": "角色设定图：约七十岁的中国老船夫，背驼得像一张拉满的弓，面皮粗糙如皮革、刻满被风吹出的深纹，左眼蒙着一层灰白翳，灰白胡茬稀疏，几乎无牙的嘴咧出一个难得的歪笑，穿褪色靛蓝棉袄、袖口磨破，脚踏旧草鞋，粗糙变形的双手握着一根长竹篙，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条干净利落，青灰、赭石与骨白的水墨低饱和配色，晨雾中的柔和漫射光，剪影清晰可辨。",
         "negativePrompt": "photorealistic, 3d render, young face, symmetrical healthy eyes, glossy skin, muscular build, bright saturated colours, busy background, extra fingers, text, watermark",
         "tags": [
           "flat vector",
@@ -193,7 +196,8 @@
           "misty morning light",
           "period china"
         ],
-        "turnaround": "An elderly Chinese ferryman around seventy with a heavily hunched back curved like a drawn bow, weathered creased face, left eye clouded pale white, sparse grey stubble, wearing a faded indigo padded jacket with frayed cuffs, rolled trousers and worn straw sandals, holding a long bamboo punting pole. Muted ink-wash palette of slate blue, ochre and bone white. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle."
+        "face": "Character face sheet of an elderly Chinese ferryman around seventy: three head studies side by side — front view, three-quarter view and left profile — plus one row of four small expression studies below (neutral, squinting into fog, rare toothless smile, weary). Deeply weathered leathery face carved with wind-worn creases, sunken cheeks, prominent cheekbones, the left eye clouded a pale milky white while the right stays sharp, sparse grey stubble on chin and jaw, a nearly toothless mouth. Thin grey hair cropped close to a balding scalp. Consistent features and proportions across every view. Plain pure white background (#FFFFFF), even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading.",
+        "turnaround": "An elderly Chinese ferryman around seventy with a heavily hunched back curved like a drawn bow, weathered creased face, left eye clouded pale white, sparse grey stubble, wearing a faded indigo padded jacket with frayed cuffs, rolled trousers and worn straw sandals, holding a long bamboo punting pole. Muted ink-wash palette of slate blue, ochre and bone white. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle. IMPORTANT — leave the face blank: on all three views the head is drawn as a clean bare shape with hairline, hair and ears rendered, but NO facial features at all — no eyes, no eyebrows, no nose, no mouth. The face area stays flat, empty and unshaded. The facial design lives on a separate face sheet; this sheet is for silhouette, proportion and costume only."
       },
       "voice": {
         "timbre": "沙哑低沉的男中低音，喉音重，带水汽感",
@@ -202,8 +206,8 @@
         "accent": "南方水乡口音，尾音含混",
         "emotion": "疲惫而平静，几乎没有起伏",
         "prompt": "An elderly male voice, around seventy-five. Low bass-baritone register, heavily gravelled and husky, as if the throat is permanently coated in river damp. Thick chest resonance with almost no head voice; word endings blur into one another. Slow unhurried pace with long breath pauses between clauses. Soft southern Chinese riverside accent, consonants worn smooth. Low energy and flat affect — settled and weary rather than sad. Minimal pitch variation, like someone who has said the same sentence for forty years.",
-        "promptZh": "约七十五岁的老年男声。低音区男中低声部，沙哑粗粝、带浓重气泡音，像喉咙里常年裹着水汽。胸腔共鸣厚重，几乎没有头声，词尾常常含混地黏在一起。语速缓慢从容，句读之间有很长的换气停顿。带南方水乡口音，辅音被磨得圆钝。能量低、情绪平直——是疲惫沉淀而非悲伤。音高起伏极小，像一个把同一句话说了四十年的人。",
-        "referenceHint": "像一个在同一个渡口喊了四十年\"开船\"、嗓子早就磨平的人"
+        "referenceHint": "像一个在同一个渡口喊了四十年\"开船\"、嗓子早就磨平的人",
+        "promptLocal": "约七十五岁的老年男声。低音区男中低声部，沙哑粗粝、带浓重气泡音，像喉咙里常年裹着水汽。胸腔共鸣厚重，几乎没有头声，词尾常常含混地黏在一起。语速缓慢从容，句读之间有很长的换气停顿。带南方水乡口音，辅音被磨得圆钝。能量低、情绪平直——是疲惫沉淀而非悲伤。音高起伏极小，像一个把同一句话说了四十年的人。"
       }
     },
     {
@@ -252,7 +256,7 @@
       "image": {
         "style": "Flat vector cartoon with bouncy linework and a warm brass palette",
         "prompt": "Character design sheet of a plump Chinese travelling peddler in his mid-forties, round soft body on stout short legs, broad beaming face with cheeks pushed up so the eyes crease into two thin happy slits, sweat beading on a balding forehead, wearing a short russet cotton jacket with sleeves rolled to the elbow and a cloth sash at the waist, carrying a shoulder pole with two wooden goods crates hung with small brass bells, three-quarter view full body, plain warm-grey background, flat vector cartoon style, clean bouncy linework, warm palette of russet, mustard and brass, bright even light, wide open-mouthed laughing expression, readable silhouette",
-        "promptZh": "角色设定图：四十来岁的中国走乡货郎，体态圆胖、腿短敦实，笑得脸颊高高鼓起、把眼睛挤成两条细缝，谢顶的额头上渗着汗珠，穿赭红色短布褂、袖子挽到手肘、腰间束一条布带，肩挑扁担，两只木货箱角上挂着一串小铜铃，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条圆润有弹性，赭红、芥黄与黄铜的暖色配色，明亮均匀的光线，张口大笑的表情，剪影清晰可辨。",
+        "promptLocal": "角色设定图：四十来岁的中国走乡货郎，体态圆胖、腿短敦实，笑得脸颊高高鼓起、把眼睛挤成两条细缝，谢顶的额头上渗着汗珠，穿赭红色短布褂、袖子挽到手肘、腰间束一条布带，肩挑扁担，两只木货箱角上挂着一串小铜铃，四分之三视角全身像，纯暖灰背景，扁平矢量卡通风格，线条圆润有弹性，赭红、芥黄与黄铜的暖色配色，明亮均匀的光线，张口大笑的表情，剪影清晰可辨。",
         "negativePrompt": "photorealistic, 3d render, thin build, serious expression, cold desaturated colours, elegant clothing, busy background, extra fingers, text, watermark",
         "tags": [
           "flat vector",
@@ -262,7 +266,8 @@
           "bright even light",
           "bouncy linework"
         ],
-        "turnaround": "A plump Chinese travelling peddler in his mid-forties, round soft body on stout short legs, broad beaming face with eyes creased into happy slits, balding sweat-beaded forehead, wearing a short russet cotton jacket with sleeves rolled to the elbow and a cloth waist sash, carrying a shoulder pole with two wooden crates hung with small brass bells. Warm palette of russet, mustard and brass. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle."
+        "face": "Character face sheet of a Chinese travelling peddler in his mid-forties: three head studies side by side — front view, three-quarter view and left profile — plus one row of four small expression studies below (neutral, broad laugh, calling out, a sudden serious moment). Round full face with fat cheeks pushed up so the eyes crease into thin happy slits, broad flat nose, wide mouth, double chin, sweat beading on a high balding forehead with thinning hair at the sides. Consistent features and proportions across every view. Plain pure white background (#FFFFFF), even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading.",
+        "turnaround": "A plump Chinese travelling peddler in his mid-forties, round soft body on stout short legs, broad beaming face with eyes creased into happy slits, balding sweat-beaded forehead, wearing a short russet cotton jacket with sleeves rolled to the elbow and a cloth waist sash, carrying a shoulder pole with two wooden crates hung with small brass bells. Warm palette of russet, mustard and brass. Orthographic character turnaround model sheet: three full-body views of the SAME character standing side by side — front view, left side profile, and back view — aligned on one shared ground line with identical height, proportions and costume details across all three. Neutral relaxed standing posture, arms at the sides. Plain pure white background (#FFFFFF), suitable for clean cut-out, even diffuse lighting, no cast shadows. Flat vector cartoon style with clean confident linework and soft cel shading, readable silhouette from every angle. IMPORTANT — leave the face blank: on all three views the head is drawn as a clean bare shape with hairline, hair and ears rendered, but NO facial features at all — no eyes, no eyebrows, no nose, no mouth. The face area stays flat, empty and unshaded. The facial design lives on a separate face sheet; this sheet is for silhouette, proportion and costume only."
       },
       "voice": {
         "timbre": "明亮、带金属芒的男高音，穿透力强",
@@ -271,8 +276,8 @@
         "accent": "北方乡音，元音开阔",
         "emotion": "外放、乐呵，毫无防备",
         "prompt": "A male voice, mid-forties. Bright brassy tenor with a broad forward ring that carries easily over ambient noise. Mid-high pitch with wide springy intonation swings. Fast tumbling pace, phrases running into one another with hardly a breath, frequent laughter breaking through mid-sentence. Warm rural northern Chinese accent with wide open vowels. High energy and strong breath support, unguardedly cheerful and gossipy by default, with enough weight in the lower register to land one sincere line when it comes.",
-        "promptZh": "四十来岁男声。明亮带金属芒的男高音，声音靠前、共鸣宽，在嘈杂环境里也能穿透。中高音区，语调起伏大而有弹性。语速快、句子一路滚着连成一片，几乎不换气，说到一半常自己先笑出来。带北方乡音，元音开阔。能量高、气息足，默认状态是毫无防备的乐呵和爱聊闲话，但低音区留有足够厚度，能把偶尔一句真心话说得压得住。",
-        "referenceHint": "像一个隔着两条街就能听见他招呼你的人"
+        "referenceHint": "像一个隔着两条街就能听见他招呼你的人",
+        "promptLocal": "四十来岁男声。明亮带金属芒的男高音，声音靠前、共鸣宽，在嘈杂环境里也能穿透。中高音区，语调起伏大而有弹性。语速快、句子一路滚着连成一片，几乎不换气，说到一半常自己先笑出来。带北方乡音，元音开阔。能量高、气息足，默认状态是毫无防备的乐呵和爱聊闲话，但低音区留有足够厚度，能把偶尔一句真心话说得压得住。"
       }
     }
   ]

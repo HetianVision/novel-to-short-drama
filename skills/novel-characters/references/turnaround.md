@@ -1,8 +1,25 @@
-# 三视图出图 · codex `$imagegen`
+# 出图 · codex `$imagegen`
 
 出图走 codex 内置的 `$imagegen` 系统 skill。**这条路不需要任何 API key**——用的是本机 codex 登录态（订阅额度）。
 
 **没有 codex 就跳过整个第 8 步**，只交提示词，其余产出照常。这是可选能力，不是硬依赖。
+
+## 每个角色两张，顺序不能反
+
+| 顺序 | 图 | 提示词字段 | 落到 |
+| --- | --- | --- | --- |
+| 1 | 面部细节图 | `image.face` | `./images/<slug>-face.png` |
+| 2 | 全身三视图（脸留空） | `image.turnaround` | `./images/<slug>-turnaround.png` |
+
+**先脸后身**：第二张要拿第一张当参考图（`-i`）压住画风和头身比例。反过来做参考就没意义了。
+
+分成两张的原因：全身三视里同一张脸要画三遍，模型很难画一致；把五官抽到单独一张定死，全身图专心管剪影、比例和服装。改服装不用重画脸，改表情不用重画身体。
+
+### 留空脸的实际效果 ⚠️
+
+实测：**正面和背面能干净留空**（只剩发型、发际线、耳朵），**侧面模型经常还是会画上五官**——侧脸轮廓对它来说似乎太像「必须有内容」的区域。
+
+这是模型遵从度的问题，不是提示词写得不够明确（提示词里已经逐项列了 no eyes / no eyebrows / no nose / no mouth）。能接受就用；不能接受只有两条路：拿到图之后手动擦掉侧脸，或者干脆放弃留空、让全身图也画脸。**别为了这个反复重生成**，多跑几次结果差不多。
 
 ---
 
@@ -45,14 +62,26 @@ CODEX=$(find_codex)
 
 ### 调用
 
-**一个角色一次调用，绝不批量。** built-in 通路会把 PNG 字节写进 rollout，批量会把上下文撑爆——这是官方 `hatch-pet` skill 踩出来的经验。
+**一张图一次调用，绝不批量。** built-in 通路会把 PNG 字节写进 rollout，批量会把上下文撑爆——这是官方 `hatch-pet` skill 踩出来的经验。两张图就是两次调用。
+
+**第一次 · 面部细节图**（无参考图，prompt 可以走位置参数）：
 
 ```bash
 cd <输出目录> && mkdir -p images
 "$CODEX" exec --skip-git-repo-check --sandbox workspace-write \
-  'Use $imagegen to generate this character turnaround sheet, then copy the final selected PNG to ./images/<slug>-turnaround.png in the current working directory. Reply with only the file path — no base64, no markdown image preview.
+  'Use $imagegen to generate this character face sheet, then copy the final selected PNG to ./images/<slug>-face.png in the current working directory. Reply with only the file path — no base64, no markdown image preview.
 
-<image.turnaround 的内容>' < /dev/null
+<image.face 的内容>' < /dev/null
+```
+
+**第二次 · 全身三视图**（拿面部图当参考，**prompt 必须走 stdin**）：
+
+```bash
+printf '%s' 'Use $imagegen to generate this full-body character turnaround, then copy the final selected PNG to ./images/<slug>-turnaround.png in the current working directory. Match the art style, line weight, shading, colour treatment and head-to-body proportion of the reference image. The reference shows the face design — but on THIS sheet the face must be left blank as described below. Reply with only the file path — no base64, no markdown image preview.
+
+<image.turnaround 的内容>' \
+| "$CODEX" exec --skip-git-repo-check --sandbox workspace-write \
+    -i ./images/<slug>-face.png
 ```
 
 三个参数都是必需的，缺一个就挂：
@@ -82,6 +111,16 @@ image exactly — these characters must belong to the same production." \
 ```
 
 代价是第一张的画风就定了全片基调，出得不好就得重来。用户在意统一性就上参考图，只是要几张草图就不必。
+
+## ⚠️ 先清掉 NODE_OPTIONS
+
+codex 自己也是个 Node CLI，**会继承父进程的 `NODE_OPTIONS`**。如果调用方环境里设了 `--require` 之类的预加载，而那个文件不在了（临时目录被清理是常见情况），codex 会在启动阶段就崩掉，报的是 `Cannot find module .../restore-node-options.cjs`，跟出图毫无关系，很难联想。
+
+所有 codex 调用都套一层 `env -u NODE_OPTIONS`：
+
+```bash
+env -u NODE_OPTIONS "$CODEX" exec --skip-git-repo-check --sandbox workspace-write ...
+```
 
 ## ⚠️ 变长参数会吞掉 prompt
 

@@ -7,7 +7,20 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CHUNK_SIZE, MAX_CHUNKS, chunkText, mergeRoster, renderHtml, renderMarkdown, slug, validateCast } from './novel-characters.mjs';
+import {
+  CHUNK_SIZE,
+  MAX_CHUNKS,
+  SUPPORTED_UI_LANGS,
+  chunkText,
+  mergeRoster,
+  renderHtml,
+  renderMarkdown,
+  needsUiTranslation,
+  slug,
+  strings,
+  uiTemplate,
+  validateCast,
+} from './novel-characters.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const examples = join(here, '..', 'examples');
@@ -111,8 +124,16 @@ bad[0].image.prompt = `${bad[0].name}, ${bad[0].image.prompt}`;
 ok(hits(bad, '人名') > 0, '抓住出图提示词里的人名');
 
 bad = clone();
-bad[0].image.promptZh = `${bad[0].aliases[0]}的设定图`;
-ok(hits(bad, '人名') > 0, '抓住中文出图提示词里的别名');
+bad[0].image.promptLocal = `${bad[0].aliases[0]}的设定图`;
+ok(hits(bad, '人名') > 0, '抓住本地语言出图提示词里的别名');
+
+bad = clone();
+bad[0].image.face = `${bad[0].name}, a face sheet`;
+ok(hits(bad, '人名') > 0, '抓住面部提示词里的人名');
+
+bad = clone();
+bad[0].image.turnaround = `${bad[0].name}, a turnaround`;
+ok(hits(bad, '人名') > 0, '抓住三视图提示词里的人名');
 
 bad = clone();
 bad[0].voice.timbre = 'warm husky alto';
@@ -120,7 +141,11 @@ ok(hits(bad, '应为中文') > 0, '抓住该中文却写成英文的字段');
 
 bad = clone();
 bad[0].image.turnaround = '中文三视图描述';
-ok(hits(bad, '应为英文') > 0, '抓住该英文却含中文的字段');
+ok(hits(bad, '必须英文') > 0, '抓住该英文却含中文的字段');
+
+bad = clone();
+delete bad[0].image.face;
+ok(hits(bad, 'image.face') > 0, '抓住缺失的面部提示词');
 
 bad = clone();
 bad[0].importance = 'sidekick';
@@ -142,13 +167,15 @@ eq(validateCast(CAST, null).length, 0, '不给原文时跳过引文校验');
 const md = renderMarkdown(CAST, '渡口');
 ok(md.includes('# 渡口 — 角色表'), 'Markdown 有标题');
 for (const c of CAST) ok(md.includes(`## ${c.name}`), `Markdown 包含 ${c.name}`);
-ok(md.includes('三视图 prompt'), 'Markdown 含三视图提示词');
+ok(md.includes('三视图提示词'), 'Markdown 含三视图提示词');
+ok(md.includes('面部提示词'), 'Markdown 含面部提示词');
+ok(renderMarkdown(CAST, 'Ferry', '', 'en').includes('# Ferry — Cast'), 'Markdown 跟随语言参数');
 
 const html = renderHtml(CAST, '渡口');
 ok(html.startsWith('<!doctype html>'), 'HTML 是完整文档');
 eq((html.match(/class="entry"/g) || []).length, CAST.length, `HTML 有 ${CAST.length} 个条目`);
-// 每人 8 个复制按钮：标签 + 4 段出图 + 2 段音色 + 整份 JSON
-eq((html.match(/class="copy"/g) || []).length, CAST.length * 8, '每段提示词都有复制按钮');
+// 每人 9 个复制按钮：标签 + 出图 EN/本地/反向/面部/三视图 + 音色 EN/本地 + 整份 JSON
+eq((html.match(/class="copy"/g) || []).length, CAST.length * 9, '每段提示词都有复制按钮');
 ok(html.includes('<nav aria-label="角色索引"'), '有角色索引');
 eq((html.match(/class="ix-name"/g) || []).length, CAST.length, '索引列出全部角色');
 ok(html.includes('<blockquote>'), '原文依据用 blockquote');
@@ -198,5 +225,102 @@ const inner = 1800 - 40 * 2;
 ok(3 * 460 + 2 * 28 <= inner, '三列能排下');
 ok(4 * 460 + 3 * 28 > inner, '四列排不下——这是「一排最多三个」的机制');
 ok(css.includes('.groups{display:block}'), '卡内三组竖排而不是再分栏');
+
+/* ---------------- 多语言 ---------------- */
+
+const zh = renderHtml(CAST, '渡口', DOC.summary, 'zh');
+const en = renderHtml(CAST, 'Ferry', 'A misty river crossing.', 'en');
+
+ok(zh.includes('lang="zh"'), 'zh 报告的 html lang 正确');
+ok(en.includes('lang="en"'), 'en 报告的 html lang 正确');
+ok(zh.includes('故事摘要') && !zh.includes('>Synopsis<'), 'zh 界面用中文');
+ok(en.includes('Synopsis') && !en.includes('故事摘要'), 'en 界面用英文');
+ok(en.includes('>Profile<') && en.includes('>Design<') && en.includes('>Voice<'), 'en 三组标题翻译了');
+ok(en.includes('>Lead<'), 'en 的 importance 标签翻译了');
+ok(en.includes('>Copy<'), 'en 的复制按钮翻译了');
+// 未知语言码退回英文骨架，而不是崩掉或露出中文
+const fr = renderHtml(CAST, 'Bac', '', 'fr');
+ok(fr.includes('lang="fr"'), '未知语言码仍写进 html lang');
+ok(fr.includes('Synopsis') || !fr.includes('故事摘要'), '未知语言码用英文界面骨架');
+eq(strings('zh').synopsis, '故事摘要', 'strings(zh)');
+eq(strings('nope').synopsis, strings('en').synopsis, 'strings 未知码退回 en');
+for (const l of ['zh', 'en', 'ja']) ok(SUPPORTED_UI_LANGS.includes(l), `内置 ${l} 界面`);
+
+// 日语内置
+const ja = renderHtml(CAST, '渡し場', 'あらすじの本文', 'ja');
+ok(ja.includes('lang="ja"'), 'ja 报告的 html lang 正确');
+ok(ja.includes('あらすじ') && ja.includes('>人物像<') && ja.includes('>主役<'), 'ja 界面用日文');
+
+// 任意语言：ui 覆盖机制
+ok(needsUiTranslation('fr'), 'fr 需要 ui 翻译');
+ok(!needsUiTranslation('ja'), 'ja 内置，不需要 ui 翻译');
+const frUi = { synopsis: 'Résumé', groups: { persona: 'Portrait' }, copy: 'Copier' };
+const frHtml = renderHtml(CAST, 'Bac', 'Un matin de brume.', 'fr', frUi);
+ok(frHtml.includes('Résumé'), 'ui 覆盖生效');
+ok(frHtml.includes('>Portrait<'), 'ui 嵌套键覆盖生效');
+ok(frHtml.includes('>Copier<'), 'ui 覆盖按钮文案');
+eq(strings('fr', frUi).groups.image, 'Design', '没覆盖的键退回英文兜底');
+eq(strings('fr', frUi).persona.gender, 'Gender', '没覆盖的嵌套键也兜底');
+// 脏 ui 不能把渲染带崩
+for (const junk of [null, 'x', 42, [], { groups: 'not-an-object' }, { docTitle: 'nope' }]) {
+  ok(renderHtml(CAST, 'x', '', 'fr', junk).startsWith('<!doctype html>'), `脏 ui ${JSON.stringify(junk)} 不崩`);
+}
+// 模板要能覆盖所有可翻译的键
+const tpl = uiTemplate();
+for (const k of ['kicker', 'synopsis', 'groups', 'persona', 'image', 'voice', 'importance', 'copy']) {
+  ok(k in tpl, `ui-template 含 ${k}`);
+}
+ok(!('docTitle' in tpl), 'ui-template 不含函数模板');
+
+// 校验的语言规则跟着 lang 走
+const enCast = clone();
+for (const c of enCast) {
+  c.voice.timbre = 'warm husky alto';
+  c.voice.pitch = 'low';
+  c.voice.pace = 'slow and deliberate';
+  c.voice.accent = 'neutral';
+  c.voice.emotion = 'weary';
+  c.voice.referenceHint = 'like a night-shift radio host';
+}
+ok(
+  validateCast(enCast, SOURCE, 'en').filter((p) => p.includes('应为')).length === 0,
+  'lang=en 时英文 voice 字段合法',
+);
+ok(
+  validateCast(enCast, SOURCE, 'zh').filter((p) => p.includes('应为中文')).length > 0,
+  'lang=zh 时英文 voice 字段违规',
+);
+ok(
+  validateCast(CAST, SOURCE, 'en').filter((p) => p.includes('应为英文')).length > 0,
+  'lang=en 时中文 voice 字段违规',
+);
+// 机器字段不受 lang 影响，永远必须英文
+const cjkMachine = clone();
+cjkMachine[0].image.prompt = '中文出图提示词';
+for (const l of ['zh', 'en', 'fr']) {
+  ok(
+    validateCast(cjkMachine, SOURCE, l).filter((p) => p.includes('必须英文')).length > 0,
+    `lang=${l} 时 image.prompt 仍必须英文`,
+  );
+}
+
+/* ---------------- 面部细节图 ---------------- */
+
+ok(CAST.every((c) => c.image.face && c.image.face.trim()), '样例每个角色都有面部提示词');
+ok(
+  CAST.every((c) => /no eyes|leave the face blank|NO facial features/i.test(c.image.turnaround)),
+  '三视图提示词要求面部留空',
+);
+const both = clone();
+both[0].faceImage = 'images/x-face.png';
+both[0].turnaroundImage = 'images/x-turnaround.png';
+const bothHtml = renderHtml(both, 'x');
+ok(bothHtml.includes('images/x-face.png'), '面部图被嵌入');
+ok(bothHtml.includes('images/x-turnaround.png'), '三视图被嵌入');
+eq((bothHtml.match(/class="plate"/g) || []).length, 2, '两张图各自一个印张');
+// 只有其中一张时也要能正常渲染
+const faceOnly = clone();
+faceOnly[0].faceImage = 'images/x-face.png';
+ok(renderHtml(faceOnly, 'x').includes('images/x-face.png'), '只有面部图也能渲染');
 
 console.log(`✓ ${passed} 项自测全部通过`);

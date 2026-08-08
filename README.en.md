@@ -1,5 +1,8 @@
 [中文](README.md) · **English**
 
+> I run a **paid community for AI short-form drama** — workflows, tooling, and hands-on practice.
+> If that's your thing, add me on **WeChat `TODO_微信号`** and mention **`github`** in the request.
+
 # shuohao-skills
 
 A collection of skills for AI coding agents. **Runs in both Claude Code and codex.**

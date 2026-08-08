@@ -1,5 +1,8 @@
 **中文** · [English](README.en.md)
 
+> 我建了一个 **AI 短剧交流群**（付费），聊 AI 短剧的工作流、工具和实操。
+> 有兴趣的加我：**微信 `TODO_微信号`**，添加时**备注 `github`**。
+
 # shuohao-skills
 
 给 AI 编码 agent 用的 skill 集合。**Claude Code 和 codex 都能跑。**
