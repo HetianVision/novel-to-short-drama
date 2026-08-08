@@ -2,9 +2,10 @@
 name: novel-characters
 version: 1.4.0
 description: |
-  从小说或短故事里拆出角色表、人物画像、卡通形象提示词、音色提示词，
-  并给主要角色出角色设定图（左半身像 + 右全身三视图），产出 JSON + Markdown + 可交互的 report.html。
-  报告语言可指定（--lang），默认中文，任意语言都支持。
+  从小说或短故事里拆出角色表、人物画像、形象提示词、音色提示词，
+  并给主要角色出角色设定图（左半身像 + 右全身三视图 + 细节条），产出 JSON + Markdown + 可交互的 report.html。
+  报告语言可指定（--lang），默认中文，任意语言都支持；
+  出图风格可指定（--style），默认半写实，也可以出吉卜力动画风。
   零依赖、零 API key，用当前会话额度；出图走 codex 内置 $imagegen（可选）。
   Use when asked to 拆小说角色、分析人物、生成角色卡、character sheets from a novel。
 allowed-tools:
@@ -36,7 +37,7 @@ metadata:
 
 ## novel-characters
 
-输入一篇小说/短故事，输出每个角色的：人物画像、卡通形象提示词、音色提示词、角色设定图。
+输入一篇小说/短故事，输出每个角色的：人物画像、形象提示词、音色提示词、角色设定图。
 
 `{baseDir}` = 本文件所在目录。脚本 `{baseDir}/scripts/novel-characters.mjs`，零依赖，`node` 直接跑。
 

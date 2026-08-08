@@ -11,7 +11,7 @@
 
 | Skill | 做什么 |
 | --- | --- |
-| [**novel-characters**](skills/novel-characters) | 把一篇小说拆成角色设定集：人物画像、卡通形象提示词、音色提示词、面部图与三视图 |
+| [**novel-characters**](skills/novel-characters) | 把一篇小说拆成角色设定集：人物画像、形象提示词、音色提示词、角色设定图。报告语言与出图风格可选 |
 
 丢一本小说进去，出这个：
 

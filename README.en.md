@@ -11,7 +11,7 @@ A collection of skills for AI coding agents. **Runs in both Claude Code and code
 
 | Skill | What it does |
 | --- | --- |
-| [**novel-characters**](skills/novel-characters/README.en.md) | Turns a novel into a character bible: profiles, cartoon-design prompts, voice prompts, face and turnaround sheets |
+| [**novel-characters**](skills/novel-characters/README.en.md) | Turns a novel into a character bible: profiles, design prompts, voice prompts, model sheets. Report language and image style are both configurable |
 
 Point it at a novel and you get this:
 
