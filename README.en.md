@@ -2,6 +2,8 @@
 
 > I run a **paid community for AI short-form drama** — workflows, tooling, and hands-on practice.
 > If that's your thing, add me on **WeChat `hao_dev`** and mention **`github`** in the request.
+>
+> <img src="assets/wechat.png" alt="WeChat QR" width="180">
 
 # shuohao-skills
 
@@ -10,6 +12,10 @@ A collection of skills for AI coding agents. **Runs in both Claude Code and code
 | Skill | What it does |
 | --- | --- |
 | [**novel-characters**](skills/novel-characters/README.en.md) | Turns a novel into a character bible: profiles, cartoon-design prompts, voice prompts, face and turnaround sheets |
+
+Point it at a novel and you get this:
+
+![Character bible report](skills/novel-characters/assets/report.png)
 
 ## Install
 

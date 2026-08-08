@@ -2,6 +2,8 @@
 
 > 我建了一个 **AI 短剧交流群**（付费），聊 AI 短剧的工作流、工具和实操。
 > 有兴趣的加我：**微信 `hao_dev`**，添加时**备注 `github`**。
+>
+> <img src="assets/wechat.png" alt="烁皓微信二维码" width="180">
 
 # shuohao-skills
 
@@ -10,6 +12,10 @@
 | Skill | 做什么 |
 | --- | --- |
 | [**novel-characters**](skills/novel-characters) | 把一篇小说拆成角色设定集：人物画像、卡通形象提示词、音色提示词、面部图与三视图 |
+
+丢一本小说进去，出这个：
+
+![角色设定集报告](skills/novel-characters/assets/report.png)
 
 ## 装
 
