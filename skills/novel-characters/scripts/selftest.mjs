@@ -236,6 +236,37 @@ ok(synHtml.includes('class="syn-more"'), '有展开入口');
 ok(/syn\.classList\.remove\('syn-clamp'\)/.test(synHtml), '点一下展开全部');
 ok(/scrollHeight <= body\.clientHeight/.test(synHtml), '摘要短到不用折叠就不显示展开入口');
 
+/* ---------------- 导出 JSON ---------------- */
+
+// 导出的形状就是 cast.json，编辑完要能直接喂回 render
+const expHtml = renderHtml(CAST, '渡口', DOC.summary, 'zh', null, 'ghibli');
+ok(expHtml.includes('class="expo"'), '顶栏有导出按钮');
+ok(expHtml.includes('<script type="application/json" id="cast-data">'), '数据内嵌在报告里');
+ok(expHtml.includes('data-name="渡口-cast.json"'), '下载文件名跟着书名走');
+
+const embedded = expHtml.match(/<script type="application\/json" id="cast-data">([\s\S]*?)<\/script>/)[1];
+const round = JSON.parse(embedded.replace(/\\u003c/g, '<'));
+eq(round.source, '渡口', '导出带书名');
+eq(round.lang, 'zh', '导出带语言');
+eq(round.style, 'ghibli', '导出带画风');
+eq(round.summary, DOC.summary, '导出带故事摘要');
+eq(round.characters.length, CAST.length, '导出带全部角色');
+eq(JSON.stringify(round.characters), JSON.stringify(CAST), '角色卡原样导出，没有丢字段');
+eq(validateCast(round.characters, SOURCE, 'zh', 'realistic').length, 0, '导出的数据能直接喂回 validate 并通过');
+ok(validateCast(round.characters, SOURCE, 'zh', 'ghibli').length > 0, '喂回去的确实是真数据——画风说反了照样报错');
+
+// ⚠️ 正文里一个 </script 就能把数据块提前截断
+const xss = clone();
+xss[0].persona.appearance = '他说</script><script>alert(1)</script>';
+const xssHtml = renderHtml(xss, 'x', '');
+const xssData = xssHtml.match(/<script type="application\/json" id="cast-data">([\s\S]*?)<\/script>/)[1];
+ok(!xssData.includes('</script'), '数据块里的 </script 被转义，截不断');
+ok(JSON.parse(xssData.replace(/\\u003c/g, '<')).characters[0].persona.appearance.includes('</script>'), '转义了但内容没丢');
+
+// 没有 ui 就不写这个键，免得导出里多一个空字段
+ok(!('ui' in JSON.parse(renderHtml(CAST, 'x', '').match(/id="cast-data">([\s\S]*?)<\/script>/)[1].replace(/\\u003c/g, '<'))), '没有 ui 翻译就不写这个键');
+ok('ui' in JSON.parse(renderHtml(CAST, 'x', '', 'fr', { copy: 'Copier' }).match(/id="cast-data">([\s\S]*?)<\/script>/)[1].replace(/\\u003c/g, '<')), '有 ui 翻译就带上');
+
 /* ---------------- 关系图谱 ---------------- */
 
 // 别名要能连上（老周被叫「老伯」），同一对人只连一条边，指向没画像的人算 dangling

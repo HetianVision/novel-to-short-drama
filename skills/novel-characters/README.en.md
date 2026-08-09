@@ -86,6 +86,18 @@ The **relationship map** sits at the top of the left rail and takes over the mai
 
 The circular layout is computed in Node and written straight into inline SVG — **no libraries**, so report.html stays a single file you can open offline.
 
+### Export JSON
+
+The **Export JSON** button in the top bar downloads exactly the `cast.json` shape — not some separate export format:
+
+```json
+{ "source": "…", "lang": "zh", "style": "realistic", "summary": "…", "characters": [ … ] }
+```
+
+So an external tool can edit it and **feed it straight back into `render`**, and it still passes `validate`. Each character keeps its `sheetImage` path (`images/<slug>-sheet.png`), so you know which sheet belongs to whom.
+
+The data is embedded as `<script type="application/json">`; exporting just wraps it in a Blob and downloads it — **no network request**.
+
 ## How it works
 
 Feeding a long text into one context window loses characters, so it runs in two passes:
@@ -139,7 +151,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem
 SKILL.md                 the workflow the agent reads
 scripts/
   novel-characters.mjs   chunk / merge / validate / render / slug
-  selftest.mjs           259 assertions, never calls a model
+  selftest.mjs           274 assertions, never calls a model
 references/
   roster-pass.md         pass 1: scanning for characters
   profile-pass.md        pass 2: building a character sheet (8 hard rules)
@@ -161,6 +173,6 @@ In `examples/渡口.txt` the peddler is only ever referred to by a nickname and 
 node scripts/selftest.mjs
 ```
 
-259 assertions across chunking, alias merging, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
+274 assertions across chunking, alias merging, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
 
 **Only tested on macOS with Node 24.** There is no platform-specific code, so Linux and older Node releases should be fine, but that is **unverified**.

@@ -93,6 +93,18 @@ node scripts/novel-characters.mjs styles ghibli   # 看某一个的完整内容
 
 圆环布局在 Node 里算好直接写进内联 SVG，**不引任何库**——report.html 始终是一个能离线双击打开的单文件。
 
+### 导出 JSON
+
+顶栏的「导出 JSON」下载的**就是 `cast.json` 本身的形状**，不是另一套导出格式：
+
+```json
+{ "source": "…", "lang": "zh", "style": "realistic", "summary": "…", "characters": [ … ] }
+```
+
+所以外部工具改完可以**直接喂回 `render` 重新出报告**，也能过 `validate`。角色卡里的 `sheetImage`（`images/<slug>-sheet.png`）一并带出，拿得到哪张图对应哪个人。
+
+数据以 `<script type="application/json">` 内嵌在报告里，点导出只是把它包成 Blob 下载，**不发任何网络请求**。
+
 ## 它是怎么工作的
 
 长文本一次性塞进上下文会丢角色，所以拆成两趟：
@@ -146,7 +158,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文�
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-characters.mjs   chunk / merge / validate / render / slug
-  selftest.mjs           259 项断言，不调模型
+  selftest.mjs           274 项断言，不调模型
 references/
   roster-pass.md         第一趟：扫描角色
   profile-pass.md        第二趟：生成角色卡（8 条硬规则）
@@ -168,6 +180,6 @@ examples/
 node scripts/selftest.mjs
 ```
 
-259 项断言，覆盖分块 / 别名归并 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+274 项断言，覆盖分块 / 别名归并 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。

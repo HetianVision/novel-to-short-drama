@@ -204,6 +204,7 @@ const STRINGS = {
     graphTitle: '关系图谱',
     graphHint: '悬停看关系，点击进角色',
     graphCounts: (n, e) => `${n} 位角色 · ${e} 组关系`,
+    exportJson: '导出 JSON',
     graphLabels: '关系文字',
     graphEmpty: '这批角色之间没有互相指认的关系',
     graphDangling: (n) => `另有 ${n} 条关系指向没做画像的角色，图里不画`,
@@ -256,6 +257,7 @@ const STRINGS = {
     graphTitle: 'Relationship map',
     graphHint: 'Hover to trace, click to open',
     graphCounts: (n, e) => `${n} character${n === 1 ? '' : 's'} · ${e} link${e === 1 ? '' : 's'}`,
+    exportJson: 'Export JSON',
     graphLabels: 'Link labels',
     graphEmpty: 'No one in this cast names anyone else',
     graphDangling: (n) => `${n} more link${n === 1 ? '' : 's'} point to characters without a profile and are not drawn`,
@@ -307,6 +309,7 @@ const STRINGS = {
     graphTitle: '相関図',
     graphHint: 'ホバーで関係、クリックで詳細',
     graphCounts: (n, e) => `${n}人 · ${e}組の関係`,
+    exportJson: 'JSON を書き出す',
     graphLabels: '関係ラベル',
     graphEmpty: 'この登場人物どうしを結ぶ関係はありません',
     graphDangling: (n) => `他に${n}件、設定を作っていない人物への関係があります（図には出ません）`,
@@ -894,7 +897,26 @@ function renderGraph(ordered, t) {
 </section>`;
 }
 
-export function renderHtml(characters, source, summary = '', lang = DEFAULT_LANG, ui = null) {
+/*
+ * 报告里内嵌的那份数据，形状**就是 cast.json**——编辑完能直接喂回
+ * `render` 重新出报告，不另立一套导出格式。
+ *
+ * `<` 转成 <：JSON 里 `<` 只可能出现在字符串值中，整体替换是安全的，
+ * 而不转的话正文里一个 `</script` 就能把这个数据块提前截断。
+ */
+function embedCast(characters, source, summary, lang, ui, style) {
+  const data = { source, lang, style, summary, ...(ui ? { ui } : {}), characters };
+  return JSON.stringify(data).replace(/</g, '\\u003c');
+}
+
+export function renderHtml(
+  characters,
+  source,
+  summary = '',
+  lang = DEFAULT_LANG,
+  ui = null,
+  style = DEFAULT_STYLE,
+) {
   const t = strings(lang, ui);
   const shots = characters.filter((c) => c.sheetImage).length;
   const ordered = [...characters].sort(
@@ -934,8 +956,14 @@ button{font-family:inherit}
   border-radius:3px;background:var(--paper);color:var(--ink);font:14px/1 var(--sans);outline:none}
 .search input:focus{border-color:var(--seal)}
 .search svg{position:absolute;left:10px;top:9px;width:14px;height:14px;stroke:var(--ink-3);fill:none}
-.topmeta{margin-left:auto;font-size:12px;color:var(--ink-3);display:flex;gap:10px;flex:none}
+.topmeta{margin-left:auto;font-size:12px;color:var(--ink-3);display:flex;align-items:center;
+  gap:10px;flex:none}
 .topmeta i{font-style:normal;color:var(--rule-2)}
+/* 导出：下载的就是内嵌的那份 cast.json，编辑完能直接喂回 render */
+.expo{margin-left:4px;font:500 11px/1 var(--sans);color:var(--ink-2);background:var(--paper);
+  border:1px solid var(--rule-2);border-radius:2px;padding:6px 10px;cursor:pointer;transition:.15s}
+.expo:hover{border-color:var(--seal);color:var(--seal)}
+.expo:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
 
 /* ---------- 骨架 ---------- */
 .shell{display:grid;grid-template-columns:var(--side-w) minmax(0,1fr);align-items:start}
@@ -1173,6 +1201,7 @@ button{font-family:inherit}
   <div class="topmeta">
     <span>${esc(t.kicker)}</span><i>·</i>
     <span>${esc(t.counts(characters.length, shots))}</span>
+    <button class="expo" data-name="${esc(slug(source))}-cast.json">${esc(t.exportJson)}</button>
   </div>
 </header>
 
@@ -1202,8 +1231,22 @@ button{font-family:inherit}
   <img alt="">
 </div>
 
+<script type="application/json" id="cast-data">${embedCast(characters, source, summary, lang, ui, style)}</script>
+
 <script>
 const L = ${JSON.stringify({ copied: t.copied, failed: t.copyFailed })};
+
+// 导出：报告自己就带着完整的 cast.json，下载的是它原样
+document.querySelector('.expo').addEventListener('click', (e) => {
+  const btn = e.currentTarget;
+  const url = URL.createObjectURL(
+    new Blob([document.getElementById('cast-data').textContent], { type: 'application/json' }),
+  );
+  const a = Object.assign(document.createElement('a'), { href: url, download: btn.dataset.name });
+  a.click();
+  // 别在 click 之后立刻回收——Safari 上会抢在下载读完之前把 blob 撤掉，存出来是空文件
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+});
 
 // 左栏切换：一次只显示一个角色
 document.querySelector('.roster').addEventListener('click', (e) => {
@@ -1522,7 +1565,7 @@ function main(argv) {
     const imagesDir = flag(rest, '--images', 'images');
     const sourceFlag = flag(rest, '--source');
 
-    const { characters, source, summary, lang: castLang, ui } = loadCast(castPath);
+    const { characters, source, summary, lang: castLang, ui, style } = loadCast(castPath);
     const lang = flag(rest, '--lang', castLang);
     const title = sourceFlag ?? source ?? basename(castPath).replace(/\.[^.]+$/, '');
 
@@ -1535,7 +1578,7 @@ function main(argv) {
 
     process.stdout.write(
       (html
-        ? renderHtml(characters, title, summary, lang, ui)
+        ? renderHtml(characters, title, summary, lang, ui, style)
         : renderMarkdown(characters, title, summary, lang, ui)) + '\n',
     );
     return;

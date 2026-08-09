@@ -1,5 +1,29 @@
 # Changelog
 
+## novel-characters 1.6.0 — 2026-08-09
+
+**报告可以导出 JSON**
+
+- 顶栏新增「导出 JSON」，下载的**就是 `cast.json` 本身的形状**
+  （`source` / `lang` / `style` / `summary` / `ui` / `characters`），
+  不另立一套导出格式
+- 所以外部工具改完可以**直接喂回 `render` 重新出报告**，也能过 `validate`。
+  自测里有一条断言就是拿导出的数据跑 `validateCast`，必须通过
+- 角色卡里的 `sheetImage` 一并带出，外部工具知道哪张图对应哪个人
+- 数据以 `<script type="application/json">` 内嵌，点导出只是把它包成 Blob 下载，
+  **不发任何网络请求**，报告仍然是离线单文件
+- `renderHtml()` 补上第 6 个参数 `style`——之前顶层的画风没传进渲染层，
+  导出时会漏掉这个字段
+
+**两个坑**
+
+- 正文里出现 `</script` 会把内嵌数据块提前截断。JSON 里 `<` 只可能在字符串值里，
+  整体转成 `<` 就安全了，自测里拿 `</script><script>alert(1)</script>` 当夹具
+- `URL.revokeObjectURL` **不能跟在 `a.click()` 后面立刻调用**——Safari 会抢在
+  下载读完之前撤掉 blob，存出来是空文件
+
+自测 259 → 274 项。
+
 ## novel-characters 1.5.0 — 2026-08-09
 
 **默认拆 30 个角色，每个都出图**
