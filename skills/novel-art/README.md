@@ -22,7 +22,7 @@
 
 产出 `art.json` + Markdown + 一个双击就能开的 `art-report.html`：
 
-![art-report.html](assets/report.png)
+![art-report.html](assets/report.webp)
 
 ## 质量门：11 道，全是代码
 
@@ -86,7 +86,7 @@ references/
 examples/
   渡口-art.json           《渡口》三场景 + 两件道具样例，全部质量门通过
 assets/
-  report.png             报告截图
+  report.webp            报告截图
 ```
 
 ## 自测

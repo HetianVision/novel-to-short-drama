@@ -10,7 +10,7 @@ Art bibles for **AI short-drama production**: scenes + narrative props. The prem
 
 Outputs `art.json`, a Markdown report, and a self-contained `art-report.html`:
 
-![art-report.html](assets/report.png)
+![art-report.html](assets/report.webp)
 
 ## The quality gates are code
 

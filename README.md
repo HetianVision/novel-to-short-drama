@@ -23,15 +23,15 @@
 
 **novel-characters · 角色设定集**
 
-![角色设定集报告](skills/novel-characters/assets/report.png)
+![角色设定集报告](skills/novel-characters/assets/report.webp)
 
 **novel-outline · 短剧改编大纲**
 
-![短剧改编大纲报告](skills/novel-outline/assets/report.png)
+![短剧改编大纲报告](skills/novel-outline/assets/report.webp)
 
 **novel-art · 美术设定集（场景 + 道具，设定图为 skill 实际生成）**
 
-![美术设定集报告](skills/novel-art/assets/report.png)
+![美术设定集报告](skills/novel-art/assets/report.webp)
 
 ## 安装
 
