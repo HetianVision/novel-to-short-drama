@@ -10,6 +10,12 @@ node_modules/
 /outline-report.html
 /*-outline.json
 /*-outline.md
+/art-report.html
+/*-art.json
+/*-art.md
+/script-report.html
+/*-script.json
+/*-script.md
 
 # 注意：skills/*/examples/ 下的样例必须提交——它们同时是自测夹具。
 # 上面几条都用 / 开头限定在仓库根，不会误伤 examples。
