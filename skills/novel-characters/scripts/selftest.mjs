@@ -180,6 +180,17 @@ eq(viaAlias[0].notes.length, 2, '两边 notes 都在');
 // 找不到的人必须报错——静默跳过会让调用方以为合并成功了
 throws(() => applyMerges(twoLu, [{ keep: '不存在', absorb: ['陆'] }]), /找不到/, 'keep 找不到要报错');
 throws(() => applyMerges(twoLu, [{ keep: '陆行远', absorb: ['不存在'] }]), /找不到/, 'absorb 找不到要报错');
+// 抛错前不许污染入参：部分合并成功、后面才发现找不到的人，入参也要原样
+const pristine = JSON.stringify(twoLu);
+throws(
+  () => applyMerges(twoLu, [{ keep: '陆行远', absorb: ['陆'] }, { keep: '不存在', absorb: ['沈知微'] }]),
+  /找不到/,
+  '部分成功再失败也要报错',
+);
+eq(JSON.stringify(twoLu), pristine, '抛错后入参没有被改动');
+eq(JSON.stringify(mergeRoster([[{ name: '甲', aliases: [], note: 'a', quotes: [] }]])),
+  JSON.stringify(applyMerges(mergeRoster([[{ name: '甲', aliases: [], note: 'a', quotes: [] }]]), [])),
+  '空 merges 是无操作');
 // absorb 指向 keep 自己不算错——两个键早就是同一个人
 eq(
   applyMerges([{ name: '甲', aliases: ['小甲'], notes: [], quotes: [] }], [{ keep: '甲', absorb: ['小甲'] }]).length,
@@ -204,6 +215,26 @@ eq(asm.style, 'ghibli', 'assemble 带画风');
 eq(asm.summary, '摘要', 'assemble 带摘要');
 eq(asm.characters.map((c) => c.name).join(''), 'BCDA', '按 importance 排序，同档保持传入顺序');
 ok(!('ui' in asm), '没有 ui 就不写这个键');
+
+// 同档要按戏份序——CLI 按文件名读卡是 slug 字典序，order 就是用来纠正它的
+const byFilename = [
+  { name: '老周', importance: 'major' },      // 文件名序在前
+  { name: '沈知微', importance: 'protagonist' },
+  { name: '陆行远', importance: 'major' },     // 但戏份比老周重
+];
+const ordered = assembleCast(byFilename, { source: 'x', order: ['沈知微', '陆行远', '老周'] });
+eq(ordered.characters.map((c) => c.name).join('→'), '沈知微→陆行远→老周', '同档按 order 的戏份顺序');
+eq(
+  assembleCast(byFilename, { source: 'x' }).characters.map((c) => c.name).join('→'),
+  '沈知微→老周→陆行远',
+  '不给 order 才退回传入顺序——这正是要修的文件名序',
+);
+// order 里没有的名字排同档末尾，不报错
+eq(
+  assembleCast(byFilename, { source: 'x', order: ['沈知微', '陆行远'] }).characters.map((c) => c.name).join('→'),
+  '沈知微→陆行远→老周',
+  'order 缺名字的排同档末尾',
+);
 ok('ui' in assembleCast([{ name: 'A' }], { source: 'x', ui: { copy: 'Copier' } }), '有 ui 翻译就带上');
 eq(
   assembleCast([{ name: 'X', importance: 'sidekick' }, { name: 'B', importance: 'protagonist' }], { source: 'x' })

@@ -13,7 +13,8 @@ import { fileURLToPath } from 'node:url';
 
 // 块大小的权衡：块越大，单块阅读越重；块越小，块数越多，跨块归并
 // （全管线语义最难的一步）的接缝就越多。现在的模型读 4 万字符毫无压力，
-// 所以往大取——接缝少三倍，漏归并的机会也少三倍。上限 24 块 ≈ 96 万字符。
+// 所以往大取——接缝少三倍，漏归并的机会也少三倍。
+// 上限 24 块，扣掉 23 段重叠净覆盖约 93 万字符。
 export const CHUNK_SIZE = 40_000;
 export const CHUNK_OVERLAP = 1_200;
 export const MAX_CHUNKS = 24;
@@ -138,8 +139,10 @@ export function mergeCandidates(cast) {
  * 把模型复核后的合并决定落地。merges: [{ keep, absorb: [...] }]，
  * keep / absorb 用 name 或任一 alias 定位都行。找不到就整体报错——
  * 静默跳过会让调用方以为合并成功了。
+ * 不改动传入的 cast：全程在副本上操作，抛错后入参照常可用。
  */
 export function applyMerges(cast, merges) {
+  cast = cast.map((c) => ({ ...c, aliases: [...c.aliases], notes: [...c.notes], quotes: [...c.quotes] }));
   const keyOf = (s) => String(s).trim().toLowerCase();
   const index = new Map();
   for (const c of cast) for (const k of [c.name, ...c.aliases]) index.set(keyOf(k), c);
@@ -610,16 +613,23 @@ export function validateCast(characters, sourceText, lang = DEFAULT_LANG, style 
 
 /**
  * 把第二趟的角色卡合成 cast.json 的顶层结构。纯机械活——之前留给模型
- * 手拼，手拼会丢字段、写错顶层键。角色按 importance 排，同档保持传入顺序。
+ * 手拼，手拼会丢字段、写错顶层键。
+ *
+ * 排序：importance 分档，同档按 order（merge 输出的名字顺序，即戏份
+ * 顺序）。不给 order 就保持传入顺序——CLI 按文件名读卡，那是 slug
+ * 字典序不是戏份序，所以报告要「按戏份排序」就必须给 order。
  */
-export function assembleCast(cards, { source, lang = DEFAULT_LANG, style = DEFAULT_STYLE, summary = '', ui = null } = {}) {
+export function assembleCast(cards, { source, lang = DEFAULT_LANG, style = DEFAULT_STYLE, summary = '', ui = null, order = null } = {}) {
   const rank = (c) => {
     const i = IMPORTANCE.indexOf(c?.importance);
     return i < 0 ? IMPORTANCE.length : i; // 越界的排最后，让 validate 去报，这里不崩
   };
+  const orderIndex = new Map((order ?? []).map((name, i) => [String(name).trim().toLowerCase(), i]));
+  // 不在 order 里的排到同档末尾（保持传入顺序），不报错——卡是从 merge 结果生成的，正常对得上
+  const byOrder = (c) => orderIndex.get(String(c?.name ?? '').trim().toLowerCase()) ?? orderIndex.size;
   const characters = cards
     .map((card, i) => [card, i])
-    .sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1])
+    .sort((a, b) => rank(a[0]) - rank(b[0]) || byOrder(a[0]) - byOrder(b[0]) || a[1] - b[1])
     .map(([card]) => card);
   const cast = { source, lang, style };
   if (ui) cast.ui = ui;
@@ -1542,6 +1552,7 @@ const USAGE = `novel-characters.mjs — novel-characters skill 的确定性工�
         [--apply merges.json]      落地复核后的合并决定：{"merges":[{"keep":…,"absorb":[…]}]}
   assemble <workdir> --source <书名>
         [--lang] [--style] [--out] 把 card-*.json + summary.txt（+ ui.json）合成 cast.json
+        [--order merged.json]      同档角色的戏份顺序（默认自动找 <workdir>/merged.json）
   validate <cast.json> <book.txt>  校验；有违规逐条打印并 exit 1
   render <cast.json> [--html|--md] 渲染报告到 stdout（默认 --md）
   slug <name>                      角色名转安全文件名
@@ -1680,13 +1691,25 @@ function main(argv) {
       problems.push(`lang=${lang} 不在内置界面语言里，缺 ${uiPath}——用 ui-template 生成骨架翻译后放进去`);
     }
 
+    // 同档角色的戏份顺序来自 merge 的输出——卡按文件名读入是 slug 字典序，
+    // 不给顺序的话「按戏份排序」就名存实亡
+    const orderPath = flag(rest, '--order', existsSync(join(dir, 'merged.json')) ? join(dir, 'merged.json') : null);
+    let order = null;
+    if (orderPath) {
+      const raw = readJson(orderPath);
+      const list = Array.isArray(raw) ? raw : (raw.characters ?? []);
+      order = list.map((e) => (typeof e === 'string' ? e : e?.name)).filter(Boolean);
+    } else {
+      console.error(`⚠️ 没有 --order 也没有 ${join(dir, 'merged.json')}，同档角色将按文件名序而不是戏份序`);
+    }
+
     if (problems.length) {
       console.error(`✗ ${problems.length} 处问题：\n`);
       for (const p of problems) console.error('  ' + p);
       process.exit(1);
     }
 
-    const cast = assembleCast(cards, { source: sourceName, lang, style, summary, ui });
+    const cast = assembleCast(cards, { source: sourceName, lang, style, summary, ui, order });
     const json = JSON.stringify(cast, null, 2) + '\n';
     const out = flag(rest, '--out');
     if (out) {

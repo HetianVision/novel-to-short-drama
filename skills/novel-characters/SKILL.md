@@ -111,8 +111,10 @@ node {baseDir}/scripts/novel-characters.mjs chunk <book.txt> <workdir>
 ### Step 4 — 归并 + 复核
 
 ```bash
-node {baseDir}/scripts/novel-characters.mjs merge <workdir>
+node {baseDir}/scripts/novel-characters.mjs merge <workdir> | tee <workdir>/merged.json
 ```
+
+落到 `merged.json` 不只是留档：Step 6 的 assemble 靠它拿同档角色的戏份顺序。
 
 按名字+别名精确收敛（某块把「陆」列成「陆行远」的别名，两条就并成一个人），notes 累加、quotes 去重，按出现块数降序——出现的块越多戏份越重。
 
@@ -125,10 +127,10 @@ node {baseDir}/scripts/novel-characters.mjs merge <workdir>
 ```
 
 ```bash
-node {baseDir}/scripts/novel-characters.mjs merge <workdir> --apply merges.json
+node {baseDir}/scripts/novel-characters.mjs merge <workdir> --apply merges.json | tee <workdir>/merged.json
 ```
 
-`keep`/`absorb` 用名字或任一别名定位都行，找不到会直接报错。输出仍带 `mergeCandidates`，剩下的都确认是不同的人（或清空）再进下一步。没有要合的就直接往下走。
+`keep`/`absorb` 用名字或任一别名定位都行，找不到会直接报错。输出仍带 `mergeCandidates`，剩下的都确认是不同的人（或清空）再进下一步。没有要合的就直接往下走——但 `merged.json` 必须留着。
 
 ### Step 5 — 选角
 
@@ -157,6 +159,8 @@ node {baseDir}/scripts/novel-characters.mjs assemble <workdir> \
 ```
 
 坏卡会被逐个点名——哪份 `card-*.json` 坏了就只重跑那个角色，其他不用动。
+
+同档角色的先后是戏份顺序，来自 Step 4 留下的 `<workdir>/merged.json`（assemble 自动读，也可用 `--order` 指别的文件）。报告左栏「按戏份排序」的序号就靠它——看到「同档角色将按文件名序」的警告说明 merged.json 丢了，回 Step 4 重新生成。
 
 ### Step 7 — 校验 ⛔ 不能跳
 
@@ -226,7 +230,7 @@ report.html 的样式约定见 `{baseDir}/references/report-style.md`——要�
 
 ## 边界
 
-- 单次上限 24 块（约 96 万字符），超了会明确报 `truncated`，不静默截断
+- 单次上限 24 块（净覆盖约 93 万字符），超了会明确报 `truncated`，不静默截断
 - 人类可读字段跟随 `--lang`（默认中文）；出图和 TTS 提示词**永远英文**，那些引擎吃英文最稳
 - 设定图最容易出的两个问题：**一张图里两个长相**、**为了塞细节把人物压扁**。拿到图先扫一眼，见 `references/sheet.md`
 - 出图只走 codex built-in `$imagegen`。**不用它的 CLI fallback**（要 `OPENAI_API_KEY`）
@@ -238,7 +242,7 @@ report.html 的样式约定见 `{baseDir}/references/report-style.md`——要�
 node {baseDir}/scripts/selftest.mjs
 ```
 
-301 项断言，不调模型、不花额度，覆盖分块 / 归并 / 合成 / 多语言 / 校验 / 渲染的全部确定性逻辑。改完脚本先跑这个。
+307 项断言，不调模型、不花额度，覆盖分块 / 归并 / 合成 / 多语言 / 校验 / 渲染的全部确定性逻辑。改完脚本先跑这个。
 
 ## 自带样例
 

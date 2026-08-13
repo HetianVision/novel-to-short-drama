@@ -139,7 +139,7 @@ node scripts/novel-characters.mjs styles ghibli   # 看某一个的完整内容
 node scripts/novel-characters.mjs chunk book.txt /tmp/wk        # 切块
 node scripts/novel-characters.mjs merge /tmp/wk                 # 归并 roster-*.json，附疑似同人候选
 node scripts/novel-characters.mjs merge /tmp/wk --apply m.json   # 落地复核后的合并
-node scripts/novel-characters.mjs assemble /tmp/wk --source 书名 # card-*.json 合成 cast.json
+node scripts/novel-characters.mjs assemble /tmp/wk --source 书名 # card-*.json 合成 cast.json，同档按戏份排序
 node scripts/novel-characters.mjs validate cast.json book.txt   # 校验
 node scripts/novel-characters.mjs render cast.json --html       # 出 report.html
 node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文件名
@@ -147,7 +147,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文�
 
 ## 边界
 
-- 单次上限 24 块（约 96 万字符）。超了会明确报 `truncated`，**不静默截断**
+- 单次上限 24 块（净覆盖约 93 万字符）。超了会明确报 `truncated`，**不静默截断**
 - 人类可读字段跟随 `--lang`；出图和 TTS 提示词**永远英文**，那些引擎吃英文最稳，跟报告语言无关
 - 默认取戏份最重的 30 位角色，**每位都出设定图**——一个角色一次调用，所以角色多的时候这步最花时间。想少出就直接给个数，或者说只要主要角色
 - **同一批角色的画风可能有差异**——各自独立出图。早期用「扁平矢量卡通」时漂得很厉害（同批出成动画感／半写实／水墨写实三种），换成明确的风格预设后好了很多，但不能保证完全一致。在意的话拿第一张当参考图压一压，见 `references/sheet.md`
@@ -160,7 +160,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # 安全文�
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-characters.mjs   chunk / merge / assemble / validate / render / slug
-  selftest.mjs           301 项断言，不调模型
+  selftest.mjs           307 项断言，不调模型
 references/
   roster-pass.md         第一趟：扫描角色
   profile-pass.md        第二趟：生成角色卡（8 条硬规则）
@@ -182,6 +182,6 @@ examples/
 node scripts/selftest.mjs
 ```
 
-301 项断言，覆盖分块 / 别名归并 / 合成 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+307 项断言，覆盖分块 / 别名归并 / 合成 / 多语言 / 校验 / 渲染。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。

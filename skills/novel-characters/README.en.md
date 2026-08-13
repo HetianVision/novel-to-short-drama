@@ -132,7 +132,7 @@ The helpers run fine without an agent — only the two model passes need one:
 node scripts/novel-characters.mjs chunk book.txt /tmp/wk        # split
 node scripts/novel-characters.mjs merge /tmp/wk                 # merge roster-*.json, with merge candidates
 node scripts/novel-characters.mjs merge /tmp/wk --apply m.json   # apply reviewed merges
-node scripts/novel-characters.mjs assemble /tmp/wk --source Book # combine card-*.json into cast.json
+node scripts/novel-characters.mjs assemble /tmp/wk --source Book # combine card-*.json into cast.json, prominence-ordered
 node scripts/novel-characters.mjs validate cast.json book.txt   # validate
 node scripts/novel-characters.mjs render cast.json --html       # build report.html
 node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem-safe name
@@ -140,7 +140,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem
 
 ## Limits
 
-- Caps at 24 chunks (~960k characters) per run. Beyond that it reports `truncated` explicitly — it does **not** silently drop the tail
+- Caps at 24 chunks (~930k characters net of overlap) per run. Beyond that it reports `truncated` explicitly — it does **not** silently drop the tail
 - Human-readable fields follow `--lang`; image and TTS prompts are **always English**, since those engines work best that way regardless of report language
 - The top 30 characters by prominence are profiled by default, and **every one of them gets a sheet** — one call per character, so this is the slowest step on a large cast. Ask for a smaller number, or for leads only, if you want it shorter
 - **Art style can still vary across a cast**, since each character is generated independently. It used to drift badly under the old "flat vector cartoon" wording — one run produced anime-ish, semi-realistic and ink-wash results side by side. The explicit style presets fixed most of that, but not all of it. Feeding the first sheet back as a reference helps; see `references/sheet.md`
@@ -153,7 +153,7 @@ node scripts/novel-characters.mjs slug "胡二爷"                  # filesystem
 SKILL.md                 the workflow the agent reads
 scripts/
   novel-characters.mjs   chunk / merge / assemble / validate / render / slug
-  selftest.mjs           301 assertions, never calls a model
+  selftest.mjs           307 assertions, never calls a model
 references/
   roster-pass.md         pass 1: scanning for characters
   profile-pass.md        pass 2: building a character sheet (8 hard rules)
@@ -175,6 +175,6 @@ In `examples/渡口.txt` the peddler is only ever referred to by a nickname and 
 node scripts/selftest.mjs
 ```
 
-301 assertions across chunking, alias merging, assembly, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
+307 assertions across chunking, alias merging, assembly, localization, validation, and rendering. No model calls, no quota, runs in about a second. Run it before anything else after touching the scripts.
 
 **Only tested on macOS with Node 24.** There is no platform-specific code, so Linux and older Node releases should be fine, but that is **unverified**.
