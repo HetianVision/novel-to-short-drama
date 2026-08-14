@@ -8,14 +8,14 @@ One line is held firmly though: **dialogue is structured data, not prose.**
 
 - **Beat flow** — every scene is an alternating sequence of action beats and dialogue lines: one event per action beat (narrative prose), every line carrying its speaker and delivery note. Lines feed straight into per-line TTS; action beats are what the picture has to do
 - **Per-episode time budget** — dialogue converts at reading speed (4.5 chars/sec by default), action at a fixed per-beat estimate (2.5s). Every episode must land within ±15% of target. **A three-minute episode is three minutes** — overruns are caught here, not in the generation pipeline
-- **Hook + cliffhanger** — on paper for every episode; beats promised by the outline must be claimed by actual scenes
+- **Hook + cliffhanger** — on paper for every episode, and **the hook is the first beat, not a label**: `hookBeat` claims its concrete image, gated to the episode's first 3 beats (cold open); beats promised by the outline must be claimed by actual scenes
 - **Voice-over convention** — `VO` marks inner voice and narration, whose voice goes in the delivery note; the line book groups VO separately
 
 Outputs `script.json`, a Markdown script, and a self-contained `script-report.html`:
 
 ![script-report.html](assets/report.webp)
 
-## Nine quality gates, all code
+## Ten quality gates, all code
 
 Same stance as the other three skills in this repo: **a checklist the model grades itself on is worthless.**
 
@@ -25,6 +25,7 @@ Same stance as the other three skills in this repo: **a checklist the model grad
 | Line length | ≤ 35 chars — a line you can't say in one breath can't be generated either |
 | Speaker legality | speaker must be in the scene's cast, or explicitly `VO` |
 | Hook & cliff on paper | `hook` / `cliff` required per episode |
+| **Hook lands in the first 3 beats** | `hookBeat` claims where the hook's concrete image appears — the cold open is a gate, not a habit, so the hook and the actual opening can never drift apart |
 | **At least one action beat per scene** | a dialogue-only scene is radio drama — nothing for the picture to do |
 | Narrative action | no quoted dialogue inside action beats — lines only live in dialogue entries |
 | Beats claimed | every beat the outline pins to this episode must be claimed (checked with `--outline`; skipping is **announced**, never silent) |
@@ -41,7 +42,7 @@ A single-page, 1600px-wide review document:
 - **Duration gauge**: one bar per episode, dialogue and action stacked, laid over the target-range band; overruns and shortfalls called out in red with exact seconds
 - **The script itself**: the main body, **two episodes per row**. Episode header (estimate / hook / cliff / claimed beats) always visible; the scene area clips at 300px with a fade and toggles open per episode; per-line copy buttons on hover
 - **Scene table**: every scene × setting × lighting × cast × estimated seconds — computed, never hand-written
-- **Line book**: **two blocks per row**, all dialogue grouped by character, each list six rows tall with its own scrollbar, with episode/scene references and a copy-all button — TTS runs per character, and this page is that worklist
+- **Line book**: **two blocks per row**, all dialogue grouped by character, each list six rows tall with its own scrollbar, with episode/scene references and a copy-all button; with `--cast`, each character header also carries a **voice-prompt** copy button — lines and voice design on one page, straight into TTS
 - **Quality gates** panel + header badge + **Export JSON** (downloads `script.json` verbatim — edit and feed it straight back into `render` / `validate`)
 - All graphics inline CSS/SVG, zero external resources, opens offline
 
@@ -64,7 +65,7 @@ One layer down comes the storyboard skill: shot numbers, per-shot duration, firs
 node scripts/novel-script.mjs seed outline.json --eps 1-3
 node scripts/novel-script.mjs validate script.json --outline outline.json --art art.json
 node scripts/novel-script.mjs checkup script.json
-node scripts/novel-script.mjs render script.json --html --outline outline.json --art art.json > script-report.html
+node scripts/novel-script.mjs render script.json --html --outline outline.json --art art.json --cast cast.json > script-report.html
 ```
 
 ## Limits
@@ -80,7 +81,7 @@ node scripts/novel-script.mjs render script.json --html --outline outline.json -
 node scripts/selftest.mjs
 ```
 
-125 assertions — timing engine, stats, gate-defeating cases, seed, rendering, export. No model calls, runs in about a second.
+137 assertions — timing engine, stats, gate-defeating cases, seed, rendering, export. No model calls, runs in about a second.
 
 The bundled example (`examples/渡口-script.json`) is a **complete 6-episode script** — 9 scenes, 123 lines, every episode inside the ±15% band, all gates passing against the outline and art fixtures.
 

@@ -25,6 +25,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = JSON.parse(readFileSync(join(here, '../examples/渡口-script.json'), 'utf8'));
 const OUTLINE = JSON.parse(readFileSync(join(here, '../../novel-outline/examples/渡口-outline.json'), 'utf8'));
 const ART = JSON.parse(readFileSync(join(here, '../../novel-art/examples/渡口-art.json'), 'utf8'));
+const CAST = JSON.parse(readFileSync(join(here, '../../novel-characters/examples/渡口-cast.json'), 'utf8'));
 const CTX = { outline: OUTLINE, art: ART };
 
 let passed = 0;
@@ -88,7 +89,7 @@ ok(voEntry.lines[0].sceneId === 'S01', '台词条目带场景');
 
 ok(gateReport(FIXTURE, CTX).every((g) => g.ok), '样例带上游全部门通过');
 ok(gateReport(FIXTURE).every((g) => g.ok), '不带上游也全部通过（对账门跳过）');
-eq(gateReport(FIXTURE).length, 9, '九道门');
+eq(gateReport(FIXTURE).length, 10, '十道门');
 
 /* ---------------- 质量门：逐门击穿 ---------------- */
 
@@ -143,6 +144,32 @@ eq(gateReport(FIXTURE).length, 9, '九道门');
   const doc = clone(FIXTURE);
   delete doc.episodes[0].cliff;
   ok(!gate(doc, 'hook-cliff').ok, '缺结尾悬念被拦');
+}
+// hook-open — 钩子必须在全集前 3 拍内兑现（认领机制）
+{
+  const doc = clone(FIXTURE);
+  delete doc.episodes[0].hookBeat;
+  const g = gate(doc, 'hook-open');
+  ok(!g.ok, '缺 hookBeat 被拦');
+  ok(g.detail.includes('hookBeat'), '报出缺的字段');
+}
+{
+  const doc = clone(FIXTURE);
+  doc.episodes[0].hookBeat = [2, 1]; // 第 2 场第 1 拍 = 全集第 14 拍
+  const g = gate(doc, 'hook-open');
+  ok(!g.ok, '钩子落在第 14 拍被拦——冷开场是门不是建议');
+  ok(g.detail.includes('第 14 拍'), '报出实际位置');
+}
+{
+  const doc = clone(FIXTURE);
+  doc.episodes[0].hookBeat = [9, 9];
+  ok(gate(doc, 'hook-open').detail.includes('不存在'), '指向不存在的节拍被拦');
+}
+{
+  const doc = clone(FIXTURE);
+  doc.episodes[0].hookBeat = [2, 1];
+  doc.params = { hookWindow: 20 };
+  ok(gate(doc, 'hook-open').ok, '钩子窗口可按需放宽');
 }
 // has-action
 {
@@ -285,6 +312,7 @@ ok(md.includes('**老周**'), 'md 说话人显示名字不是 ID');
 ok(md.includes('**画外音**'), 'md 里 VO 显示成画外音');
 ok(md.includes('场次总表'), 'md 带场次总表');
 ok(md.includes('台词本'), 'md 带台词本');
+ok(md.includes('第 1 场第 1 拍兑现'), 'md 钩子行带认领位置');
 const mdBare = renderMarkdown(FIXTURE);
 ok(mdBare.includes('**C03**'), '不给上游时退回裸 ID');
 ok(mdBare.includes('S02'), '场景同样退回 ID');
@@ -299,7 +327,7 @@ ok(html.includes('分集剧本'), '02 分集剧本');
 ok(html.includes('场次总表'), '03 场次总表');
 ok(html.includes('台词本'), '04 台词本');
 ok(html.includes('质量门'), '05 质量门');
-ok(html.includes('✓ 质量门 9 / 9'), '页眉徽章全绿');
+ok(html.includes('✓ 质量门 10 / 10'), '页眉徽章全绿');
 ok(html.includes('class="band"'), '时长条带目标区间');
 ok(html.includes('导出 JSON'), '导出按钮在');
 ok(html.includes('id="script-data"'), '数据内嵌');
@@ -320,6 +348,14 @@ ok(html.includes('max-height:186px'), '台词列表六行高，纵向滚动');
 }
 ok(html.includes('老周'), 'html 里 ID 换成名字');
 ok(html.includes('晨雾'), '光照 chips 在');
+ok(html.includes('第 1 场第 1 拍兑现'), '钩子行带认领徽章');
+ok(html.includes('act-line hooked'), '认领的节拍在正文里高亮');
+ok(!html.includes('音色提示词'), '不给 --cast 就没有音色按钮——不猜');
+{
+  const withCast = renderHtml(FIXTURE, { ...CTX, cast: CAST });
+  ok(withCast.includes('音色提示词'), '给了 --cast 台词本带音色提示词按钮');
+  ok(withCast.includes('A young female voice'), '音色提示词是 cast 的 voice.prompt 原文');
+}
 
 // 病灶横幅
 {
