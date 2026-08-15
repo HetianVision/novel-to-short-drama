@@ -950,18 +950,30 @@ export function renderHtml(board, ctx = {}) {
           const frame = (ci) => `${seg.id}/f${ci + 1}.png`;
           const has = (ci) => (ctx.imageExists ? ctx.imageExists(frame(ci)) : false);
 
-          // 主分镜图区：每切一张图，未生成时整宽竖排显示各自的出图提示词 + 复制按钮
-          const frameCells = seg.cuts
-            .map((cut, ci) => {
-              const label = ci === 0 ? t.masterLabel : t.subLabel(ci + 1);
-              const body = has(ci)
-                ? `<img class="frame" src="${esc(frame(ci))}" alt="${esc(`${seg.id}#${ci + 1}`)}" loading="lazy">`
-                : `<div class="frame ph fcell"><div class="fcell-h"><b>${esc(`${label} · ${t.frameMissing(ci + 1)}`)}</b><button class="copy mini" data-copy="${esc(cut.frame ?? '')}">${esc(t.copy)}</button></div><span class="fprompt">${esc(cut.frame ?? '')}</span></div>`;
-              return body;
-            })
-            .join('\n');
-          const master = `<div class="fquad">${frameCells}</div>`;
-          const subs = '';
+          // 主分镜图区：图出全的段保留原 master+subs 层级；有缺图的段每切一格——
+          // 有图的格显示原图，无图的格显示整宽提示词卡 + 复制按钮（混合情况按格判断）
+          const hasAll = seg.cuts.every((_, ci) => has(ci));
+          let master, subs;
+          if (hasAll) {
+            master = `<img class="frame" src="${esc(frame(0))}" alt="${esc(`${seg.id}#1`)}" loading="lazy">`;
+            subs = seg.cuts.length > 1
+              ? `<div class="subs">${seg.cuts
+                  .slice(1)
+                  .map((cut, ci) => `<img class="subf" src="${esc(frame(ci + 1))}" alt="${esc(`${seg.id}#${ci + 2}`)}" loading="lazy">`)
+                  .join('')}</div>`
+              : '';
+          } else {
+            master = `<div class="fquad">${seg.cuts
+              .map((cut, ci) => {
+                const label = ci === 0 ? t.masterLabel : t.subLabel(ci + 1);
+                const body = has(ci)
+                  ? `<img class="frame" src="${esc(frame(ci))}" alt="${esc(`${seg.id}#${ci + 1}`)}" loading="lazy">`
+                  : `<div class="frame ph fcell"><div class="fcell-h"><b>${esc(`${label} · ${t.frameMissing(ci + 1)}`)}</b><button class="copy mini" data-copy="${esc(cut.frame ?? '')}">${esc(t.copy)}</button></div><span class="fprompt">${esc(cut.frame ?? '')}</span></div>`;
+                return body;
+              })
+              .join('\n')}</div>`;
+            subs = '';
+          }
 
           const cutRows = seg.cuts
             .map((cut, ci) => {
@@ -1154,7 +1166,8 @@ section.top-sec{margin-top:34px}
 .fquad .fcell{margin:0;min-height:0}
 .fcell-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
 .fcell-h .copy.mini{margin:0;flex:none}
-.fprompt{font:400 10.5px/1.4 var(--mono);color:var(--ink-2);white-space:pre-wrap;word-break:break-word;display:block}
+.frame.ph .fprompt{font:400 10.5px/1.4 var(--mono);color:var(--ink-2);white-space:pre-wrap;word-break:break-word;display:block;
+  -webkit-line-clamp:none;-webkit-box-orient:vertical;overflow:visible}
 .subf{width:100%;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--rule-2);border-radius:2px;
   cursor:zoom-in;display:block;background:var(--side)}
 .subf.ph{display:flex;align-items:center;justify-content:center;cursor:default;
