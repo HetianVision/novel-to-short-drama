@@ -356,6 +356,37 @@ ok(!html.includes('音色提示词'), '不给 --cast 就没有音色按钮——
   ok(withCast.includes('音色提示词'), '给了 --cast 台词本带音色提示词按钮');
   ok(withCast.includes('A young female voice'), '音色提示词是 cast 的 voice.prompt 原文');
 }
+ok(html.includes('lang="zh"'), '默认报告 html lang 是 zh');
+
+/* ---------------- render — 英文界面 ---------------- */
+
+{
+  const en = renderHtml(FIXTURE, { ...CTX, lang: 'en' });
+  ok(en.includes('lang="en"'), 'en 报告的 html lang 属性正确');
+  ok(en.includes('Export JSON'), 'en 导出按钮标签');
+  ok(en.includes('Quality gates 10 / 10'), 'en 页眉徽章全绿');
+  ok(en.includes('Line book'), 'en 台词本标题');
+  ok(en.includes('Duration gauge'), 'en 时长仪表标题');
+  ok(!en.includes('导出 JSON'), 'en 报告不含中文导出标签');
+  ok(!en.includes('质量门'), 'en 报告不含中文质量门标签');
+  ok(!en.includes('台词本'), 'en 报告不含中文台词本标签');
+}
+{
+  const mdEn = renderMarkdown(FIXTURE, { ...CTX, lang: 'en' });
+  ok(mdEn.includes('## Episode 1'), 'en md 分集标题是英文');
+  ok(mdEn.includes('## Line book'), 'en md 台词本标题是英文');
+}
+{
+  const doc = clone(FIXTURE);
+  doc.lang = 'en';
+  ok(renderMarkdown(doc, CTX).includes('## Episode 1'), 'script.json 顶层 lang 字段生效');
+  ok(renderMarkdown(doc, { ...CTX, lang: 'zh' }).includes('## 第 1 集'), '--lang 优先于 JSON 的 lang 字段');
+}
+{
+  let threw = false;
+  try { renderHtml(FIXTURE, { ...CTX, lang: 'fr' }); } catch { threw = true; }
+  ok(threw, '非内置语言直接抛错，不静默回退');
+}
 
 // 病灶横幅
 {
@@ -377,4 +408,10 @@ ok(!html.includes('音色提示词'), '不给 --cast 就没有音色按钮——
   ok(h.includes('\\u003c'), '内嵌 JSON 的 < 转成 \\u003c，防 </script 截断');
 }
 
+// 质量门面板是报告的一部分：英文界面下门标签也要翻译（阈值由门自己算，原样保留）
+{
+  const gateEn = renderHtml(FIXTURE, { ...CTX, lang: 'en' });
+  ok(gateEn.includes('Episode duration within'), 'EN 报告的质量门标签翻译且阈值原样保留');
+  ok(!gateEn.includes('每集时长在目标'), 'EN 报告不再出现中文门标签');
+}
 console.log(`✓ ${passed} 项自测全部通过`);

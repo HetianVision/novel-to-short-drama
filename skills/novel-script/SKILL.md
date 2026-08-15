@@ -1,6 +1,6 @@
 ---
 name: novel-script
-version: 1.1.0
+version: 1.2.0
 description: |
   给 AI 短剧写剧本：把 novel-outline 的分集梗概落成结构化的场次 + 节拍流（动作节拍与台词行交替），
   台词逐句带说话人与语气，时长逐集按语速确定性折算。产出 script.json + Markdown + 单页评审报告
@@ -110,6 +110,7 @@ node {baseDir}/scripts/novel-script.mjs render <剧名>-script.json --md \
   --outline <outline.json> --art <art.json> > <剧名>-script.md
 node {baseDir}/scripts/novel-script.mjs render <剧名>-script.json --html \
   --outline <outline.json> --art <art.json> --cast <cast.json> > script-report.html
+# 英文界面：加 --lang en（默认中文，也可跟 script.json 顶层的 lang 字段）
 ```
 
 报告含：KPI 带（含台词占比）、时长仪表（每集条形打在目标区间带上，超欠标红）、分集剧本（一排两集，场次信息超过 300px 渐隐截断、点开展开）、场次总表、**台词本**（一排两个，按角色聚合、列表六行高可滚动、整组复制；给了 `--cast` 每个角色组头带**音色提示词**按钮——台词和音色一页配齐直接跑 TTS）、质量门面板、导出 JSON（下载的就是 script.json 原样）。
@@ -140,7 +141,7 @@ seed 吃 outline.json；validate/render 的 `--outline` `--art` 负责对账和�
 
 ## 边界
 
-- 报告界面 v1 只有中文；台词语言跟剧走
+- 报告界面内置中英（`--lang`，默认中文、或跟 script.json 的 `lang` 字段）；台词语言跟剧走
 - 时长是**估算不是秒表**——容差 ±15% 就是为此留的；`params.charsPerSecond` 按配音语速可调
 - `VO` 是画外音统一记号，谁的心声写在 `delivery` 里；台词本里 VO 单独成组
 - 不设每集场次上限——AI 换景不要钱，换景次数只进 KPI 统计不设门
@@ -151,7 +152,7 @@ seed 吃 outline.json；validate/render 的 `--outline` `--art` 负责对账和�
 node {baseDir}/scripts/selftest.mjs
 ```
 
-137 项断言，不调模型、不花额度。10 道质量门每一道都有击穿用例。改完脚本先跑这个。
+151 项断言，不调模型、不花额度。10 道质量门每一道都有击穿用例。改完脚本先跑这个。
 
 ## 自带样例
 

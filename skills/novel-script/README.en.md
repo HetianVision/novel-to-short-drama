@@ -36,6 +36,8 @@ The selftest **defeats every gate on purpose** to prove each one actually blocks
 
 ## The report
 
+**Reports render with a Chinese UI by default; pass `--lang en` for a fully English report** (or set a top-level `"lang": "en"` in script.json — `--lang` wins when both are given). In English mode the quality-gate labels are translated too (thresholds kept as computed); failing-gate details and all data stay as authored.
+
 A single-page, 1600px-wide review document:
 
 - **KPI band**: episodes / estimated total vs target / line count / dialogue ratio / average scene length — scene changes are a statistic, not a gate; AI scene changes are free
@@ -66,13 +68,16 @@ node scripts/novel-script.mjs seed outline.json --eps 1-3
 node scripts/novel-script.mjs validate script.json --outline outline.json --art art.json
 node scripts/novel-script.mjs checkup script.json
 node scripts/novel-script.mjs render script.json --html --outline outline.json --art art.json --cast cast.json > script-report.html
+node scripts/novel-script.mjs render script.json --html --lang en --outline outline.json --art art.json > script-report.html
 ```
+
+The report UI defaults to Chinese; `--lang en` renders it fully in English.
 
 ## Limits
 
 - No shots, no shot numbers, no generation prompts, no images — nothing from the storyboard layer
 - Duration is an **estimate, not a stopwatch** — that's what the ±15% tolerance is for; tune `params.charsPerSecond` to your voice-over pace
-- Report UI is Chinese-only in v1; dialogue follows the drama's language
+- Report UI ships in Chinese and English (`--lang zh|en`, Chinese by default, or the script.json top-level `lang` field); dialogue follows the drama's language
 - Write ≤ 3 episodes per batch — the script is the most-rewritten layer of the whole pipeline
 
 ## Selftest
@@ -81,7 +86,7 @@ node scripts/novel-script.mjs render script.json --html --outline outline.json -
 node scripts/selftest.mjs
 ```
 
-137 assertions — timing engine, stats, gate-defeating cases, seed, rendering, export. No model calls, runs in about a second.
+151 assertions — timing engine, stats, gate-defeating cases, seed, rendering (both UI languages), export. No model calls, runs in about a second.
 
 The bundled example (`examples/渡口-script.json`) is a **complete 6-episode script** — 9 scenes, 123 lines, every episode inside the ±15% band, all gates passing against the outline and art fixtures.
 

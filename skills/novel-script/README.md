@@ -36,7 +36,7 @@
 
 ## 报告长什么样
 
-业内评审用的单页报告，页宽 1600：
+业内评审用的单页报告，页宽 1600。界面默认中文，render 加 `--lang en` 输出全英文界面： 英文界面下质量门标签同样翻译（阈值原样），门的失败详情与数据内容保持原文。
 
 - **KPI 带**：集数 / 预估总时长 vs 目标 / 台词句数 / 台词占比 / 平均每场——换景次数只是统计不设门，AI 换景不要钱
 - **时长仪表**：每集一行条形图，台词与动作堆叠，打在目标区间的绿带上；超时欠时红字点名差几秒
@@ -71,6 +71,8 @@ node scripts/novel-script.mjs checkup script.json                # 只跑质量�
 node scripts/novel-script.mjs render script.json --html \
      --outline outline.json --art art.json \
      --cast cast.json > script-report.html                       # 出报告（--cast 带音色提示词）
+node scripts/novel-script.mjs render script.json --html --lang en \
+     --outline outline.json --art art.json > script-report.html  # 英文界面报告（默认中文）
 node scripts/novel-script.mjs slug "渡口"                         # 安全文件名
 ```
 
@@ -78,7 +80,7 @@ node scripts/novel-script.mjs slug "渡口"                         # 安全文�
 
 - 不分镜头、无镜号、不写画面生成提示词、不出图——分镜层的活一件不碰
 - 时长是**估算不是秒表**，容差 ±15% 就是为此留的；配音语速不同就调 `params.charsPerSecond`
-- 报告界面 v1 只有中文；台词语言跟剧走
+- 报告界面内置中英：render 加 `--lang en` 输出全英文界面（默认中文，或跟 script.json 顶层的 `lang` 字段）；台词语言跟剧走
 - 一次建议写 ≤ 3 集——剧本是全管线改得最凶的一层，小批量出、快拍板、再往下写
 
 ## 文件
@@ -87,7 +89,7 @@ node scripts/novel-script.mjs slug "渡口"                         # 安全文�
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-script.mjs       seed / validate / checkup / render / slug
-  selftest.mjs           137 项断言，不调模型
+  selftest.mjs           151 项断言，不调模型
 references/
   schema.md              script.json 结构 + 时长折算规则
   script-pass.md         写戏：硬规则、手感规则、常见病
@@ -104,6 +106,6 @@ assets/
 node scripts/selftest.mjs
 ```
 
-137 项断言，覆盖时长引擎 / 统计 / 质量门逐项击穿 / seed / 渲染 / 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+151 项断言，覆盖时长引擎 / 统计 / 质量门逐项击穿 / seed / 渲染（含英文界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。

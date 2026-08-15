@@ -48,7 +48,7 @@ The selftest **defeats every gate on purpose** to prove each one actually blocks
 
 ## The report
 
-A single-page, 1600px-wide review document:
+A single-page, 1600px-wide review document. Reports render with a Chinese UI by default; pass `--lang en` to `render` for a fully English report (zh / en built in). This only switches the UI labels — it is independent of `promptLang`, which controls the H3 prompt language (English by default). In English mode the quality-gate labels are translated too (thresholds kept as computed); failing-gate details and all data stay as authored.
 
 - **KPI band**: segments / cuts with average length / total vs target / generation batches / segments carrying dialogue
 - **Cut rhythm strip** (the signature chart): one band per episode, **thick separators = segment boundaries (one generation each)**, slice width = cut duration share, color depth = shot size; click a slice to jump to its segment card
@@ -77,6 +77,7 @@ node scripts/novel-storyboard.mjs seed script.json --eps 1
 node scripts/novel-storyboard.mjs validate sb.json --script script.json --outline outline.json --cast cast.json
 node scripts/novel-storyboard.mjs checkup sb.json --script script.json
 node scripts/novel-storyboard.mjs render sb.json --html --script script.json --outline outline.json --art art.json > storyboard-report.html
+node scripts/novel-storyboard.mjs render sb.json --html --lang en --script script.json --outline outline.json --art art.json > storyboard-report.html   # English report UI
 node scripts/novel-storyboard.mjs export sb.json --script script.json   # per-segment folders: f1..fN.png + prompt.md
 ```
 
@@ -85,7 +86,7 @@ node scripts/novel-storyboard.mjs export sb.json --script script.json   # per-se
 - No writing or rewriting dialogue, no design sheets, no video generation or editing
 - Lip-sync is out of scope for now — that belongs to the generation pipeline
 - Seconds are a **generation order, not an estimate**; tune the segment cap and cut-rhythm range in `params` per your model
-- Report UI is Chinese-only in v1; prompts are always English
+- Report UI ships in Chinese (default) and English — pick with `--lang`; the prompt language is controlled separately by `promptLang` (English by default)
 - Generate the first segment's full frame set (3–5 images) for approval before committing — one episode is ~30–40 frames, and a wrong art direction wastes the batch
 
 ## Selftest
@@ -94,7 +95,7 @@ node scripts/novel-storyboard.mjs export sb.json --script script.json   # per-se
 node scripts/selftest.mjs
 ```
 
-165 assertions — beat expansion, H3 skeleton derivation, stats and batching, gate-defeating cases, seed, rendering, export. No model calls, runs in about a second.
+183 assertions — beat expansion, H3 skeleton derivation, stats and batching, gate-defeating cases, seed, rendering (both report UI languages), export. No model calls, runs in about a second.
 
 The bundled example (`examples/渡口-storyboard.json`) is a complete episode-1 storyboard — 10 segments, 34 cuts claiming all 35 script beats at ~3.5s per cut, 119s against a 120s target, 2 generation batches, every segment carrying a fully audited H3 prompt.
 

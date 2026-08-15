@@ -56,6 +56,7 @@
 - **配音对齐单**：每句台词对到**段号#切序**——TTS 音频贴到哪一段的第几切，全自动
 - **质量门**面板 + 页眉徽章 + **导出 JSON**（下载的就是 `storyboard.json` 原样）
 - 全部图形内联 CSS/SVG，零外部依赖，离线双击能开
+- 报告界面默认中文，`render --lang en` 输出全英文界面（内置 zh / en 两套）——只切界面标签，与 `promptLang`（H3 提示词语言，默认英文）互相独立。英文界面下质量门标签同样翻译（阈值原样），门的失败详情与数据内容保持原文
 
 ## 五个 skill 的接力（管线到此闭环）
 
@@ -80,6 +81,8 @@ node scripts/novel-storyboard.mjs validate sb.json \
 node scripts/novel-storyboard.mjs checkup sb.json --script script.json
 node scripts/novel-storyboard.mjs render sb.json --html \
      --script script.json --outline outline.json --art art.json > storyboard-report.html
+node scripts/novel-storyboard.mjs render sb.json --html --lang en \
+     --script script.json --outline outline.json --art art.json > storyboard-report.html   # 英文界面报告
 node scripts/novel-storyboard.mjs export sb.json --script script.json   # H3 投产包
 ```
 
@@ -90,7 +93,7 @@ node scripts/novel-storyboard.mjs export sb.json --script script.json   # H3 投
 - 不写戏不改台词、不出设定图、不做视频生成与剪辑合成
 - 口型/唇形同步暂不管——那是生成管线的事
 - 秒数是**下给视频模型的生成时长**不是估算；段上限、分镜节奏区间都在 `params` 里按模型调
-- 报告界面 v1 只有中文；提示词永远英文
+- 报告界面内置中英（`--lang`，默认中文）；提示词语言由 `promptLang` 单独控制（默认英文）
 - 分镜图默认先出第一段的整套（3–5 张）看效果，确认画风和构图再往后补——一集约 30–40 格，方向错了整批重来
 
 ## 文件
@@ -99,7 +102,7 @@ node scripts/novel-storyboard.mjs export sb.json --script script.json   # H3 投
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-storyboard.mjs   seed / validate / checkup / render / export / slug
-  selftest.mjs           165 项断言，不调模型
+  selftest.mjs           183 项断言，不调模型
 references/
   schema.md              storyboard.json 结构 + 时长约束链
   h3-prompt.md           H3 提示词写法规范（官方方法论内化版）
@@ -118,6 +121,6 @@ assets/
 node scripts/selftest.mjs
 ```
 
-165 项断言，覆盖节拍展开 / H3 骨架推导 / 统计与批次 / 质量门逐项击穿 / seed / 渲染 / 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+183 项断言，覆盖节拍展开 / H3 骨架推导 / 统计与批次 / 质量门逐项击穿 / seed / 渲染（含中英界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。

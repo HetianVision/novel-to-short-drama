@@ -646,44 +646,168 @@ export function slug(name) {
 /* render — 界面文案                                                    */
 /* ------------------------------------------------------------------ */
 
-const T = {
-  kicker: '分镜',
-  docTitle: (s, a, b) => `${s} · 分镜${a === b ? `（第 ${a} 集）` : `（第 ${a}–${b} 集）`}`,
-  exportJson: '导出 JSON',
-  gatesPass: '全部通过',
-  gatesFail: (n) => `${n} 项未过`,
-  gatePill: (okN, total) => `质量门 ${okN} / ${total}`,
-  kpi: {
-    segments: '生成段', segmentsSub: (cap) => `一段一次调用，上限 ${cap} 秒`,
-    cuts: '分镜', cutsSub: (avg) => `平均 ${avg} 秒一切`,
-    time: '预估总时长', timeSub: (t) => `目标 ${t}`,
-    batches: '生成批次', batchesSub: '同场景同光照共用环境参考图',
-    lines: '台词段', linesSub: '其余是纯画面段',
+/*
+ * 界面文案表：内置 zh / en 两套。语言优先级 --lang > JSON 顶层 lang 字段 > 'zh'，
+ * 经 ctx.lang 传给渲染器。只管报告界面标签——与 promptLang（H3 提示词语言）
+ * 互相独立：界面切英文不改提示词，提示词切中文不改界面。
+ * 数据（H3 提示词、画面摘要、台词、质量门 detail）不在此表，原样透传。
+ */
+/* 门标签与「跳过」提示的英文映射：质量门面板是报告的一部分，出英文报告时
+ * 这里做展示层翻译——gateReport 的逻辑与中文诊断文案一行不动（CLI 仍是中文）。
+ * 动态阈值由门自己算，映射里只写固定语义；未命中的 id 回落到原标签。 */
+const GATE_LABELS_EN = {
+  'coverage': 'Every script beat claimed exactly once, in order, contiguous (cut level)',
+  'segment-cap': 'Each segment 0 < total ≤ {1}s (the single-generation cap)',
+  'cut-length': 'Every cut {0}–{1}s — the short-drama attention rhythm',
+  'dialogue-fit': 'Dialogue of the claimed beats fits within the cut duration',
+  'ep-duration': 'Episode total within ±{0}% of the script\'s target',
+  'crowd': 'At most {0} characters on screen per cut; more requires a breakdown note',
+  'segment-id': 'Segment IDs in E01-01 format, sequential',
+  'size-phrase': 'Shot-size phrase present in the frame prompt',
+  'camera-phrase': 'Camera move from the official H3 vocabulary, inside its own [Shot k] passage',
+  'h3-structure': 'H3 alignment line derived from the cut structure, audited verbatim; cut times match',
+  'h3-dialogue': 'Claimed dialogue appears verbatim inside the H3 <d> blocks',
+  'h3-lang': 'Prompt language matches the promptLang setting',
+  'style-phrase': 'Frame-prompt style phrase consistent — one drama, one look',
+  'prompt-english': 'Frame prompts are English and non-empty',
+  'prompt-no-names': 'English prompts carry no character names',
+  'refs': 'Scenes / characters / props audited against the script',
+};
+const GATE_SKIPS_EN = {
+    '未提供 outline.json，本门跳过（视为通过）': 'outline.json not provided — gate skipped (treated as passing)',
+    '未提供 art.json，本门跳过（视为通过）': 'art.json not provided — gate skipped (treated as passing)',
+    '未提供 script.json，本门跳过（视为通过）': 'script.json not provided — gate skipped (treated as passing)',
+    '未提供 outline/cast，本门跳过（视为通过）': 'outline/cast not provided — gate skipped (treated as passing)',
+    '未提供 cast.json，本门跳过（视为通过）': 'cast.json not provided — gate skipped (treated as passing)',
+};
+/** 报告里的门文案：英文界面取映射，未命中或中文界面回落原文。 */
+const gateText = (g, lang) => {
+  if (lang !== 'en') return { label: g.label, detail: g.detail };
+  const en = GATE_LABELS_EN[g.id];
+  // 阈值仍由门自己算：把中文标签里出现的数字按序填进 {0} {1}
+  const nums = String(g.label).match(/\d+(?:\.\d+)?/g) ?? [];
+  const label = en ? en.replace(/\{(\d)\}/g, (m, i) => nums[Number(i)] ?? m) : g.label;
+  return { label, detail: GATE_SKIPS_EN[g.detail] ?? g.detail };
+};
+
+const I18N = {
+  zh: {
+    langCode: 'zh',
+    kicker: '分镜',
+    docTitle: (s, a, b) => `${s} · 分镜${a === b ? `（第 ${a} 集）` : `（第 ${a}–${b} 集）`}`,
+    epRange: (a, b) => (a === b ? `第 ${a} 集` : `第 ${a}–${b} 集`),
+    exportJson: '导出 JSON',
+    gatesPass: '全部通过',
+    gatesFail: (n) => `${n} 项未过`,
+    gatePill: (okN, total) => `质量门 ${okN} / ${total}`,
+    kpi: {
+      segments: '生成段', segmentsSub: (cap) => `一段一次调用，上限 ${cap} 秒`,
+      cuts: '分镜', cutsSub: (avg) => `平均 ${avg} 秒一切`,
+      time: '预估总时长', timeSub: (t) => `目标 ${t}`,
+      batches: '生成批次', batchesSub: '同场景同光照共用环境参考图',
+      lines: '台词段', linesSub: '其余是纯画面段',
+    },
+    secRhythm: '分镜节奏带',
+    secSegments: '分集分镜表',
+    secBatches: '生成批次单',
+    secDialogue: '配音对齐单',
+    secGates: '质量门',
+    rhythmNote: '粗分隔 = 生成段边界 · 段宽 = 分镜时长占比 · 颜色越深景别越近',
+    segmentsNote: '一段 = 一次生成：主分镜图钉 0.00 秒，子分镜图钉各自切点',
+    batchesNote: '自动汇总 · 同批段共用同一张环境参考图',
+    dialogueNote: '自动汇总 · TTS 音频对到哪一段的第几切',
+    epHead: (nSeg, nCut, total, target) => `${nSeg} 段 ${nCut} 切 · 共 ${total} 秒 / 目标 ${target} 秒`,
+    segHead: (total, n) => `${total} 秒 · ${n} 个分镜`,
+    secBadge: (secs, n) => `${secs}s · ${n} 切`,
+    rhythmVal: (nSeg, nCut, secs) => `${nSeg} 段 ${nCut} 切 · ${secs}s`,
+    beatsLabel: (s, from, to) => `第 ${s} 场 ${from === to ? `第 ${from} 拍` : `第 ${from}–${to} 拍`}`,
+    masterLabel: '主分镜图',
+    subLabel: (i) => `子分镜 ${i}`,
+    frameMissing: (i) => `#${i} 未生成`,
+    framePrompt: '分镜图提示词',
+    h3Prompt: 'H3 提示词',
+    h3Section: 'H3 视频提示词',
+    showSegs: '▾ 展开全部段',
+    hideSegs: '▴ 收起',
+    copy: '复制', copied: '已复制', copyFailed: '复制失败',
+    dialogueCols: ['段 · 切', '说话人', '台词', '台词秒数'],
+    cutCols: ['切', '起点', '秒', '景别', '运镜', '画面', '人物'],
+    batchCols: ['场景', '光照', '段', '需要的角色', '道具'],
+    atSec: (t) => `${t.toFixed(2)}s 起`,
+    batchLabel: (num) => `批次 ${num}`,
+    batchNeed: (chars, props) => `需要：${chars.length ? chars.join('、') + ' 的角色设定图' : '无角色（空镜）'}${props.length ? ' · ' + props.join('、') : ''}`,
+    voiceOver: '画外音',
+    listSep: '、',
+    sizeName: (size) => SHOT_SIZES[size]?.zh ?? size,
+    cameraLabel: (camera) => `${camera}（${CAMERA_MOVES[camera] ?? '?'}）`,
+    speakerLine: (name, text) => `${name}：「${text}」`,
+    withLighting: (name, lighting) => (lighting ? `${name}（${lighting}）` : name),
+    fmtMin: (sec) => `${Math.floor(sec / 60)} 分 ${Math.round(sec % 60)} 秒`,
+    unitSeg: '段',
+    unitCut: '切',
+    colophon: '分镜由模型依据剧本切分：段 = 一次生成（≤15 秒），分镜 = 段内 2–5 秒的剪切，每个分镜一张关键帧图。对齐指令、切点时刻、台词、提示词纪律全部由脚本确定性对账。分镜图出图走 codex，环境与角色设定图当参考图。',
   },
-  secRhythm: '分镜节奏带',
-  secSegments: '分集分镜表',
-  secBatches: '生成批次单',
-  secDialogue: '配音对齐单',
-  secGates: '质量门',
-  rhythmNote: '粗分隔 = 生成段边界 · 段宽 = 分镜时长占比 · 颜色越深景别越近',
-  segmentsNote: '一段 = 一次生成：主分镜图钉 0.00 秒，子分镜图钉各自切点',
-  batchesNote: '自动汇总 · 同批段共用同一张环境参考图',
-  dialogueNote: '自动汇总 · TTS 音频对到哪一段的第几切',
-  epHead: (nSeg, nCut, total, target) => `${nSeg} 段 ${nCut} 切 · 共 ${total} 秒 / 目标 ${target} 秒`,
-  segHead: (total, n) => `${total} 秒 · ${n} 个分镜`,
-  beatsLabel: (s, from, to) => `第 ${s} 场 ${from === to ? `第 ${from} 拍` : `第 ${from}–${to} 拍`}`,
-  masterLabel: '主分镜图',
-  subLabel: (i) => `子分镜 ${i}`,
-  frameMissing: (i) => `#${i} 未生成`,
-  framePrompt: '分镜图提示词',
-  h3Prompt: 'H3 提示词',
-  h3Section: 'H3 视频提示词',
-  showSegs: '▾ 展开全部段',
-  hideSegs: '▴ 收起',
-  copy: '复制', copied: '已复制', copyFailed: '复制失败',
-  dialogueCols: ['段 · 切', '说话人', '台词', '台词秒数'],
-  atSec: (t) => `${t.toFixed(2)}s 起`,
-  colophon: '分镜由模型依据剧本切分：段 = 一次生成（≤15 秒），分镜 = 段内 2–5 秒的剪切，每个分镜一张关键帧图。对齐指令、切点时刻、台词、提示词纪律全部由脚本确定性对账。分镜图出图走 codex，环境与角色设定图当参考图。',
+  en: {
+    langCode: 'en',
+    kicker: 'Storyboard',
+    docTitle: (s, a, b) => `${s} · Storyboard (${a === b ? `Episode ${a}` : `Episodes ${a}–${b}`})`,
+    epRange: (a, b) => (a === b ? `Episode ${a}` : `Episodes ${a}–${b}`),
+    exportJson: 'Export JSON',
+    gatesPass: 'All passed',
+    gatesFail: (n) => `${n} failed`,
+    gatePill: (okN, total) => `Quality gates ${okN} / ${total}`,
+    kpi: {
+      segments: 'Segments', segmentsSub: (cap) => `one generation call each, capped at ${cap}s`,
+      cuts: 'Cuts', cutsSub: (avg) => `${avg}s per cut on average`,
+      time: 'Estimated total', timeSub: (t) => `target ${t}`,
+      batches: 'Generation batches', batchesSub: 'same scene + lighting share one environment reference',
+      lines: 'Dialogue segments', linesSub: 'the rest are picture-only',
+    },
+    secRhythm: 'Cut rhythm strip',
+    secSegments: 'Segment cards',
+    secBatches: 'Generation batches',
+    secDialogue: 'Audio alignment',
+    secGates: 'Quality gates',
+    rhythmNote: 'thick separators = segment boundaries · slice width = cut duration share · darker = closer shot size',
+    segmentsNote: 'one segment = one generation: the master frame pins 0.00s, sub-frames pin their own cut marks',
+    batchesNote: 'auto-computed · segments in a batch share one environment reference image',
+    dialogueNote: 'auto-computed · which segment and cut each TTS clip lands on',
+    epHead: (nSeg, nCut, total, target) => `${nSeg} segments ${nCut} cuts · ${total}s total / ${target}s target`,
+    segHead: (total, n) => `${total}s · ${n} cuts`,
+    secBadge: (secs, n) => `${secs}s · ${n} cuts`,
+    rhythmVal: (nSeg, nCut, secs) => `${nSeg} seg ${nCut} cuts · ${secs}s`,
+    beatsLabel: (s, from, to) => `Scene ${s} · ${from === to ? `beat ${from}` : `beats ${from}–${to}`}`,
+    masterLabel: 'master frame',
+    subLabel: (i) => `sub-frame ${i}`,
+    frameMissing: (i) => `#${i} not generated`,
+    framePrompt: 'Frame prompt',
+    h3Prompt: 'H3 prompt',
+    h3Section: 'H3 video prompt',
+    showSegs: '▾ Show all segments',
+    hideSegs: '▴ Collapse',
+    copy: 'Copy', copied: 'Copied', copyFailed: 'Copy failed',
+    dialogueCols: ['Segment · cut', 'Speaker', 'Line', 'Seconds'],
+    cutCols: ['Cut', 'Start', 'Sec', 'Size', 'Camera', 'Picture', 'Characters'],
+    batchCols: ['Scene', 'Lighting', 'Segments', 'Characters needed', 'Props'],
+    atSec: (t) => `from ${t.toFixed(2)}s`,
+    batchLabel: (num) => `Batch ${num}`,
+    batchNeed: (chars, props) => `Needs: ${chars.length ? `character sheets for ${chars.join(', ')}` : 'no characters (empty shot)'}${props.length ? ' · ' + props.join(', ') : ''}`,
+    voiceOver: 'Voice-over',
+    listSep: ', ',
+    sizeName: (size) => SHOT_SIZES[size]?.phrase ?? size,
+    cameraLabel: (camera) => camera,
+    speakerLine: (name, text) => `${name}: “${text}”`,
+    withLighting: (name, lighting) => (lighting ? `${name} (${lighting})` : name),
+    fmtMin: (sec) => `${Math.floor(sec / 60)} min ${Math.round(sec % 60)} s`,
+    unitSeg: 'seg',
+    unitCut: 'cuts',
+    colophon: 'Cut by the model from the script: a segment = one generation call (≤15s), a cut = a 2–5s edit inside it, one keyframe per cut. Alignment lines, cut marks, dialogue and prompt discipline are all audited deterministically by the script. Frames are generated through codex with the scene and character sheets as references.',
+  },
+};
+
+const tOf = (lang) => {
+  if (lang && !I18N[lang]) throw new Error('报告界面语言目前内置 zh / en');
+  return I18N[lang ?? 'zh'];
 };
 
 /* ------------------------------------------------------------------ */
@@ -697,12 +821,12 @@ const esc = (s) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-function namer(ctx = {}) {
+function namer(ctx = {}, t = I18N.zh) {
   const charName = new Map((ctx.outline?.characters ?? []).map((c) => [c.id, c.name]));
   const sceneName = new Map((ctx.art?.scenes ?? []).map((s) => [s.id, s.name]));
   const propName = new Map((ctx.art?.props ?? []).map((p) => [p.id, p.name]));
   return {
-    char: (id) => (id === 'VO' ? '画外音' : charName.get(id) ?? id),
+    char: (id) => (id === 'VO' ? t.voiceOver : charName.get(id) ?? id),
     scene: (id) => sceneName.get(id) ?? id,
     prop: (id) => propName.get(id) ?? id,
   };
@@ -723,8 +847,8 @@ const mdRow = (cells) => `| ${cells.map((c) => String(c ?? '').replace(/\|/g, '\
 const mdHead = (cols) => [mdRow(cols), mdRow(cols.map(() => '---'))].join('\n');
 
 export function renderMarkdown(board, ctx = {}) {
-  const t = T;
-  const n = namer(ctx);
+  const t = tOf(ctx.lang ?? board?.lang);
+  const n = namer(ctx, t);
   const expanded = expandScript(ctx.script);
   const stats = computeStats(board, ctx.script);
   const eps = board.episodes;
@@ -736,26 +860,26 @@ export function renderMarkdown(board, ctx = {}) {
     out.push(`## E${String(ep.ep).padStart(2, '0')}`, '', `> ${t.epHead(st.segments, st.cuts, st.totalSeconds, st.target)}`, '');
     for (const seg of ep.segments) {
       const scene = sEp?.scenes?.[seg.sceneIndex - 1];
-      out.push(`### ${seg.id} · ${scene ? `${n.scene(scene.sceneId)}${scene.lighting ? `（${scene.lighting}）` : ''}` : '?'} · ${t.segHead(segSeconds(seg), seg.cuts.length)}`, '');
-      out.push(mdHead(['切', '起点', '秒', '景别', '运镜', '画面', '人物']));
+      out.push(`### ${seg.id} · ${scene ? t.withLighting(n.scene(scene.sceneId), scene.lighting) : '?'} · ${t.segHead(segSeconds(seg), seg.cuts.length)}`, '');
+      out.push(mdHead(t.cutCols));
       const starts = cutStarts(seg.cuts);
       seg.cuts.forEach((cut, ci) => {
         const summary = cutBeats(cut, scene)
-          .map((b) => (b.kind === 'line' ? `${n.char(b.speaker)}：「${b.text}」` : b.text))
+          .map((b) => (b.kind === 'line' ? t.speakerLine(n.char(b.speaker), b.text) : b.text))
           .join(' ');
         out.push(mdRow([
           `#${ci + 1}`, `${starts[ci].toFixed(2)}s`, cut.seconds,
-          SHOT_SIZES[cut.size]?.zh ?? cut.size, `${cut.camera}（${CAMERA_MOVES[cut.camera] ?? '?'}）`,
-          summary, (cut.characters ?? []).map(n.char).join('、'),
+          t.sizeName(cut.size), t.cameraLabel(cut.camera),
+          summary, (cut.characters ?? []).map(n.char).join(t.listSep),
         ]));
       });
       out.push('', `**${t.h3Section}**`, '', '```text', seg.h3Prompt ?? '', '```', '');
     }
   }
 
-  out.push(`## ${t.secBatches}`, '', mdHead(['场景', '光照', '段', '需要的角色', '道具']));
+  out.push(`## ${t.secBatches}`, '', mdHead(t.batchCols));
   for (const b of stats.batches) {
-    out.push(mdRow([`${b.sceneId} ${n.scene(b.sceneId)}`, b.lighting, b.segments.join('、'), b.characters.map(n.char).join('、'), b.props.map(n.prop).join('、')]));
+    out.push(mdRow([`${b.sceneId} ${n.scene(b.sceneId)}`, b.lighting, b.segments.join(t.listSep), b.characters.map(n.char).join(t.listSep), b.props.map(n.prop).join(t.listSep)]));
   }
   out.push('', `## ${t.secDialogue}`, '', mdHead(t.dialogueCols));
   for (const d of stats.dialogue) out.push(mdRow([`${d.segment}#${d.cut}`, n.char(d.speaker), d.line, d.seconds]));
@@ -777,15 +901,16 @@ function embedDoc(doc) {
 }
 
 export function renderHtml(board, ctx = {}) {
-  const t = T;
-  const n = namer(ctx);
+  const lang = ctx.lang ?? board?.lang ?? 'zh';
+  const t = tOf(lang);
+  const n = namer(ctx, t);
   const expanded = expandScript(ctx.script);
   const stats = computeStats(board, ctx.script);
   const gates = gateReport(board, ctx);
   const failed = gates.filter((g) => !g.ok);
   const eps = board.episodes;
   const params = stats.params;
-  const fmtMin = (sec) => `${Math.floor(sec / 60)} 分 ${Math.round(sec % 60)} 秒`;
+  const fmtMin = t.fmtMin;
 
   const SIZE_ALPHA = { 'extreme-wide': 0.25, wide: 0.4, medium: 0.58, close: 0.78, 'extreme-close': 1 };
 
@@ -799,18 +924,18 @@ export function renderHtml(board, ctx = {}) {
             .map((cut, ci) => {
               const w = st.totalSeconds ? (cut.seconds / st.totalSeconds) * 100 : 0;
               const alpha = SIZE_ALPHA[cut.size] ?? 0.5;
-              return `<a class="seg" href="#seg-${esc(seg.id)}" style="width:${r1(w)}%;background:rgba(138,51,36,${alpha})" title="${esc(`${seg.id}#${ci + 1} · ${cut.seconds}s · ${SHOT_SIZES[cut.size]?.zh ?? ''} · ${cut.camera}`)}"></a>`;
+              return `<a class="seg" href="#seg-${esc(seg.id)}" style="width:${r1(w)}%;background:rgba(138,51,36,${alpha})" title="${esc(`${seg.id}#${ci + 1} · ${cut.seconds}s · ${t.sizeName(cut.size)} · ${cut.camera}`)}"></a>`;
             })
             .join('');
           const gw = st.totalSeconds ? (segSeconds(seg) / st.totalSeconds) * 100 : 0;
           return `<span class="rseg" style="width:${r1(gw)}%">${segs}</span>`;
         })
         .join('');
-      return `<div class="rrow"><span class="rep">E${String(ep.ep).padStart(2, '0')}</span><div class="rtrack">${groups}</div><span class="rval">${st.segments} 段 ${st.cuts} 切 · ${st.totalSeconds}s</span></div>`;
+      return `<div class="rrow"><span class="rep">E${String(ep.ep).padStart(2, '0')}</span><div class="rtrack">${groups}</div><span class="rval">${esc(t.rhythmVal(st.segments, st.cuts, st.totalSeconds))}</span></div>`;
     })
     .join('\n');
-  const rhythmLegend = Object.entries(SHOT_SIZES)
-    .map(([k, v]) => `<i><span class="sw" style="background:rgba(138,51,36,${SIZE_ALPHA[k]})"></span>${esc(v.zh)}</i>`)
+  const rhythmLegend = Object.keys(SHOT_SIZES)
+    .map((k) => `<i><span class="sw" style="background:rgba(138,51,36,${SIZE_ALPHA[k]})"></span>${esc(t.sizeName(k))}</i>`)
     .join('');
 
   // ---- 02 分集分镜表：段卡（主分镜图 + 子分镜条 + 分镜行） ----
@@ -853,7 +978,7 @@ export function renderHtml(board, ctx = {}) {
   <div class="cut-h">
     <b>#${ci + 1}</b>
     <span class="cut-t">${esc(t.atSec(starts[ci]))} · ${cut.seconds}s</span>
-    <span class="cut-sc">${esc(SHOT_SIZES[cut.size]?.zh ?? cut.size)} · ${esc(cut.camera)}</span>
+    <span class="cut-sc">${esc(t.sizeName(cut.size))} · ${esc(cut.camera)}</span>
     ${(cut.characters ?? []).map((id) => `<span class="chip">${esc(n.char(id))}</span>`).join('')}
     ${(cut.props ?? []).map((id) => `<span class="chip prop">${esc(n.prop(id))}</span>`).join('')}
     <button class="copy mini" data-copy="${esc(cut.frame ?? '')}">${esc(t.framePrompt)}</button>
@@ -866,7 +991,7 @@ export function renderHtml(board, ctx = {}) {
           return `<article class="segcard" id="seg-${esc(seg.id)}">
   <header class="seg-h">
     <b>${esc(seg.id)}</b>
-    <span class="sec-badge">${segSeconds(seg)}s · ${seg.cuts.length} 切</span>
+    <span class="sec-badge">${esc(t.secBadge(segSeconds(seg), seg.cuts.length))}</span>
     <span class="chip">${esc(scene ? `${scene.sceneId} ${n.scene(scene.sceneId)}` : '?')}</span>
     ${scene?.lighting ? `<span class="chip lite">${esc(scene.lighting)}</span>` : ''}
     <span class="beatsref">${esc(t.beatsLabel(seg.sceneIndex, seg.cuts[0]?.beats?.[0], seg.cuts[seg.cuts.length - 1]?.beats?.[1]))}</span>
@@ -911,9 +1036,9 @@ ${cards}
       const hasSheet = ctx.imageExists ? ctx.imageExists(sheet) : false;
       return `<article class="batch">
   ${hasSheet ? `<img class="bimg" src="${esc(sheet)}" alt="${esc(n.scene(b.sceneId))}" loading="lazy">` : ''}
-  <header class="batch-h"><b>批次 ${String(i + 1).padStart(2, '0')}</b><span class="chip">${esc(`${b.sceneId} ${n.scene(b.sceneId)}`)}</span>${b.lighting ? `<span class="chip lite">${esc(b.lighting)}</span>` : ''}</header>
+  <header class="batch-h"><b>${esc(t.batchLabel(String(i + 1).padStart(2, '0')))}</b><span class="chip">${esc(`${b.sceneId} ${n.scene(b.sceneId)}`)}</span>${b.lighting ? `<span class="chip lite">${esc(b.lighting)}</span>` : ''}</header>
   <div class="batch-shots">${b.segments.map((s) => `<a class="chip mono" href="#seg-${esc(s)}">${esc(s)}</a>`).join('')}</div>
-  <p class="batch-need">${esc(`需要：${b.characters.length ? b.characters.map(n.char).join('、') + ' 的角色设定图' : '无角色（空镜）'}${b.props.length ? ' · ' + b.props.map(n.prop).join('、') : ''}`)}</p>
+  <p class="batch-need">${esc(t.batchNeed(b.characters.map(n.char), b.props.map(n.prop)))}</p>
 </article>`;
     })
     .join('\n');
@@ -926,15 +1051,15 @@ ${cards}
   const gateList = `<ul class="gate">
   ${gates
     .map(
-      (g) => `<li class="${g.ok ? 'ok' : 'bad'}"><span class="m">${g.ok ? '✓' : '✗'}</span><span>${esc(g.label)}${
-        (!g.ok && g.detail) || (g.ok && g.detail.includes('跳过')) ? `<small>${esc(g.detail)}</small>` : ''
+      (g) => `<li class="${g.ok ? 'ok' : 'bad'}"><span class="m">${g.ok ? '✓' : '✗'}</span><span>${esc(gateText(g, t.langCode).label)}${
+        (!g.ok && g.detail) || (g.ok && g.detail.includes('跳过')) ? `<small>${esc(gateText(g, t.langCode).detail)}</small>` : ''
       }</span></li>`,
     )
     .join('\n  ')}
 </ul>`;
 
   return `<!doctype html>
-<html lang="zh"><head>
+<html lang="${esc(lang)}"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(t.docTitle(board.source, eps[0]?.ep, eps[eps.length - 1]?.ep))}</title>
@@ -982,7 +1107,7 @@ section.top-sec{margin-top:34px}
 .sec-h h2{font:400 20px/1.2 var(--serif);letter-spacing:.05em}
 .sec-h .note{margin-left:auto;font-size:12px;color:var(--ink-3)}
 
-/* 01 分镜节奏带 */
+/* 01 cut rhythm strip */
 .rhythm{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:16px 20px 10px}
 .rrow{display:grid;grid-template-columns:44px minmax(0,1fr) 150px;gap:12px;align-items:center;padding:5px 0}
 .rep{font:500 12px/1 var(--mono);color:var(--ink-2)}
@@ -997,7 +1122,7 @@ section.top-sec{margin-top:34px}
 .legend i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px}
 
-/* 02 分集分镜表 */
+/* 02 segment cards */
 .ep{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:18px 22px;margin-bottom:16px}
 .ep-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--rule-2);padding-bottom:10px;margin-bottom:14px}
 .ep-n{font:400 22px/1 var(--serif);letter-spacing:.04em;color:var(--seal)}
@@ -1063,7 +1188,7 @@ a.chip:hover{border-color:var(--seal);color:var(--seal)}
 .prompts{display:flex;gap:6px}
 .seg-note{margin:0;font-size:11px;color:var(--ink-3)}
 
-/* 03 生成批次单 */
+/* 03 generation batches */
 .batches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
 @media(max-width:1100px){.batches{grid-template-columns:minmax(0,1fr)}}
 .batch{background:var(--panel);border:1px solid var(--rule);border-radius:2px;padding:14px 18px}
@@ -1074,7 +1199,7 @@ a.chip:hover{border-color:var(--seal);color:var(--seal)}
 .batch-shots{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .batch-need{margin:8px 0 0;font-size:12px;color:var(--ink-2)}
 
-/* 04 配音对齐单 */
+/* 04 audio alignment */
 table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--rule);font-size:13px}
 th,td{padding:8px 12px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
 th{font:500 11px/1 var(--sans);letter-spacing:.1em;color:var(--ink-3);background:var(--side)}
@@ -1126,7 +1251,7 @@ td.serif{font-family:var(--serif)}
 
 <header class="hd">
   <h1>${esc(board.source)}</h1>
-  <span class="sub">${esc(t.kicker)}${eps[0]?.ep === eps[eps.length - 1]?.ep ? ` · 第 ${eps[0]?.ep} 集` : ` · 第 ${eps[0]?.ep}–${eps[eps.length - 1]?.ep} 集`}</span>
+  <span class="sub">${esc(t.kicker)} · ${esc(t.epRange(eps[0]?.ep, eps[eps.length - 1]?.ep))}</span>
   <span class="right">
     <span class="gatepill ${failed.length ? 'fail' : 'pass'}">${failed.length ? '✗' : '✓'} ${esc(t.gatePill(gates.length - failed.length, gates.length))}</span>
     <button class="expo" data-name="${esc(slug(board.source))}-storyboard.json">${esc(t.exportJson)}</button>
@@ -1134,13 +1259,13 @@ td.serif{font-family:var(--serif)}
 </header>
 
 <div class="kpis">
-  <div class="kpi accent"><div class="l">${esc(t.kpi.segments)}</div><div class="v">${stats.totals.segments} <small>段</small></div><div class="d">${esc(t.kpi.segmentsSub(params.maxSegmentSeconds))}</div></div>
-  <div class="kpi"><div class="l">${esc(t.kpi.cuts)}</div><div class="v">${stats.totals.cuts} <small>切</small></div><div class="d">${esc(t.kpi.cutsSub(stats.totals.avgCutSeconds))}</div></div>
+  <div class="kpi accent"><div class="l">${esc(t.kpi.segments)}</div><div class="v">${stats.totals.segments} <small>${esc(t.unitSeg)}</small></div><div class="d">${esc(t.kpi.segmentsSub(params.maxSegmentSeconds))}</div></div>
+  <div class="kpi"><div class="l">${esc(t.kpi.cuts)}</div><div class="v">${stats.totals.cuts} <small>${esc(t.unitCut)}</small></div><div class="d">${esc(t.kpi.cutsSub(stats.totals.avgCutSeconds))}</div></div>
   <div class="kpi"><div class="l">${esc(t.kpi.time)}</div><div class="v">${esc(fmtMin(stats.totals.seconds))}</div><div class="d">${esc(t.kpi.timeSub(fmtMin(stats.totals.targetSeconds)))}</div></div>
   <div class="kpi"><div class="l">${esc(t.kpi.batches)}</div><div class="v">${stats.batches.length}</div><div class="d">${esc(t.kpi.batchesSub)}</div></div>
-  <div class="kpi"><div class="l">${esc(t.kpi.lines)}</div><div class="v">${stats.totals.withLines} <small>段</small></div><div class="d">${esc(t.kpi.linesSub)}</div></div>
+  <div class="kpi"><div class="l">${esc(t.kpi.lines)}</div><div class="v">${stats.totals.withLines} <small>${esc(t.unitSeg)}</small></div><div class="d">${esc(t.kpi.linesSub)}</div></div>
 </div>
-${failed.length ? `<div class="galert"><b>✗ ${esc(t.gatesFail(failed.length))}</b>${failed.map((g) => `<span>${esc(g.label)}${g.detail ? ` — ${esc(g.detail)}` : ''}</span>`).join('')}</div>` : ''}
+${failed.length ? `<div class="galert"><b>✗ ${esc(t.gatesFail(failed.length))}</b>${failed.map((g) => `<span>${esc(gateText(g, t.langCode).label)}${g.detail ? ` — ${esc(gateText(g, t.langCode).detail)}` : ''}</span>`).join('')}</div>` : ''}
 
 <section class="top-sec" id="sec-rhythm">
   <div class="sec-h"><span class="no">01</span><h2>${esc(t.secRhythm)}</h2><span class="note">${esc(t.rhythmNote)}</span></div>
@@ -1183,7 +1308,7 @@ ${dlgRows}
 
 <script type="application/json" id="storyboard-data">${embedDoc(board)}</script>
 <script>
-const L = ${JSON.stringify({ copied: T.copied, failed: T.copyFailed, show: T.showSegs, hide: T.hideSegs })};
+const L = ${JSON.stringify({ copied: t.copied, failed: t.copyFailed, show: t.showSegs, hide: t.hideSegs })};
 
 // 分集分镜表：段卡区默认最多 760px。不超高的集直接放开；超高的集点开/收起
 document.querySelectorAll('.shmore').forEach((btn) => {
@@ -1258,6 +1383,7 @@ const USAGE = `novel-storyboard.mjs — novel-storyboard skill 的确定性工�
   checkup <sb.json> --script <script.json>    只打印质量门 ✓/✗，有未过项 exit 1
   render <sb.json> --script <script.json>     渲染报告到 stdout（默认 --md）
          [--html|--md] [--outline] [--art]    分镜图从 ./<段号>/f<切序>.png 找
+         [--lang zh|en]                       报告界面语言（默认 zh；未指定时读取 JSON 顶层 lang 字段）
   export <sb.json> --script <script.json>     导出 H3 投产包：每段一个文件夹 <段号>/prompt.md
          [--out .]                            （分镜图 f1..fN.png 同住）+ 根部 manifest.json
   slug <name>                                 剧名转安全文件名`;
@@ -1331,10 +1457,13 @@ function main(argv) {
 
   if (cmd === 'render') {
     const [path] = rest;
-    if (!path) throw new Error('用法：render <storyboard.json> --script <script.json> [--html|--md] [--outline] [--art]');
+    if (!path) throw new Error('用法：render <storyboard.json> --script <script.json> [--html|--md] [--lang zh|en] [--outline] [--art]');
     const board = readJson(path);
     const ctx = loadCtx(rest);
     if (!ctx.script) throw new Error('分镜离开剧本没有意义——必须给 --script <script.json>');
+    // 界面语言：--lang > JSON 顶层 lang 字段 > 'zh'（后两级在渲染器里兜底）
+    const langFlag = flag(rest, '--lang');
+    if (langFlag) ctx.lang = langFlag;
     ctx.imageExists = (rel) => existsSync(resolve(rel));
     process.stdout.write((rest.includes('--html') ? renderHtml(board, ctx) : renderMarkdown(board, ctx)) + '\n');
     return;

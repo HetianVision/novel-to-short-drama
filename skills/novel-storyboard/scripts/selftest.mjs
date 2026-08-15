@@ -230,7 +230,7 @@ eq(gateReport(FIXTURE, CTX).length, 16, '十六道门');
 {
   const doc = clone(FIXTURE);
   const seg = doc.episodes[0].segments[0];
-  seg.h3Prompt = seg.h3Prompt.replace('holds a static shot as fog rolls in', 'stays still as fog rolls in');
+  seg.h3Prompt = seg.h3Prompt.replace('a tracking shot follows her', 'the camera follows her');
   const g = gate(doc, 'camera-phrase');
   ok(!g.ok, '运镜词没写进自己的 [Shot k] 段落被拦');
   ok(g.detail.includes('E01-01#1'), '点名到切');
@@ -482,4 +482,52 @@ ok(html.includes('老周'), 'html 里 ID 换成名字');
   ok(h.includes('\\u003c'), '内嵌 JSON 的 < 转成 \\u003c，防 </script 截断');
 }
 
+/* ---------------- 报告界面语言（--lang，与 promptLang 独立） ---------------- */
+
+{
+  const en = renderHtml(FIXTURE, { ...CTX, lang: 'en' });
+  ok(en.includes('<html lang="en">'), 'en 报告的 html lang 属性跟着语言走');
+  ok(en.includes('Export JSON'), 'en 界面：导出按钮英文');
+  ok(en.includes('Quality gates 16 / 16'), 'en 界面：页眉徽章英文');
+  ok(en.includes('Cut rhythm strip'), 'en 界面：节奏带节标题英文');
+  ok(en.includes('Segment cards'), 'en 界面：分镜表节标题英文');
+  ok(en.includes('Generation batches'), 'en 界面：批次节标题英文');
+  ok(en.includes('Audio alignment'), 'en 界面：配音对齐节标题英文');
+  ok(en.includes('master frame'), 'en 界面：主分镜图占位标签英文');
+  ok(!en.includes('导出 JSON'), 'en 界面不残留中文导出按钮');
+  ok(!en.includes('生成批次单'), 'en 界面不残留中文批次标题');
+  ok(!en.includes('配音对齐单'), 'en 界面不残留中文对齐标题');
+  ok(en.includes('How the reference pictures align'), 'en 界面下 H3 提示词数据原样不动');
+  ok(en.includes('[Shot 2] At 00:03.000,'), 'en 界面下切点时刻数据原样不动');
+}
+{
+  const enMd = renderMarkdown(FIXTURE, { ...CTX, lang: 'en' });
+  ok(enMd.includes('# 渡口 · Storyboard (Episode 1)') && enMd.includes('Audio alignment'), 'en markdown 标题与节标题英文');
+}
+{
+  const zhAgain = renderHtml(FIXTURE, CTX);
+  ok(zhAgain.includes('<html lang="zh">') && zhAgain.includes('导出 JSON'), '默认仍是中文界面');
+}
+{
+  const doc = clone(FIXTURE);
+  doc.lang = 'en';
+  ok(renderHtml(doc, CTX).includes('Export JSON'), 'JSON 顶层 lang 字段可选定界面语言');
+  ok(renderHtml(doc, { ...CTX, lang: 'zh' }).includes('导出 JSON'), 'ctx.lang（--lang）优先于 JSON 的 lang 字段');
+}
+{
+  let threw = false;
+  try {
+    renderHtml(FIXTURE, { ...CTX, lang: 'ja' });
+  } catch (e) {
+    threw = /zh \/ en/.test(e.message);
+  }
+  ok(threw, '非法界面语言抛错并点名内置 zh / en');
+}
+
+// 质量门面板是报告的一部分：英文界面下门标签也要翻译（阈值由门自己算，原样保留）
+{
+  const gateEn = renderHtml(FIXTURE, { ...CTX, lang: 'en' });
+  ok(gateEn.includes('Every cut 2–5s'), 'EN 报告的质量门标签翻译且阈值原样保留');
+  ok(!gateEn.includes('每个分镜 2–5 秒'), 'EN 报告不再出现中文门标签');
+}
 console.log(`✓ ${passed} 项自测全部通过`);

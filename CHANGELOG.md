@@ -1,5 +1,25 @@
 # Changelog
 
+## 报告双语化 — 2026-08-15
+
+novel-outline 1.1.0 · novel-art 1.1.0 · novel-script 1.2.0 · novel-storyboard 1.1.0
+
+英文 README 引来的用户打开报告却是满屏中文——**五个 skill 的报告现在都内置
+中英两套界面**（novel-characters 早就支持多语言，这次补齐其余四个）：
+
+- 每个 skill 的界面文案表从单表改成 `I18N = { zh, en }` + `tOf(lang)`，
+  渲染器里散落的硬编码中文（单位词、「第 N 集」「N 分 N 秒」、列表分隔符、
+  连 HTML 内嵌的 CSS/JS 注释）全部收进表
+- `render --lang zh|en`，优先级 `--lang` > JSON 顶层 `lang` 字段 > 中文；
+  `<html lang>` 跟着走；非法语言直接报错不静默回落
+- **质量门面板也翻译**：门标签按 id 映射英文，阈值由门自己算、原样填进去
+  （`主场景 ≤ 5` → `Primary scenes ≤ 5`）。门逻辑与 CLI 诊断文案一行没动，
+  失败详情与数据内容（人名、梗概、台词、提示词）保持原文
+- 分镜的 `--lang`（界面）与 `promptLang`（H3 提示词语言）是两个独立开关
+- 两份 README 都写明默认中文与 `--lang en` 用法；英文 README 给出完整命令
+
+自测：outline 200 → 220、art 131 → 146、script 137 → 153、storyboard 165 → 185。
+
 ## novel-script 1.1.1 · novel-storyboard 1.0.1 — 2026-08-14
 
 **冷开场要在运动中给**——报告人审时发现的问题：静物特写开场
