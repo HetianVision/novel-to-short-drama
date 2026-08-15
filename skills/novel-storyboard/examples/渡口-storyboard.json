@@ -14,15 +14,15 @@
                 1
               ],
               "seconds": 3,
-              "size": "extreme-close",
-              "camera": "Static Shot",
+              "size": "medium",
+              "camera": "Tracking Shot",
               "characters": [
                 "C01"
               ],
               "props": [
                 "P01"
               ],
-              "frame": "extreme close-up of an old leather suitcase with green-tarnished brass clasps clutched in a young woman's arms, her knuckles pressed white from gripping, thick fog swallowing the edges of the frame, cinematic film still, cold gray-green palette, 16:9"
+              "frame": "medium shot of a young woman in a plain early-republic qipao running through thick fog along a muddy riverside path, reeds and puddles at her feet, an old leather suitcase hugged tight against her chest, hem and loose hair swept back by her motion, no pier visible yet, cinematic film still, cold gray-green palette, 16:9"
             },
             {
               "beats": [
@@ -67,7 +67,7 @@
               "frame": "wide shot of a middle-aged peddler hurrying along a wet gangplank carrying a shoulder pole with two goods baskets, motion in his stride, fog swallowing the pier behind him, cinematic film still, cold gray-green palette, 16:9"
             }
           ],
-          "h3Prompt": "How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; Picture 2 (from Shot 2) aligns with the 3.00-second mark of the target video; Picture 3 (from Shot 3) aligns with the 6.00-second mark of the target video; Picture 4 (from Shot 4) aligns with the 10.00-second mark of the target video.\n\nintegrated_multimodal_description:\n[Shot 1] Cinematic, live-action, cold gray-green palette. The cold open holds the extreme close framing of <Picture 1>: an old leather suitcase with green-tarnished brass clasps clutched in a young woman's arms, her knuckles pressed white; the camera holds a static shot as fog rolls in and swallows the frame.\n[Shot 2] At 00:03.000, the camera cuts to the extreme wide view of <Picture 2>: the fog-drowned wooden pier, the old ferryman squatting at the bow of the ferry as a faint silhouette with his pipe ember glowing through the mist; the camera holds a static shot while distant watchman clappers knock, muffled as if wrapped in cotton.\n[Shot 3] At 00:06.000, the shot cuts to the framing of <Picture 3>: the ferryman stands at the bow with one hand cupped to his mouth, the camera holds a static shot, and the weathered old boatman with a loud, coarse, unhurried voice (S1) calls toward the shore: <d>[Chinese] 上船喽——过河的抓紧，雾要变天。</d>\n[Shot 4] At 00:10.000, the shot cuts to <Picture 4> and a tracking shot follows the middle-aged peddler with a bright, breathless voice (S2) hurrying along the gangplank under a loaded shoulder pole, shouting: <d>[Chinese] 等等二爷我！这雾天赶船，命都得跑掉半条。</d>\n\noverall_soundscape: Water laps softly against the pilings under fog-damped silence, wooden clappers knock twice in the far distance, and hurried footsteps with rattling baskets close in along the wet planks.\n\nnon_diegetic_music: Sustained low strings at a very slow tempo, barely above silence."
+          "h3Prompt": "How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns with the 0.00-second mark of the target video; Picture 2 (from Shot 2) aligns with the 3.00-second mark of the target video; Picture 3 (from Shot 3) aligns with the 6.00-second mark of the target video; Picture 4 (from Shot 4) aligns with the 10.00-second mark of the target video.\n\nintegrated_multimodal_description:\n[Shot 1] Cinematic, live-action, cold gray-green palette. The cold open follows <Picture 1>: a young woman in a plain qipao runs through thick fog along a muddy riverside path, reeds and puddles at her feet, an old leather suitcase hugged tight against her chest; a tracking shot follows her from behind, the pier not yet in sight as the fog swallows her silhouette.\n[Shot 2] At 00:03.000, the camera cuts to the extreme wide view of <Picture 2>: the run ends and the wooden pier finally emerges from the fog, the old ferryman squatting at the bow of the ferry as a faint silhouette with his pipe ember glowing through the mist; the camera holds a static shot while distant watchman clappers knock, muffled as if wrapped in cotton.\n[Shot 3] At 00:06.000, the shot cuts to the framing of <Picture 3>: the ferryman stands at the bow with one hand cupped to his mouth, the camera holds a static shot, and the weathered old boatman with a loud, coarse, unhurried voice (S1) calls toward the shore: <d>[Chinese] 上船喽——过河的抓紧，雾要变天。</d>\n[Shot 4] At 00:10.000, the shot cuts to <Picture 4> and a tracking shot follows the middle-aged peddler with a bright, breathless voice (S2) hurrying along the gangplank under a loaded shoulder pole, shouting: <d>[Chinese] 等等二爷我！这雾天赶船，命都得跑掉半条。</d>\n\noverall_soundscape: Rapid running footsteps splash along a wet riverside path through fog-damped silence, water laps softly against the pilings, wooden clappers knock twice in the far distance, and rattling baskets close in later along the gangplank.\n\nnon_diegetic_music: Sustained low strings at a very slow tempo, barely above silence."
         },
         {
           "id": "E01-02",
