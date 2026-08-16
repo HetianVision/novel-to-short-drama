@@ -489,7 +489,7 @@ export function validateCast(characters, sourceText, lang = DEFAULT_LANG, style 
   // 这是整批图"像不像同一部片"的底线。每个角色的 image.style 给人读的画风
   // 一句话，模型在第二趟出卡时可能按各自服装/年龄自由发挥（藏青/冷灰/大地色
   // 各写一套），导致同框时像四个画师画的。预设只约束大类别（realistic/ghibli），
-  // 管不到剧内统一，所以用确定性检查兜底：归一化后多于一钟值就报错，并点名
+  // 管不到剧内统一，所以用确定性检查兜底：归一化后多于一种值就报错，并点名
   // 哪些角色用了不同画风。单角色（或未写 image.style 的角色）不触发。
   const styleByChar = [];
   for (const c of characters) {
