@@ -109,6 +109,32 @@ for f in skills/*/scripts/selftest.mjs; do node "$f"; done
 
 没有配 CI——自测足够快（1 秒），本地跑一次比等 CI 更省事。**只在 macOS + Node 24 上验过**；代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但没验。
 
+## 端到端 demo 工作目录约定
+
+把一本小说从头跑完五段（角色 → 大纲 → 美术 → 剧本 → 分镜），会产出大量 `*.json` / `*.md` / `*-report.html`。**不要平铺在根目录**，按五个 skill 各建一个目录归档，一眼对应流水线五段：
+
+```
+<demo>/
+├── characters/    ← novel-characters 产出：<剧>-cast.json / .md / -report.html
+├── outline/       ← novel-outline 产出：<剧>-outline.json / .md / -report.html
+├── art/           ← novel-art 产出：<剧>-art.json / .md / -report.html
+├── script/        ← novel-script 产出：<剧>-script.json / .md / -report.html
+├── storyboard/    ← novel-storyboard 产出：<剧>-storyboard.json / .md / -report.html
+│   ├── manifest.json
+│   └── segments/  ← export 的分镜投产包：E01-01/ … E01-10/（每段含 prompt.md + f1..fN.png）
+├── docs/          ← 自己写的使用说明、PR 草稿等（与机器产物解耦）
+└── scripts/       ← 跑管线的辅助脚本（探索期脚本用 _ 前缀保留溯源）
+```
+
+约定要点：
+
+- **每个 skill 一个目录**，装它自己的 `json` / `md` / `html` 三件套，加新角色/场景只往对应目录放，不污染根目录
+- **分镜的 `manifest.json` 和 `E01-0x/` 投产包归 `storyboard/`**（它们是分镜 `export` 的产物），段文件夹统一收进 `storyboard/segments/`
+- **报告 HTML 与生成的图/视频可由 `render` 重跑再生**——进版本控制时建议只提交 `json` / `md` / `docs` / `scripts`，报告 HTML 和分镜 `png` 用 `.gitignore` 排除，保持仓库轻量
+- 用法类文档（如各报告的使用说明）放 `docs/`，与 skill 自动生成的产物分开，方便单独维护
+
+> 这套结构来自《渡口》样例（`projects/DJ-demo`），已按此归档。
+
 
 ## License
 
