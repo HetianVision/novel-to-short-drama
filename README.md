@@ -120,8 +120,10 @@ for f in skills/*/scripts/selftest.mjs; do node "$f"; done
 ├── art/           ← novel-art 产出：<剧>-art.json / .md / -report.html
 ├── script/        ← novel-script 产出：<剧>-script.json / .md / -report.html
 ├── storyboard/    ← novel-storyboard 产出：<剧>-storyboard.json / .md / -report.html
-│   ├── manifest.json
-│   └── segments/  ← export 的分镜投产包：E01-01/ … E01-10/（每段含 prompt.md + f1..fN.png）
+│   ├── manifest.json  ← export 产出
+│   ├── E01-01/        ← export 的分镜投产包，每段一个文件夹（prompt.md + f1..fN.png）
+│   ├── E01-02/
+│   └── …
 ├── docs/          ← 自己写的使用说明、PR 草稿等（与机器产物解耦）
 └── scripts/       ← 跑管线的辅助脚本（探索期脚本用 _ 前缀保留溯源）
 ```
@@ -129,11 +131,11 @@ for f in skills/*/scripts/selftest.mjs; do node "$f"; done
 约定要点：
 
 - **每个 skill 一个目录**，装它自己的 `json` / `md` / `html` 三件套，加新角色/场景只往对应目录放，不污染根目录
-- **分镜的 `manifest.json` 和 `E01-0x/` 投产包归 `storyboard/`**（它们是分镜 `export` 的产物），段文件夹统一收进 `storyboard/segments/`
+- **分镜的 `manifest.json` 与 `E01-0x/` 投产包一起归 `storyboard/`**，就是 `export --out storyboard` 的原样产出。**段文件夹不要再往下收一层**（例如收进 `segments/`）：分镜报告里的图走相对路径 `<段号>/f<切序>.png`，报告 html 与段文件夹必须同级，多套一层目录，报告里的图会**静默**全变成「未生成」占位——实测把 10 个段文件夹移进 `segments/` 之后，内嵌图从 2 张变 0 张，报告不会报错
 - **报告 HTML 与生成的图/视频可由 `render` 重跑再生**——进版本控制时建议只提交 `json` / `md` / `docs` / `scripts`，报告 HTML 和分镜 `png` 用 `.gitignore` 排除，保持仓库轻量
 - 用法类文档（如各报告的使用说明）放 `docs/`，与 skill 自动生成的产物分开，方便单独维护
 
-> 这套结构来自《渡口》样例（`projects/DJ-demo`），已按此归档。
+> 这套结构来自《渡口》端到端 demo 的实际归档经验，demo 的工作目录在本仓库之外，这里只固化约定。
 
 
 ## License
