@@ -48,6 +48,26 @@
 
 **镜头配方是可选挂载的语汇层**：cut 上可以写一个可选的 `recipe`（[shot-recipes](../shot-recipes) 的卡片 id，**cut 级不是 segment 级**，**多格配方靠连续同 id 的分镜表达**，不是数组）。没装 shot-recipes 照跑不误——本 skill 自包含，连解析卡片 frontmatter 的那 25 行都是自己写的，不跨目录 import。卡片的**建议景别与运镜刻意不设门**，只在报告的「配方」列加 `≠` 标记（悬停看建议值）、`checkup` 末尾出一段提示：配方是语汇不是法条，可选挂载的东西一旦变严就没人挂了，**误拦的门比没有门更糟**。
 
+## 门失败会累积，`stats` 告诉你模型最常违反哪条规则
+
+`validate` 与 `checkup` 每次都把门的结果追加到**当前目录**的 `.gates.jsonl`。积累几十次之后：
+
+```bash
+node scripts/novel-storyboard.mjs stats
+```
+
+它回答三个问题：
+
+| 问题 | 说明什么 |
+| --- | --- |
+| **哪道门最常响** | 那条规则模型最常无视——**该改的是规则的措辞，不是再骂一遍模型** |
+| **哪道门从没响过** | 可能是死门，也可能规则已经被模型内化了 |
+| **失败详情长什么样** | 反复出现却没有对应门的那类问题，只能靠人看这些自由文本发现 |
+
+这是从 SkillOpt「skill 文档是可训练状态」那套思路里拿的一条：**文档不是一次写好的说明书，是要按反馈迭代的东西**——但迭代要有依据，而不是靠印象。日志只累积证据，改不改、怎么改仍然是人的判断。
+
+不想记就加 `--no-log`；写不进去会静默跳过，不影响校验本身。`.gates.jsonl` 已在 `.gitignore` 里。
+
 ## 报告长什么样
 
 业内评审用的单页报告，页宽 1600：
@@ -107,7 +127,7 @@ node scripts/novel-storyboard.mjs export sb.json --script script.json   # H3 投
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-storyboard.mjs   seed / validate / checkup / render / export / slug
-  selftest.mjs           237 项断言，不调模型
+  selftest.mjs           254 项断言，不调模型
 references/
   schema.md              storyboard.json 结构 + 时长约束链
   h3-prompt.md           H3 提示词写法规范（官方方法论内化版）
@@ -126,6 +146,6 @@ assets/
 node scripts/selftest.mjs
 ```
 
-237 项断言，覆盖节拍展开 / H3 骨架推导 / 统计与批次 / 质量门逐项击穿 / 配方卡库解析与挂载 / seed / 渲染（含中英界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+254 项断言，覆盖节拍展开 / H3 骨架推导 / 统计与批次 / 质量门逐项击穿 / 配方卡库解析与挂载 / seed / 渲染（含中英界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。

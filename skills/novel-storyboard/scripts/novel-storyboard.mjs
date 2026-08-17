@@ -3,8 +3,8 @@
 // Zero dependencies on purpose: the skill must work in any directory
 // without an npm install. Node 18+ (stdlib only).
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /* ------------------------------------------------------------------ */
@@ -278,6 +278,58 @@ export function recipeDrift(cut, card) {
   return {
     sizes: sizes.length && !sizes.includes(cut?.size) ? sizes : [],
     cameras: cameras.length && !cameras.includes(cut?.camera) ? cameras : [],
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* 门失败累积                                                           */
+/* ------------------------------------------------------------------ */
+/*
+ * 每次 validate / checkup 的结果本来跑完就没了，于是「模型最常违反哪条规则」
+ * 只能靠印象。这里把每次运行与每条失败追加到工作目录的 .gates.jsonl，
+ * stats 子命令再读回来，回答三个问题：
+ *   哪道门最常响   → 那条规则模型最常无视，措辞该改
+ *   哪道门从没响过 → 可能是死门，或者规则已经被模型内化了
+ *   失败详情长什么样 → 反复出现却没有门的那类问题，只能靠人看这些自由文本
+ *
+ * 刻意做成纯函数 + CLI 负责 IO：自测不落盘也能验。
+ * 写不进去就静默跳过——日志是附加价值，不能让它挡住主流程。
+ */
+
+export const GATE_LOG = '.gates.jsonl';
+
+/** 一次运行产生的日志行（对象数组，CLI 负责序列化落盘）。 */
+export function gateLogEntries(gates, { doc = '', at = '' } = {}) {
+  const list = Array.isArray(gates) ? gates : [];
+  if (!list.length) return [];
+  const failed = list.filter((g) => !g.ok);
+  const rows = [{ kind: 'run', at, doc, gates: list.length, failed: failed.length }];
+  for (const g of failed) {
+    rows.push({ kind: 'fail', at, doc, gate: g.id, label: g.label, detail: g.detail ?? '' });
+  }
+  return rows;
+}
+
+/** 汇总日志行。allGates 给全量门 id，用来找出「从没响过」的那些。 */
+export function summarizeGateLog(entries, allGates = []) {
+  const rows = (Array.isArray(entries) ? entries : []).filter((e) => e && typeof e === 'object');
+  const runs = rows.filter((e) => e.kind === 'run');
+  const fails = rows.filter((e) => e.kind === 'fail');
+  const byGate = new Map();
+  for (const f of fails) {
+    if (!byGate.has(f.gate)) byGate.set(f.gate, { gate: f.gate, label: f.label ?? f.gate, count: 0, samples: [] });
+    const rec = byGate.get(f.gate);
+    rec.count += 1;
+    if (rec.samples.length < 3 && f.detail) rec.samples.push(f.detail);
+  }
+  const ranked = [...byGate.values()].sort((a, b) => b.count - a.count || a.gate.localeCompare(b.gate));
+  const silent = allGates.filter((id) => !byGate.has(id));
+  return {
+    runs: runs.length,
+    cleanRuns: runs.filter((r) => !r.failed).length,
+    fails: fails.length,
+    ranked,
+    silent,
   };
 }
 
@@ -1562,7 +1614,13 @@ const USAGE = `novel-storyboard.mjs — novel-storyboard skill 的确定性工�
          [--shots <卡片目录>]                  报告的「配方」列显示卡名并标注建议景别／运镜的偏离
   export <sb.json> --script <script.json>     导出 H3 投产包：每段一个文件夹 <段号>/prompt.md
          [--out .]                            （分镜图 f1..fN.png 同住）+ 根部 manifest.json
-  slug <name>                                 剧名转安全文件名`;
+  stats                                       读当前目录的 .gates.jsonl，汇总哪道门最常响、
+                                              哪道门从没响过（validate/checkup 会自动累积）
+  slug <name>                                 剧名转安全文件名
+
+validate 与 checkup 每次都会把门的结果追加到当前目录的 .gates.jsonl。
+积累几十次之后跑 stats，就知道模型最常违反哪条规则——那条规则的措辞该改。
+不想记就加 --no-log；写不进去会静默跳过，不影响校验本身。`;
 
 function readJson(path) {
   return JSON.parse(readFileSync(resolve(path), 'utf8'));
@@ -1629,8 +1687,19 @@ function main(argv) {
     if (!ctx.script) throw new Error('分镜离开剧本没有意义——必须给 --script <script.json>');
     if (!ctx.outline && !ctx.cast) console.error('⚠️ 没给 --outline / --cast，跳过提示词人名检查');
 
+    // 门的结果追加到 .gates.jsonl——validate 与 checkup 都记，
+    // 这样「跑过多少次」这个分母才是全的
+    const logGates = (gates) => {
+      if (rest.includes('--no-log')) return;
+      try {
+        const rows = gateLogEntries(gates, { doc: basename(path), at: new Date().toISOString() });
+        if (rows.length) appendFileSync(GATE_LOG, rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
+      } catch { /* 写不进去就算了，日志不能挡住主流程 */ }
+    };
+
     if (cmd === 'checkup') {
       const gates = gateReport(board, ctx);
+      logGates(gates);
       for (const g of gates) console.log(`${g.ok ? '✓' : '✗'} ${g.label}${g.detail ? ` — ${g.detail}` : ''}`);
       const failedN = gates.filter((g) => !g.ok).length;
       console.log(failedN ? `\n✗ ${failedN} 项未过` : '\n✓ 全部通过');
@@ -1656,6 +1725,7 @@ function main(argv) {
       return;
     }
 
+    logGates(gateReport(board, ctx));
     const problems = validateStoryboard(board, ctx);
     if (problems.length) {
       console.error(`✗ ${problems.length} 处违规：\n`);
@@ -1696,6 +1766,34 @@ function main(argv) {
     const segN = pack.manifest.length;
     console.log(`✓ ${segN} 段投产包 → ${resolve(dir)}/（每段一个文件夹：分镜图 + prompt.md；根部 manifest.json）`);
     if (pack.missingTotal) console.log(`⚠️ 缺 ${pack.missingTotal} 张分镜图，已在 manifest 的 missing 里标注——喂 H3 前先补齐`);
+    return;
+  }
+
+  if (cmd === 'stats') {
+    let entries = [];
+    try {
+      entries = readFileSync(GATE_LOG, 'utf8').split('\n').filter(Boolean).map((l) => {
+        try { return JSON.parse(l); } catch { return null; }
+      }).filter(Boolean);
+    } catch {
+      console.log(`还没有 ${GATE_LOG}——先在这个目录里跑几次 validate 或 checkup，门的失败会累积到这里。`);
+      return;
+    }
+    const allGates = gateReport({ episodes: [] }, {}).map((g) => g.id);
+    const s = summarizeGateLog(entries, allGates);
+    console.log(`跑过 ${s.runs} 次，其中 ${s.cleanRuns} 次全过 · 累计 ${s.fails} 条失败\n`);
+    if (s.ranked.length) {
+      console.log('最常响的门（那条规则模型最常无视，措辞该改）：');
+      for (const r of s.ranked) {
+        console.log(`  ${String(r.count).padStart(3)} 次  ${r.gate.padEnd(16)} ${r.label}`);
+        for (const x of r.samples) console.log(`         ${x.length > 90 ? x.slice(0, 90) + '…' : x}`);
+      }
+      console.log();
+    }
+    if (s.silent.length) {
+      console.log(`从没响过的门（${s.silent.length} / ${allGates.length}）——可能是死门，也可能规则已经被模型内化：`);
+      console.log('  ' + s.silent.join(' / '));
+    }
     return;
   }
 

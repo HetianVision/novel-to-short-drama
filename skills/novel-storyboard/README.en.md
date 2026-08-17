@@ -49,6 +49,26 @@ The selftest **defeats every gate on purpose** to prove each one actually blocks
 
 **Shot recipes are an optional vocabulary layer.** A cut may carry an optional `recipe` — a card id from [shot-recipes](../shot-recipes), **per cut, not per segment**, with **multi-cut recipes expressed as a run of consecutive cuts sharing the id** rather than an array. Without shot-recipes installed everything still runs: this skill is self-contained, down to its own 25-line restricted frontmatter parser instead of a cross-directory import. A card's suggested sizes and cameras are **deliberately not gated** — the report's Recipe column marks deviations with `≠` (hover for the suggestion) and `checkup` prints a note. A recipe is vocabulary, not law; make an optional mount stricter and nobody mounts it, and **a gate that blocks wrongly is worse than no gate**.
 
+## Gate failures accumulate, and `stats` tells you which rule the model breaks most
+
+Every `validate` and `checkup` appends the gate outcome to `.gates.jsonl` in the **current directory**. After a few dozen runs:
+
+```bash
+node scripts/novel-storyboard.mjs stats
+```
+
+It answers three questions:
+
+| Question | What it tells you |
+| --- | --- |
+| **Which gate fires most** | That rule is the one the model ignores — **the wording is what needs fixing, not the model** |
+| **Which gate never fires** | Either a dead gate, or a rule the model has internalised |
+| **What the failure details look like** | Problems that recur without a gate of their own only surface by reading this free text |
+
+This is the one idea worth borrowing from SkillOpt's "the skill document is trainable state": **a document is not a spec written once, it is something you iterate from feedback** — but the iteration needs evidence rather than impressions. The log only accumulates evidence; what to change stays a human call.
+
+Pass `--no-log` to skip it. If the file cannot be written the step is skipped silently and validation is unaffected. `.gates.jsonl` is already in `.gitignore`.
+
 ## The report
 
 A single-page, 1600px-wide review document. Reports render with a Chinese UI by default; pass `--lang en` to `render` for a fully English report (zh / en built in). This only switches the UI labels — it is independent of `promptLang`, which controls the H3 prompt language (English by default). In English mode the quality-gate labels are translated too (thresholds kept as computed); failing-gate details and all data stay as authored.
@@ -99,7 +119,7 @@ node scripts/novel-storyboard.mjs export sb.json --script script.json   # per-se
 node scripts/selftest.mjs
 ```
 
-237 assertions — beat expansion, H3 skeleton derivation, stats and batching, gate-defeating cases, recipe-card parsing and mounting, seed, rendering (both report UI languages), export. No model calls, runs in about a second.
+254 assertions — beat expansion, H3 skeleton derivation, stats and batching, gate-defeating cases, recipe-card parsing and mounting, seed, rendering (both report UI languages), export. No model calls, runs in about a second.
 
 The bundled example (`examples/渡口-storyboard.json`) is a complete episode-1 storyboard — 10 segments, 34 cuts claiming all 35 script beats at ~3.5s per cut, 119s against a 120s target, 2 generation batches, every segment carrying a fully audited H3 prompt.
 

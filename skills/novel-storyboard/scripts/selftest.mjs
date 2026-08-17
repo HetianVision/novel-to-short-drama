@@ -18,7 +18,10 @@ import {
   computeStats,
   cutStarts,
   expandScript,
+  GATE_LOG,
+  gateLogEntries,
   gateReport,
+  summarizeGateLog,
   h3AlignmentLine,
   h3CutSlices,
   h3CutTime,
@@ -476,6 +479,39 @@ const withRecipe = () => {
   doc.episodes[0].segments[0].cuts[0].recipe = 'no-such-card';
   eq(validateStoryboard(doc, CTX).length, 0, '不挂卡库时 recipe 不进结构检查');
 }
+
+/* ---------------- 门失败累积 ---------------- */
+
+// 每次 validate 的结果本来跑完就没了，「模型最常违反哪条规则」只能靠印象。
+// 纯函数 + CLI 负责 IO，所以这里不落盘也能验。
+{
+  const gates = [
+    { id: 'cut-length', label: '每个分镜 2–5 秒', ok: false, detail: 'E01-01#1 9 秒' },
+    { id: 'coverage', label: '节拍全覆盖', ok: true, detail: '' },
+    { id: 'segment-cap', label: '每段 ≤ 15 秒', ok: false, detail: 'E01-01 共 21 秒' },
+  ];
+  const rows = gateLogEntries(gates, { doc: 'x.json', at: 'T0' });
+  eq(rows.length, 3, '一次运行记一条 run + 每条失败一行');
+  eq(rows[0].kind, 'run', '第一行是运行记录');
+  eq(rows[0].gates, 3, 'run 记下这次跑了几道门');
+  eq(rows[0].failed, 2, 'run 记下这次挂了几道');
+  ok(rows.slice(1).every((r) => r.kind === 'fail'), '其余都是失败记录');
+  ok(rows.every((r) => r.at === 'T0' && r.doc === 'x.json'), '时间与文档名逐行带上');
+  eq(gateLogEntries([], {}).length, 0, '没有门就不写任何东西');
+
+  const all = ['cut-length', 'coverage', 'segment-cap', 'refs'];
+  const sum = summarizeGateLog([...rows, ...gateLogEntries(gates, { doc: 'y.json', at: 'T1' })], all);
+  eq(sum.runs, 2, '统计跑过几次');
+  eq(sum.cleanRuns, 0, '统计全过几次');
+  eq(sum.fails, 4, '统计累计失败条数');
+  eq(sum.ranked[0].gate, 'cut-length', '按失败次数排序，最常响的在前');
+  eq(sum.ranked[0].count, 2, '同一道门跨运行累加');
+  ok(sum.ranked[0].samples.length >= 1, '带上 detail 样本，供人看有没有该设而没设的门');
+  eq(sum.silent.join(','), 'coverage,refs', '从没响过的门列出来——可能是死门，也可能规则已被内化');
+  eq(summarizeGateLog([], all).silent.length, 4, '零日志时所有门都算没响过');
+  eq(summarizeGateLog([null, 'x', { kind: 'run', failed: 0 }], all).runs, 1, '坏行跳过不炸');
+}
+eq(GATE_LOG, '.gates.jsonl', '日志文件名固定');
 
 /* ---------------- exportPack（H3 投产包） ---------------- */
 
