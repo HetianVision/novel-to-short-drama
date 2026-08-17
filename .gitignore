@@ -25,3 +25,4 @@ node_modules/
 
 # 画廊报告是渲染产物，每次 render 都能重新生成
 skills/shot-recipes/references/cards/gallery*.html
+.playwright-mcp/
