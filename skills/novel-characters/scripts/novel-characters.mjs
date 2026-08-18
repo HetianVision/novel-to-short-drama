@@ -268,13 +268,13 @@ const STRINGS = {
     },
     image: {
       style: '画风',
-      prompt: '出图提示词 EN', promptLocal: '出图提示词',
+      prompt: '出图提示词 · 喂出图模型用这条', promptLocal: '出图提示词（中文对照）',
       negative: '反向提示词', sheet: '角色设定图提示词 EN',
     },
     voice: {
       timbre: '音色', pitch: '音高', pace: '语速', accent: '口音',
       emotion: '情绪', referenceHint: '类比',
-      prompt: '音色提示词 EN', promptLocal: '音色提示词',
+      prompt: '音色提示词 · 喂 TTS 引擎用这条',
     },
     importance: { protagonist: '主角', major: '主要角色', supporting: '配角', minor: '龙套' },
     graphTitle: '关系图谱',
@@ -321,13 +321,13 @@ const STRINGS = {
     },
     image: {
       style: 'Style',
-      prompt: 'Image prompt', promptLocal: 'Image prompt (local)',
+      prompt: 'Image prompt · feed this to the image model', promptLocal: 'Image prompt (local translation)',
       negative: 'Negative prompt', sheet: 'Model sheet prompt',
     },
     voice: {
       timbre: 'Timbre', pitch: 'Pitch', pace: 'Pace', accent: 'Accent',
       emotion: 'Emotion', referenceHint: 'Sounds like',
-      prompt: 'Voice prompt', promptLocal: 'Voice prompt (local)',
+      prompt: 'Voice prompt · feed this to the TTS engine',
     },
     importance: { protagonist: 'Lead', major: 'Major', supporting: 'Supporting', minor: 'Minor' },
     graphTitle: 'Relationship map',
@@ -373,13 +373,13 @@ const STRINGS = {
     },
     image: {
       style: '画風',
-      prompt: '画像プロンプト EN', promptLocal: '画像プロンプト',
+      prompt: '画像プロンプト · 画像モデルにはこれを', promptLocal: '画像プロンプト（対訳）',
       negative: 'ネガティブプロンプト', sheet: 'キャラ設定画プロンプト EN',
     },
     voice: {
       timbre: '声質', pitch: '音域', pace: '話速', accent: '訛り',
       emotion: '感情', referenceHint: 'たとえるなら',
-      prompt: '音声プロンプト EN', promptLocal: '音声プロンプト',
+      prompt: '音声プロンプト · TTS にはこれを',
     },
     importance: { protagonist: '主役', major: '主要人物', supporting: '脇役', minor: '端役' },
     graphTitle: '相関図',
@@ -589,6 +589,31 @@ export function validateCast(characters, sourceText, lang = DEFAULT_LANG, style 
       for (const f of [...HUMAN_VOICE_FIELDS, 'prompt']) {
         if (typeof voice[f] !== 'string' || !voice[f].trim()) at(name, `voice.${f} 缺失或为空`);
       }
+      /*
+       * 音色提示词里不许出现引号包起来的台词。
+       * profile-pass.md 第 7 条写着「描述乐器本身，不是某一句台词的演绎」，
+       * 但模型会写出「杀意藏在『规矩就是规矩』这类客套话里」这种句子——
+       * 台词一进去，有些 TTS 引擎会把它当成要朗读的内容（生产里踩过）。
+       * 只查成对的引号，判定干净：正常的音色描述不需要引任何一句话。
+       */
+      /*
+       * 音色提示词要紧凑，不要散文。
+       * voice design 引擎（Qwen3-TTS Voice Design / ElevenLabs / MiniMax）吃的是
+       * 参数密度：年龄性别、音色、音区、共鸣、动态、音量、语速、语调、口音、默认情绪。
+       * 写成流畅的英文散文会把这些参数稀释掉——生产里实测对比过，紧凑版明显更好。
+       *
+       * 上限 400 字符是量出来的：自带样例四个角色 218–245，而被实测判为过冗余的
+       * 散文版是 490–514，中间余量很大。它拦的是「写成小作文」，不是「写得细」。
+       */
+      if (typeof voice.prompt === 'string' && voice.prompt.length > 400) {
+        at(name, `voice.prompt ${voice.prompt.length} 字符，超过 400——音色提示词要紧凑的参数串，不是散文；参数写全但别铺陈`);
+      }
+      if (typeof voice.prompt === 'string') {
+        const quoted = voice.prompt.match(/[「『"“][^」』"”]{2,}[」』"”]/);
+        if (quoted) {
+          at(name, `voice.prompt 里出现了引号台词「${quoted[0].slice(0, 24)}」——音色提示词描述的是嗓子本身，不是某一句台词的演绎`);
+        }
+      }
     }
 
     // --- 引文必须逐字 ---
@@ -749,7 +774,6 @@ export function renderMarkdown(characters, source, summary = '', lang = DEFAULT_
     for (const f of HUMAN_VOICE_FIELDS) out.push(`- **${t.voice[f]}**：${voice[f]}`);
     out.push('');
     out.push(`**${t.voice.prompt}**`, '', '```text', voice.prompt, '```', '');
-    if (voice.promptLocal) out.push(`${voice.promptLocal}`, '');
   }
 
   return out.join('\n');
@@ -901,13 +925,12 @@ function renderCharacter(c, index, t) {
 
   <div class="prompts">
     <div class="pgroup">
-      ${promptRow(t.image.promptLocal, image.promptLocal)}
       ${promptRow(t.image.prompt, image.prompt)}
       ${promptRow(t.image.sheet, image.sheet)}
       ${promptRow(t.image.negative, image.negativePrompt)}
+      ${promptRow(t.image.promptLocal, image.promptLocal)}
     </div>
     <div class="pgroup">
-      ${promptRow(t.voice.promptLocal, voice.promptLocal)}
       ${promptRow(t.voice.prompt, voice.prompt)}
       <div class="pgroup-f">
         <button class="copy wide" data-copy="${esc(JSON.stringify(c, null, 2))}">${esc(t.copyJson)}</button>

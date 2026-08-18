@@ -68,9 +68,8 @@
         "pace": "偏慢，重要的词前会有一个小停顿",
         "accent": "标准官话，无明显地域色彩",
         "emotion": "试探、戒备，有所保留",
-        "prompt": "A young female voice, nineteen years old. Light airy soprano in a mid-to-high register, noticeably breathy with thin chest support and a narrow dynamic range. Speaks quietly, as if wary of being overheard. Slight rising inflection at the end of most phrases, turning statements into half-questions. Gentle, slightly hesitant pace with small pauses before consequential words. Neutral educated Mandarin with no strong regional colour. Emotional default: tentative and watchful, holding something back.",
-        "referenceHint": "像一个在陌生地方问路、又怕对方追问下去的人",
-        "promptLocal": "十九岁年轻女声。中高音区，轻盈带气声，胸腔支撑较薄，音量动态范围窄，说话很轻，像是怕被人听见。多数短语句尾略微上扬，把陈述句说成半个问句。语速偏慢略带迟疑，在关键的词之前会有一个小停顿。标准官话，无明显地域口音。情绪基调：试探、警觉，有所保留。"
+        "prompt": "19-year-old female, light breathy soprano, mid-to-high pitch, thin chest support, narrow dynamic range. Quiet volume, slightly hesitant pace, rising inflection at phrase ends. Standard Mandarin, no regional accent. Tentative and watchful.",
+        "referenceHint": "像一个在陌生地方问路、又怕对方追问下去的人"
       }
     },
     {
@@ -137,9 +136,8 @@
         "pace": "快而短促，句子说完即止",
         "accent": "带北方腔的官话，咬字清脆",
         "emotion": "表面无波澜，底下绷着",
-        "prompt": "A male voice, twenty-seven to twenty-eight years old. Dry tightly-focused baritone with a narrow resonant core and very little warmth. Mid-low pitch, clipped and forward-placed, consonants landing hard. Fast clipped pace with almost no filler words and abrupt full stops — phrasing built like orders rather than conversation. Northern-inflected Mandarin, crisp and unornamented. Low breathiness, tightly controlled volume, minimal emotional colour on the surface with tension held underneath.",
-        "referenceHint": "像一个习惯了下达指令、不需要对方回话的人",
-        "promptLocal": "二十七八岁男声。干涩、聚焦的男中音，共鸣腔窄，几乎没有暖度。中低音区，咬字靠前、辅音落得重。语速快而短促，几乎没有语气词，句子戛然而止——措辞像下命令而不是聊天。带北方腔的官话，清脆、不加修饰。气声少，音量控制得紧，表面几乎没有情绪起伏，底下绷着一股张力。"
+        "prompt": "Late-20s male, dry tight baritone, mid-low pitch, narrow resonant core, hard forward consonants. Low volume, fast clipped pace, abrupt full stops, minimal filler. Northern Mandarin, crisp. Controlled with held tension.",
+        "referenceHint": "像一个习惯了下达指令、不需要对方回话的人"
       }
     },
     {
@@ -206,9 +204,8 @@
         "pace": "缓慢，字与字之间拖着气口",
         "accent": "南方水乡口音，尾音含混",
         "emotion": "疲惫而平静，几乎没有起伏",
-        "prompt": "An elderly male voice, around seventy-five. Low bass-baritone register, heavily gravelled and husky, as if the throat is permanently coated in river damp. Thick chest resonance with almost no head voice; word endings blur into one another. Slow unhurried pace with long breath pauses between clauses. Soft southern Chinese riverside accent, consonants worn smooth. Low energy and flat affect — settled and weary rather than sad. Minimal pitch variation, like someone who has said the same sentence for forty years.",
-        "referenceHint": "像一个在同一个渡口喊了四十年\"开船\"、嗓子早就磨平的人",
-        "promptLocal": "约七十五岁的老年男声。低音区男中低声部，沙哑粗粝、带浓重气泡音，像喉咙里常年裹着水汽。胸腔共鸣厚重，几乎没有头声，词尾常常含混地黏在一起。语速缓慢从容，句读之间有很长的换气停顿。带南方水乡口音，辅音被磨得圆钝。能量低、情绪平直——是疲惫沉淀而非悲伤。音高起伏极小，像一个把同一句话说了四十年的人。"
+        "prompt": "75-year-old male, gravelled husky bass-baritone, low pitch, thick chest resonance, blurred word endings. Low volume, slow pace, long breath pauses, minimal pitch variation. Southern riverside accent, worn-smooth consonants. Settled and weary.",
+        "referenceHint": "像一个在同一个渡口喊了四十年\"开船\"、嗓子早就磨平的人"
       }
     },
     {
@@ -276,9 +273,8 @@
         "pace": "快，句子连成一片，几乎不换气",
         "accent": "北方乡音，元音开阔",
         "emotion": "外放、乐呵，毫无防备",
-        "prompt": "A male voice, mid-forties. Bright brassy tenor with a broad forward ring that carries easily over ambient noise. Mid-high pitch with wide springy intonation swings. Fast tumbling pace, phrases running into one another with hardly a breath, frequent laughter breaking through mid-sentence. Warm rural northern Chinese accent with wide open vowels. High energy and strong breath support, unguardedly cheerful and gossipy by default, with enough weight in the lower register to land one sincere line when it comes.",
-        "referenceHint": "像一个隔着两条街就能听见他招呼你的人",
-        "promptLocal": "四十来岁男声。明亮带金属芒的男高音，声音靠前、共鸣宽，在嘈杂环境里也能穿透。中高音区，语调起伏大而有弹性。语速快、句子一路滚着连成一片，几乎不换气，说到一半常自己先笑出来。带北方乡音，元音开阔。能量高、气息足，默认状态是毫无防备的乐呵和爱聊闲话，但低音区留有足够厚度，能把偶尔一句真心话说得压得住。"
+        "prompt": "Mid-40s male, bright brassy tenor, mid-high pitch, broad forward ring, strong breath support. Loud carrying volume, fast tumbling pace, wide springy intonation, laughter breaking in. Rural northern accent, wide open vowels. Unguardedly cheerful.",
+        "referenceHint": "像一个隔着两条街就能听见他招呼你的人"
       }
     }
   ]
