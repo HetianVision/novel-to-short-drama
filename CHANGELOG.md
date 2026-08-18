@@ -38,7 +38,10 @@ MiniMax speech）。**CosyVoice 的 instruct 与 IndexTTS 都不吃**——它�
 来自参考音频，自然语言通道只能改情绪。用克隆系引擎时这条提示词帮不上忙，
 不是它写得不好，是那类引擎没有这个入口。
 
-自测 327 → 330 项。
+顺带修 `novel-script` 一条脆弱断言：它硬编了样例音色提示词的开头，样例一改
+就挂。改成从 cast 夹具里取，测的是「按钮带的是 cast 原文」这个不变量本身。
+
+自测 characters 327 → 330 项、script 153 → 154 项。
 
 ## novel-storyboard 1.3.0 — 2026-08-17
 
