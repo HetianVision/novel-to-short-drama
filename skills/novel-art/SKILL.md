@@ -140,8 +140,8 @@ node {baseDir}/scripts/novel-art.mjs render <剧名>-art.json --html > art-repor
 ## 三个 skill 的接力
 
 ```
-novel-characters → cast.json    （谁：角色资产）
 novel-outline    → outline.json （什么：结构与分集）
+novel-characters → cast.json    （谁：角色资产）
 novel-art        → art.json     （哪里 + 手里拿的：美术资产）
 ```
 

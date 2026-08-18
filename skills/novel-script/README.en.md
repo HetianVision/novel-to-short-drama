@@ -51,8 +51,8 @@ A single-page, 1600px-wide review document:
 ## The relay
 
 ```
-novel-characters → cast.json    (who)
 novel-outline    → outline.json (what)
+novel-characters → cast.json    (who)
 novel-art        → art.json     (where + what's in their hands)
 novel-script     → script.json  (the drama: scenes, beats, lines)
 ```

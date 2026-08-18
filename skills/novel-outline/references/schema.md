@@ -58,7 +58,9 @@
   | `support` | 有名字的重要配角（亲属、闺蜜、副反派） | ≤ 10 | `arc` 必填 |
   | `functional` | 功能性角色（医生、秘书、店员） | ≤ 10 | **占脸不占名**：`name` 用称呼标签（「急诊医生」）；`arc` 可省——医生就是来缝针的 |
 
-  无名背景人不进表、不追踪、不限量。从 novel-characters 的 cast.json 映射：protagonist/major → `lead`，supporting → `support`，minor → `functional`
+  无名背景人不进表、不追踪、不限量。
+
+  **这份表是下游 novel-characters 的角色清单**：谁进谁不进、谁是主角组在这里定死，角色设定照着做，不用再判断一遍轻重（`tier` 对应过去就是 `importance`：`lead` → protagonist、`support` → supporting、`functional` → minor）。反过来，手上已经有 cast.json 的话也能映射进来：protagonist/major → `lead`，supporting → `support`，minor → `functional`
 
 ## scenes
 

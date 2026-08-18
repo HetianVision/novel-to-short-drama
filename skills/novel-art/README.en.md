@@ -19,8 +19,8 @@ Same stance as the other two skills: **a checklist the model grades itself on is
 ## The three-skill relay
 
 ```
-novel-characters → cast.json    (who: character assets)
 novel-outline    → outline.json (what: structure & episodes)
+novel-characters → cast.json    (who: character assets)
 novel-art        → art.json     (where & what they hold: art assets)
 ```
 

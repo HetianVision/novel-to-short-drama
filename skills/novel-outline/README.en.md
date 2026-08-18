@@ -65,7 +65,9 @@ An 800k-character novel doesn't fit in context. `chunk` splits by chapter headin
 
 ## Relationship to novel-characters
 
-novel-characters owns character design (profiles, image/voice prompts, model sheets); novel-outline owns adaptation structure (cutting, merging, beat placement, episodes). If you have a `cast.json`, feed it in as character raw material. This skill writes no dialogue, no storyboards, no generation prompts.
+novel-outline owns adaptation structure (cutting, merging, beat placement, episodes); novel-characters owns character design (profiles, image/voice prompts, model sheets).
+
+**The outline sits upstream of the character bible**: the `characters` block already settles who is in, who is out, and who leads, so the character pass works from that roster instead of re-deciding it. The reverse also works — if you already have a `cast.json`, feed it in as character raw material instead of re-reading the source. This skill writes no dialogue, no storyboards, no generation prompts.
 
 ## Selftest
 

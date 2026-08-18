@@ -28,6 +28,19 @@ A character model sheet (Shen Zhiwei, from the bundled sample story):
 
 ![model sheet](assets/sheet.jpg)
 
+## Upstream
+
+In the pipeline the **outline sits upstream of the character bible**:
+
+```
+novel-outline    → outline.json (what: structure & episodes, who is in)
+novel-characters → cast.json    (who: character assets)
+```
+
+Pass the `outline.json` along if you have one — its `characters` block already settles the roster, `tier` maps onto `importance` (`lead` → protagonist, `support` → supporting, `functional` → minor), and `arc` is ready-made material for the profile. **Do not overturn the outline's tiers here**; if a tier looks wrong, go fix the outline.
+
+It runs fine without one — this skill does not depend on it. Feed it a raw novel and it builds the roster from the text itself.
+
 ## Use
 
 For installation see the [repository README](../../README.en.md). Then:

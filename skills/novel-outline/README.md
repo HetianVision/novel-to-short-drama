@@ -92,7 +92,9 @@ node scripts/novel-outline.mjs assets outline.json              # 资产清单 J
 
 ## 跟 novel-characters 的关系
 
-分工：**novel-characters 管角色设定**（画像/形象提示词/音色/设定图），**novel-outline 管改编结构**（砍线/合人/排爽点/分集）。有 `cast.json` 就直接当人物原料喂进来，不用重拆原文。本 skill 不写台词、不做分镜、不出提示词。
+分工：**novel-outline 管改编结构**（砍线/合人/排爽点/分集），**novel-characters 管角色设定**（画像/形象提示词/音色/设定图）。
+
+**大纲在角色的上游**：`outline.json` 的 `characters` 块已经定下了谁进谁不进、谁是主角组，角色设定照着这份清单做就行，不用再判断一遍轻重。反过来也走得通——用户手上已经有 `cast.json` 就直接当人物原料喂进来，不用重拆原文。本 skill 不写台词、不做分镜、不出提示词。
 
 ## 文件
 

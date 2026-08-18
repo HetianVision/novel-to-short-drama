@@ -55,7 +55,9 @@ metadata:
 
 平台阈值不同可以带上 `params.thresholds` 覆盖（默认：主角组 ≤ 5、重要配角 ≤ 10、功能性角色 ≤ 10、爽点间隔 ≤ 3 集）。**主场景上限不用配，随集数自动算**：4 + ⌈集数/10⌉，夹在 5–15（60 集 → 10）。这是 AI 短剧的数——场景是生成的没有搭景钱，放宽换观赏性；显式给 `maxPrimaryScenes` 才覆盖。**短篇（20–30 集）建议收紧角色档的阈值**，默认值是按 60 集以上给的。
 
-**如果用户有 novel-characters 的产出（cast.json）**，直接拿来当人物原料——角色、别名、关系都是现成的，不用重拆原文。分档按 `importance` 映射：protagonist/major → `lead`，supporting → `support`，minor → `functional`。
+**人物表从原文拆**——大纲是角色设定的上游，`characters` 块定下的分档、人物线与来源，下游 `novel-characters` 直接拿去当角色清单，不用再判断一遍谁重要。
+
+例外是用户手上已经有 `cast.json`（此前单独跑过 `novel-characters`）：那就拿来当人物原料，角色、别名、关系都是现成的，不用重拆原文。分档按 `importance` 反向映射：protagonist/major → `lead`，supporting → `support`，minor → `functional`。
 
 ### Step 1 — 定位输入
 
@@ -74,7 +76,7 @@ metadata:
 **这一步是脚手架，不是交付物**——分卷摘要是给没读过原文的模型压缩用的。两种情况直接跳到 Step 3：
 
 - 短篇，单卷装得下
-- **当前会话已经通读过原文**（比如刚跑完 novel-characters 的分块扫描）——不用再压缩一遍，也不用事后补档
+- **当前会话已经通读过原文**——不用再压缩一遍，也不用事后补档
 
 长篇且没读过原文：
 

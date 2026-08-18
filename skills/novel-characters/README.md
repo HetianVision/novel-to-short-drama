@@ -34,6 +34,19 @@ node scripts/novel-characters.mjs ui-template fr   # 打印待翻译的骨架
 
 ![角色设定图](assets/sheet.jpg)
 
+## 上游
+
+管线里**大纲在角色的上游**：
+
+```
+novel-outline    → outline.json （什么：结构与分集，谁进谁不进）
+novel-characters → cast.json    （谁：角色资产）
+```
+
+有 `outline.json` 就一起给——它的 `characters` 块已经定死了角色清单，`tier` 对应 `importance`（`lead` → protagonist、`support` → supporting、`functional` → minor），`arc` 是写画像的现成依据。**大纲定的分档不要在这一层推翻**，觉得不对回去改大纲。
+
+没有也照常跑，本 skill 不依赖它——直接丢一本小说进去，自己从原文拆角色表。
+
 ## 使用
 
 安装见[仓库根 README](../../README.md)。装好后：

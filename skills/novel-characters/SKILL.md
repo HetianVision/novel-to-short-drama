@@ -86,6 +86,19 @@ node {baseDir}/scripts/novel-characters.mjs styles   # 打印预设的完整内�
 
 确定输出目录：用户指定就用；没指定就用原书同级目录。
 
+**有 `outline.json`（novel-outline 的产出）就一起要过来**——大纲是角色设定的上游，它的 `characters` 块已经定死了角色清单：
+
+| outline 的字段 | 拿来做什么 |
+| --- | --- |
+| `name` | 角色表就照这份，**不再自己判断谁该进** |
+| `tier` | 直接对应 `importance`：`lead` → `protagonist`、`support` → `supporting`、`functional` → `minor` |
+| `arc` | 人物线，写 `oneLiner` 和 `persona` 的现成依据 |
+| `from` | 这个角色由原著的谁合并而来，扫原文时知道该收哪几条线的戏 |
+
+**大纲定的分档不要推翻**——谁重要是改编阶段拍板的事，角色这一层只负责把定下来的人做深。真觉得分档不对，回去改大纲，别在这里悄悄改一个不一样的。
+
+没有 `outline.json` 也照常跑，本 skill 不依赖它——那就自己从原文拆角色表。
+
 ### Step 2 — 分块
 
 ```bash

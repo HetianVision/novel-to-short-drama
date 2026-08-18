@@ -1,5 +1,33 @@
 # Changelog
 
+## 管线顺序对齐流程图 — 2026-08-18
+
+**大纲挪到角色前面，文档跟流程图口径统一**
+
+根 README 的流程图一直画的是 `小说原文 → 改编大纲 → 收敛层（剧本 / 场景 / 角色，
+三者同步迭代，无先后）→ 分镜 → 批量生成`，README 正文那句话也是照这个写的。
+**跟它打架的是它下面那张表**——表里 `novel-characters` 排在 `novel-outline`
+前面，一路复制到各 skill 的对照表、demo 目录约定、截图排列，共 18 个文件。
+
+这次以流程图为准，把文档拉回来。**流程图一个像素没动**，`assets/*.svg` 与
+`*.webp` 全部原样。
+
+- 根 README 中英两份：技能表行序、五张报告截图的排列、demo 工作目录树
+- 各 skill 的「谁 / 什么 / 哪里」对照表 9 处（art / script / storyboard 的
+  SKILL.md 与 README 中英）——大纲统一提到第一行
+- `novel-outline` 三处方向写反的文案掉过来：人物表从原文拆，`characters` 块
+  是**下游 novel-characters 的角色清单**；用户手上已经有 `cast.json` 降级成
+  例外分支，不再是主路径
+- `novel-characters` 补上上游说明（SKILL.md Step 1 + README 中英新增「上游」
+  一节）：有 `outline.json` 就照它的角色清单做，`tier` → `importance`、
+  `arc` 当画像依据；**大纲定的分档不要在这一层推翻**，觉得不对回去改大纲
+
+**没有动任何 `.mjs`。** 代码里本来就不存在 characters → outline 这条依赖——
+两个 skill 都不吃上游文件，旧顺序只活在文档里。同理也没给 `novel-characters`
+加 `seed <outline.json>`：它照样能直接吃一本小说独立跑，两份 README 都写明了。
+
+自测六个 skill 全绿，无变化。
+
 ## novel-characters 1.10.0 — 2026-08-18
 
 **音色提示词：删掉会让人复制错的那一条，形状改成紧凑参数串**
