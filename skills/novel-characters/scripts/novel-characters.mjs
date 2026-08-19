@@ -454,6 +454,69 @@ export function uiTemplate() {
 }
 
 /* ------------------------------------------------------------------ */
+/* seed — 从大纲预填角色表骨架                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * outline 的 tier 映射成 cast 的 importance。
+ *
+ * 注意两边粒度不一样：outline 的 `lead` 是「主角组」，男女主与主反派都在里面，
+ * 对应 cast 的 protagonist 与 major 两档。这里一律给 protagonist，由模型照
+ * seedNote 里的 role（女主 / 男主 / 反派）把主角之外的改成 major——**分档本身
+ * 不推翻，只在主角组内部细分**。
+ */
+export const TIER_TO_IMPORTANCE = { lead: 'protagonist', support: 'supporting', functional: 'minor' };
+
+/**
+ * 从 outline.json 预填 cast.json 骨架。
+ *
+ * 大纲是角色设定的上游：谁进谁不进、谁是主角组，在改编阶段就拍板了，这一层
+ * 不再判断一遍。搬过来的是**大纲已经定死的事实**（角色码、名字、分档、人物线、
+ * 由原著的谁合并而来），留空的是**这一层才该做的设计**（别名、画像、形象提示词、
+ * 音色提示词）——别名要读原文才知道，大纲里没有。
+ *
+ * 与 novel-art / novel-script 的 seedFromOutline 同一个形状：搬事实、留设计、
+ * 附一条 seedNote 带上下文。产出是骨架不是成品，直接跑 validate 会报一堆
+ * 字段缺失，那是预期的。
+ */
+export function seedFromOutline(outline) {
+  const characters = (outline?.characters ?? []).map((c) => {
+    const note = [
+      c?.id ? `角色码 ${c.id}` : null,
+      c?.role ? `大纲定位：${c.role}` : null,
+      c?.tier ? `大纲分档：${c.tier}` : null,
+      (c?.from ?? []).length ? `合并自：${(c.from ?? []).join('、')}` : null,
+    ].filter(Boolean).join('　');
+    return {
+      // 从大纲搬来的事实，不用再想
+      ...(c?.id ? { id: c.id } : {}),
+      name: c?.name ?? '',
+      importance: TIER_TO_IMPORTANCE[c?.tier] ?? 'supporting',
+      // 这一层才该做的设计，先占位
+      aliases: [],
+      oneLiner: '',
+      persona: {
+        gender: '', ageRange: '', identity: '', appearance: '',
+        personality: [], temperament: '', motivation: '',
+        // 人物弧光大纲已经写了，直接用；觉得不对回去改大纲，别在这里改一个不一样的
+        arc: c?.arc ?? '',
+        relationships: [], evidence: [],
+      },
+      image: { style: '', prompt: '', promptLocal: '', negativePrompt: '', tags: [], sheet: '' },
+      voice: { timbre: '', pitch: '', pace: '', accent: '', emotion: '', prompt: '', referenceHint: '' },
+      ...(note ? { seedNote: note } : {}),
+    };
+  });
+  return {
+    source: outline?.source ?? '',
+    lang: outline?.lang ?? DEFAULT_LANG,
+    style: DEFAULT_STYLE,
+    summary: '',
+    characters,
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* validate                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -1631,6 +1694,7 @@ document.addEventListener('click', async (e) => {
 
 const USAGE = `novel-characters.mjs — novel-characters skill 的确定性工具
 
+  seed <outline.json>              从大纲预填角色表骨架（打印到 stdout，画像与提示词留空待填）
   chunk <book.txt> <workdir>       段落感知重叠切块，写 chunk-NN.txt，打印块数
   merge <workdir>                  归并 roster-*.json，打印 {characters, mergeCandidates}
         [--apply merges.json]      落地复核后的合并决定：{"merges":[{"keep":…,"absorb":[…]}]}
@@ -1683,6 +1747,13 @@ function main(argv) {
   if (!cmd || cmd === '-h' || cmd === '--help') {
     console.log(USAGE);
     process.exit(cmd ? 0 : 1);
+  }
+
+  if (cmd === 'seed') {
+    const [path] = rest;
+    if (!path) throw new Error('用法：seed <outline.json>');
+    console.log(JSON.stringify(seedFromOutline(readJson(path)), null, 2));
+    return;
   }
 
   if (cmd === 'chunk') {

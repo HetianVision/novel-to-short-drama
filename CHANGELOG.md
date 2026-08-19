@@ -1,5 +1,44 @@
 # Changelog
 
+## novel-characters 1.11.0 — 2026-08-19
+
+**大纲成了角色的真上游：`seed <outline.json>`**
+
+上一版把管线顺序按流程图对齐了，但只改了文档——`novel-characters` 当时仍然
+不认 `outline.json`，「大纲 → 角色」那根箭头背后没有数据。这一版补上，收敛层
+三个 skill 的取数口径从此一致：**没有指定数据就从大纲来，指定了就用指定的**。
+
+```bash
+node scripts/novel-characters.mjs seed outline.json > seed.json
+```
+
+形状照抄 `novel-art` 与 `novel-script` 的 `seedFromOutline`：**搬事实、留设计、
+附一条 seedNote 带上下文**。
+
+- 搬过来的是大纲已经拍板的：角色码（`id` 原样保留，下游 script / storyboard
+  用它引用角色）、名字、分档、人物线（`arc` 落进 `persona.arc`）
+- 留空的是这一层才该做的：`aliases`（要读原文才知道，大纲里没有）、`oneLiner`、
+  `persona` 其余各项、`image`、`voice`
+- `role` 与 `from` 进 `seedNote`——定位（女主 / 反派）与「由原著的谁合并而来」，
+  扫原文时知道该收哪几条线的戏
+
+**分档映射与两条口径**：`lead` → protagonist、`support` → supporting、
+`functional` → minor。大纲定的分档不在这一层推翻，觉得不对回去改大纲；
+但主角组内部可以细分——`lead` 是「男女主 + 主反派」一整组，对应 protagonist
+与 major 两档，seed 一律给 protagonist，照 `seedNote` 的定位把主角之外的
+改成 major。
+
+**没设任何门。** 有 `outline.json` 就用，没有照常从原文拆角色表，
+`seed` 是可选的第一步不是前置条件。seed 出来的是骨架不是成品，直接跑
+`validate` 会报一堆字段缺失——这跟 art / script 的 seed 行为一致，自测里
+有一条断言专门钉住它。
+
+顺带说明大纲里为什么没有道具：`outline.json` 只有 scenes / characters /
+episodes 三块，道具从来不在里面。所以 `novel-art` 的道具仍然由模型从原文
+提取，这是大纲本身的边界，不是缺口。
+
+自测 330 → 355 项。
+
 ## 管线顺序对齐流程图 — 2026-08-18
 
 **大纲挪到角色前面，文档跟流程图口径统一**

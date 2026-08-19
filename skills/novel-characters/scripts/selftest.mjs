@@ -19,6 +19,8 @@ import {
   mergeRoster,
   renderHtml,
   renderMarkdown,
+  seedFromOutline,
+  TIER_TO_IMPORTANCE,
   STYLE_PRESETS,
   SUPPORTED_STYLES,
   needsUiTranslation,
@@ -200,6 +202,56 @@ eq(
   1,
   'absorb 已经是同一个人时不报错',
 );
+
+/* ---------------- seedFromOutline（大纲是角色的上游） ---------------- */
+
+{
+  // 拿真实的 outline 样例当夹具。这个函数的契约就是「吃 novel-outline 的产出」，
+  // 手捏一份假 outline 测不到真实的字段形状。novel-art 与 novel-script 的自测
+  // 读的是同一份文件，同仓库上游样例共享是既有做法。
+  const outlinePath = join(here, '..', '..', 'novel-outline', 'examples', '渡口-outline.json');
+  const outline = JSON.parse(readFileSync(outlinePath, 'utf8'));
+  const seeded = seedFromOutline(outline);
+
+  ok(seeded.characters.length === outline.characters.length, 'seed 出的角色数跟大纲一致');
+  ok(seeded.source === outline.source, 'source 从大纲继承');
+  ok(seeded.style === 'realistic', '画风取默认值，大纲里没有这个信息');
+  ok(seeded.summary === '', 'summary 留空——那是读完原文才写得出来的');
+
+  // 分档映射：大纲拍板的轻重，这一层不推翻
+  ok(TIER_TO_IMPORTANCE.lead === 'protagonist', 'lead → protagonist');
+  ok(TIER_TO_IMPORTANCE.support === 'supporting', 'support → supporting');
+  ok(TIER_TO_IMPORTANCE.functional === 'minor', 'functional → minor');
+  for (const c of seeded.characters) {
+    const src = outline.characters.find((x) => x.id === c.id);
+    ok(c.importance === TIER_TO_IMPORTANCE[src.tier], `${c.name} 的分档照大纲映射`);
+  }
+
+  // 搬事实
+  const first = seeded.characters[0];
+  ok(first.id === outline.characters[0].id, '角色码从大纲搬过来');
+  ok(first.name === outline.characters[0].name, '名字从大纲搬过来');
+  ok(first.persona.arc === outline.characters[0].arc, '人物弧光大纲已经写了，直接用');
+  ok(first.seedNote.includes(outline.characters[0].role), 'seedNote 带上大纲定位，供模型细分主角组');
+  ok(first.seedNote.includes('C01'), 'seedNote 带上角色码');
+
+  // 留设计
+  ok(first.aliases.length === 0, '别名留空——大纲里没有，要读原文才知道');
+  ok(first.oneLiner === '', '一句话留空');
+  ok(first.image.prompt === '' && first.voice.prompt === '', '形象与音色提示词留空');
+  ok(first.persona.appearance === '' && first.persona.evidence.length === 0, '外貌与引文留空');
+
+  // 骨架不是成品：直接校验必然报字段缺失，这是预期行为，跟 art / script 的 seed 一致
+  const problems = validateCast(seeded.characters, null);
+  ok(problems.length > 0, 'seed 产出是骨架不是成品，直接 validate 会报缺字段');
+
+  // 空大纲不炸
+  ok(seedFromOutline({}).characters.length === 0, '空大纲返回空角色表，不抛异常');
+  ok(seedFromOutline(null).source === '', 'null 也不炸');
+  // tier 缺失或不认识时给一个安全的中间档，不是崩掉
+  ok(seedFromOutline({ characters: [{ name: '张三' }] }).characters[0].importance === 'supporting',
+    'tier 缺失时退到 supporting，不抛异常也不给最高档');
+}
 
 /* ---------------- assembleCast ---------------- */
 
