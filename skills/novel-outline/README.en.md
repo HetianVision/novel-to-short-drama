@@ -75,6 +75,6 @@ novel-outline owns adaptation structure (cutting, merging, beat placement, episo
 node scripts/selftest.mjs
 ```
 
-219 assertions — chunking, validation, gate-defeating cases, asset aggregation, rendering (both UI languages), export. No model calls, runs in about a second.
+220 assertions — chunking, validation, gate-defeating cases, asset aggregation, rendering (both UI languages), export. No model calls, runs in about a second.
 
 **Only tested on macOS + Node 24.**

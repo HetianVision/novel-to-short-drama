@@ -47,6 +47,6 @@ Via codex's built-in `$imagegen`, zero API keys. One 16:9 sheet per scene and pe
 node scripts/selftest.mjs
 ```
 
-144 assertions — seeding, style presets, gate-defeating cases for all 11 gates, rendering (zh/en report UI), export. No model calls, runs in about a second.
+146 assertions — seeding, style presets, gate-defeating cases for all 11 gates, rendering (zh/en report UI), export. No model calls, runs in about a second.
 
 **Only tested on macOS + Node 24.**

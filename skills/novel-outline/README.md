@@ -102,7 +102,7 @@ node scripts/novel-outline.mjs assets outline.json              # 资产清单 J
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-outline.mjs      chunk / validate / checkup / render / assets
-  selftest.mjs           219 项断言，不调模型
+  selftest.mjs           220 项断言，不调模型
 references/
   schema.md              outline.json 结构 + 硬规则
   volume-pass.md         分卷摘要怎么写
@@ -121,6 +121,6 @@ assets/
 node scripts/selftest.mjs
 ```
 
-219 项断言，覆盖分卷 / 校验 / 质量门逐项击穿 / 资产汇总 / 渲染（中英两套界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+220 项断言，覆盖分卷 / 校验 / 质量门逐项击穿 / 资产汇总 / 渲染（中英两套界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。
