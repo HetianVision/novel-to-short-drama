@@ -14,7 +14,7 @@
 
 ![outline-report.html](assets/report.webp)
 
-## 质量门：13 道，全是代码
+## 质量门：14 道，全部是代码
 
 这个 skill 的核心主张：**checklist 交给模型自觉是靠不住的**。所以每一道门都是 `validate` 里的确定性检查，不是给模型读的文字：
 
@@ -24,6 +24,7 @@
 | 有名字的重要配角 | ≤ 10 人 |
 | 功能性角色（医生、店员……占脸不占名） | ≤ 10 人 |
 | 主场景上限 | **随集数动态**：4 + ⌈集数/10⌉，夹在 5–15（6 集 → 5，60 集 → 10，110 集起封顶 15） |
+| 叙事道具上限 | ≤ 8 件（`props` 是可选字段，没写这道门明说跳过） |
 | 一次性场景有规避方案 | — |
 | 爽点间隔无真空区 | ≤ 3 集 |
 | 第 1 集有钩子 | — |
@@ -102,7 +103,7 @@ node scripts/novel-outline.mjs assets outline.json              # 资产清单 J
 SKILL.md                 给 agent 读的工作流
 scripts/
   novel-outline.mjs      chunk / validate / checkup / render / assets
-  selftest.mjs           220 项断言，不调模型
+  selftest.mjs           249 项断言，不调模型
 references/
   schema.md              outline.json 结构 + 硬规则
   volume-pass.md         分卷摘要怎么写
@@ -121,6 +122,6 @@ assets/
 node scripts/selftest.mjs
 ```
 
-220 项断言，覆盖分卷 / 校验 / 质量门逐项击穿 / 资产汇总 / 渲染（中英两套界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
+249 项断言，覆盖分卷 / 校验 / 质量门逐项击穿 / 资产汇总 / 渲染（中英两套界面）/ 导出。不调模型、不花额度、1 秒跑完。改完脚本先跑这个。
 
 **只在 macOS + Node 24 上实测过。** 代码没有平台相关调用，Linux 和更低版本 Node 理论上没问题，但**没验过**。
