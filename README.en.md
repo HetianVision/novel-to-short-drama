@@ -31,6 +31,30 @@ Off to the side of the pipeline there is a **shot vocabulary library** that none
 
 **Every skill renders its report in English too** — reports default to a Chinese UI; pass `--lang en` to `render` for a fully English report (data content stays as authored).
 
+## One page for the whole pipeline
+
+The five stage reports can be merged into a single page with a left-hand nav — **you get a pane for every stage you actually have**:
+
+```bash
+node scripts/report.mjs --from <demo-dir> --out report.html
+```
+
+`--from` discovers the five json files using the [working-directory convention](#repository-conventions); you can also point at each one directly (`--outline` `--cast` `--art` `--script` `--storyboard`). Ran only the character pass? You get one pane, no error.
+
+It is an **assembler, not a sixth skill**: it imports no skill code, it shells out to each skill's own `render --html` and stitches the results. So the six skills stay untouched, still run standalone, and are still copyable on their own — and when a skill changes its rendering, this picks it up for free.
+
+Merging solves three problems, **all of them inside the assembler, none inside the skills**:
+
+- **Style bleed.** The five reports share 57 class names, 13 of which mean different things in different reports (`.copy`, `.kpis`, `.badge`, `.chip`…), so every selector gets a scope prefix
+- **Script bleed.** Each report's script does document-wide lookups like `document.querySelector('.expo')`. Merged, that only ever finds the first one — all five export buttons would break. Each script gets wrapped in a scoping proxy
+- **Asset paths.** Each report's images are relative to its own json directory (`images/…`, `E01-01/f1.png`) and get rebased against the output file
+
+One pane shows at a time by default (the five together run to roughly 600k characters). "Show all" in the bottom-left expands every pane so Cmd+F reaches the whole document. Number keys `1`–`5` switch panes, and `#pane-script` deep-links straight to one.
+
+```bash
+node scripts/report-selftest.mjs   # 92 assertions, no browser needed
+```
+
 Point it at a novel and you get all five:
 
 **novel-outline · short-drama adaptation outline**
