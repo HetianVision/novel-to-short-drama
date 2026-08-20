@@ -21,40 +21,56 @@ function hasSource(project) {
   return existsSync(source) && readdirSync(source).length > 0;
 }
 
-function required(...missing) {
-  return { ok: missing.length === 0, missing, warnings: [] };
-}
-
 export const STAGE_DEFINITIONS = Object.freeze({
   outline: {
     label: '生成大纲',
     skillName: 'novel-outline',
     outputDirs: ['outline'],
     artifactNames: ['outline.json'],
+    jsonToken: 'outline',
+    reportName: 'outline-report.html',
+    requiredCommands: ['validate', 'render'],
+    upstreamStages: [],
   },
   characters: {
     label: '生成角色',
     skillName: 'novel-characters',
     outputDirs: ['characters'],
     artifactNames: ['cast.json'],
+    jsonToken: 'cast',
+    reportName: 'report.html',
+    requiredCommands: ['seed', 'validate', 'render'],
+    upstreamStages: ['outline'],
   },
   art: {
     label: '生成美术',
     skillName: 'novel-art',
     outputDirs: ['art'],
     artifactNames: ['art.json'],
+    jsonToken: 'art',
+    reportName: 'art-report.html',
+    requiredCommands: ['seed', 'validate', 'render'],
+    upstreamStages: ['outline', 'characters'],
   },
   script: {
     label: '生成剧本',
     skillName: 'novel-script',
     outputDirs: ['script'],
     artifactNames: ['script.json'],
+    jsonToken: 'script',
+    reportName: 'script-report.html',
+    requiredCommands: ['seed', 'validate', 'render'],
+    upstreamStages: ['outline', 'characters', 'art'],
   },
   storyboard: {
     label: '生成分镜',
     skillName: 'novel-storyboard',
     outputDirs: ['storyboard'],
     artifactNames: ['storyboard.json', 'manifest.json'],
+    jsonToken: 'storyboard',
+    reportName: 'storyboard-report.html',
+    requiredCommands: ['seed', 'validate', 'render', 'export'],
+    upstreamStages: ['script', 'outline', 'characters', 'art'],
   },
   image: {
     label: '生成图片',
@@ -68,9 +84,11 @@ export function readiness(project = {}, taskType) {
   const definition = STAGE_DEFINITIONS[taskType];
   if (!definition) throw new Error(`Unknown task type: ${taskType}`);
 
-  if (taskType === 'outline') return required(hasSource(project) ? null : 'source material').missing.filter(Boolean).length
-    ? { ok: false, missing: ['source material'], warnings: [] }
-    : { ok: true, missing: [], warnings: [] };
+  if (taskType === 'outline') {
+    return hasSource(project)
+      ? { ok: true, missing: [], warnings: [] }
+      : { ok: false, missing: ['source material'], warnings: [] };
+  }
 
   if (taskType === 'characters') {
     if (!hasSource(project)) return { ok: false, missing: ['source material'], warnings: [] };

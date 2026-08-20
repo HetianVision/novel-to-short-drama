@@ -14,13 +14,14 @@ import {
   sendJson,
   sendText,
 } from './lib/http-utils.mjs';
-import { REPO_ROOT, PROJECTS_ROOT, WORKBENCH_ROOT, SKILLS_ROOT } from './lib/constants.mjs';
+import { REPO_ROOT, PROJECTS_ROOT, WORKBENCH_ROOT } from './lib/constants.mjs';
 import { createProjectStore } from './lib/project-store.mjs';
 import { createTaskStore } from './lib/task-store.mjs';
 import { TaskQueue } from './lib/task-queue.mjs';
 import { readiness, STAGE_DEFINITIONS } from './lib/task-definitions.mjs';
 import { indexArtifacts } from './lib/artifact-index.mjs';
 import { resolveInside } from './lib/path-utils.mjs';
+import { createStageRunner } from './lib/stage-runner.mjs';
 
 const execFileAsync = promisify(execFile);
 const PUBLIC_ROOT = join(WORKBENCH_ROOT, 'public');
@@ -63,7 +64,7 @@ export function createServer({
   projectStore = createProjectStore({ projectsRoot: PROJECTS_ROOT }),
   taskQueue,
   taskStore,
-  taskRunner = async () => ({ status: 'failed', error: 'No task runner configured' }),
+  taskRunner = null,
   skillLock = null,
   codexBin = process.env.CODEX_BIN ?? 'codex',
   publicRoot = PUBLIC_ROOT,
@@ -71,8 +72,6 @@ export function createServer({
   const taskStores = new Map();
   const taskProjectIds = new Map();
   const sseClients = new Map();
-  const queue = taskQueue ?? new TaskQueue({ runTask: taskRunner });
-
   async function getProject(projectId) {
     return projectStore.read(decode(projectId));
   }
@@ -83,6 +82,16 @@ export function createServer({
     if (!taskStores.has(project.id)) taskStores.set(project.id, createTaskStore(project.root));
     return taskStores.get(project.id);
   }
+
+  const defaultTaskRunner = createStageRunner({
+    repoRoot,
+    skillsRoot: join(repoRoot, 'skills'),
+    skillLockPath: join(repoRoot, 'skills.lock.json'),
+    projectStore,
+    getTaskStore,
+    codexBin,
+  });
+  const queue = taskQueue ?? new TaskQueue({ runTask: taskRunner ?? defaultTaskRunner });
 
   async function syncQueueEvent(event) {
     const task = event.task;
@@ -96,6 +105,24 @@ export function createServer({
     if (event.result?.error) patch.error = event.result.error;
     if (event.result?.artifactIds) patch.artifactIds = event.result.artifactIds;
     await store.update(task.id, patch);
+    const definition = STAGE_DEFINITIONS[task.type];
+    if (definition?.outputDirs?.length) {
+      const latest = await projectStore.read(task.projectId);
+      await projectStore.update(task.projectId, {
+        stageState: {
+          ...(latest.stageState ?? {}),
+          [task.type]: {
+            ...(latest.stageState?.[task.type] ?? {}),
+            status: event.status,
+            taskId: task.id,
+            skillName: task.skillName ?? definition.skillName,
+            outputDir: definition.outputDirs[0],
+            ...(event.result?.artifactIds ? { artifactIds: event.result.artifactIds } : {}),
+            ...(event.result?.error ? { error: event.result.error } : {}),
+          },
+        },
+      });
+    }
     const eventPayload = {
       type: event.type,
       taskId: task.id,
@@ -169,6 +196,7 @@ export function createServer({
       status: 'queued',
       options,
       skillName: definition.skillName,
+      outputDir: definition.outputDirs[0] ?? null,
       retryOf,
     });
     taskProjectIds.set(task.id, project.id);
