@@ -88,7 +88,7 @@ async function directJson(directory, token) {
   return files.length ? join(directory, files[0]) : null;
 }
 
-function targetsFromDocument(ownerStage, document) {
+export function targetsFromDocument(ownerStage, document) {
   if (ownerStage === 'characters') {
     return (document.characters ?? []).map((character) => ({
       id: character.id ?? character.name,
@@ -109,11 +109,11 @@ function targetsFromDocument(ownerStage, document) {
     }));
     return [...scenes, ...props];
   }
-  return (document.segments ?? []).flatMap((segment) => (segment.cuts ?? []).map((cut, index) => ({
+  return (document.episodes ?? []).flatMap((episode) => (episode.segments ?? []).flatMap((segment) => (segment.cuts ?? []).map((cut, index) => ({
     id: `${segment.id ?? 'segment'}#${index + 1}`,
     relativePath: normalizeTarget(ownerStage, `${segment.id ?? 'segment'}/f${index + 1}.png`),
     description: cut.frame ?? cut.imagePrompt ?? cut.prompt ?? `${segment.id} cut ${index + 1}`,
-  })));
+  }))));
 }
 
 async function resolveTargets(project, task) {
