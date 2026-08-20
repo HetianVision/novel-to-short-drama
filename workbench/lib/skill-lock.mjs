@@ -164,7 +164,7 @@ export async function snapshotSkill({ skillsRoot, skillName, destination }) {
   const sourceStat = await lstat(source);
   if (!sourceStat.isDirectory() || sourceStat.isSymbolicLink()) throw new Error(`Invalid Skill root: ${skillName}`);
 
-  const root = resolve(destination);
+  const root = resolve(destination, skillName);
   await mkdir(root, { recursive: true });
   const files = [];
   const hashes = {};
