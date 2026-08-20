@@ -156,3 +156,11 @@ export function createSkillSync({
 }
 
 export { parseDiff, tokenFor };
+
+export async function checkSkillUpdate(options = {}) {
+  return createSkillSync(options).check();
+}
+
+export async function syncSkills(options = {}) {
+  return createSkillSync(options).sync(options);
+}

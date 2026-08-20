@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { renderEpisode } from '../lib/episode-renderer.mjs';
 import { makeTempDir } from './helpers.mjs';
+
+const ffmpegFixture = fileURLToPath(new URL('./fixtures/ffmpeg-fixture.mjs', import.meta.url));
 
 test('episode renderer rejects a missing segment before invoking ffmpeg', async () => {
   const root = await makeTempDir('episode-renderer-missing-');
@@ -40,4 +43,13 @@ test('episode renderer builds a concat list and invokes ffmpeg once', async () =
   assert.equal(invocation.bin, 'ffmpeg-fixture');
   assert.deepEqual(invocation.args.slice(0, 5), ['-y', '-f', 'concat', '-safe', '0']);
   assert.equal(await readFile(output, 'utf8'), 'assembled');
+});
+
+test('episode renderer can use the deterministic ffmpeg fixture', async () => {
+  const root = await makeTempDir('episode-renderer-fixture-');
+  const segment = join(root, 'E01-01.mp4');
+  const output = join(root, 'E01.mp4');
+  await writeFile(segment, 'one');
+  await renderEpisode({ segmentPaths: [segment], outputPath: output, ffmpegBin: ffmpegFixture });
+  assert.equal(await readFile(output, 'utf8'), 'fixture-ffmpeg-output');
 });

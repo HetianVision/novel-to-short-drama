@@ -11,6 +11,25 @@
 
 # shuohao-skills
 
+> 本仓库是 `eternityspring/shuohao-skills` 的本地工作台复刻版。原始 `skills/` 保持锁定、只读运行；`workbench/` 增加浏览器界面、Codex CLI 任务编排、成果物报告查看，以及 MiniMax/Seedance 视频适配层。
+
+## 本地短剧制作工作台
+
+如果你的目标是从小说一路跑到可交付的短剧素材和视频片段，直接使用工作台：
+
+```bash
+node workbench/cli.mjs start
+open http://127.0.0.1:4318
+```
+
+默认基准测试不调用模型、不花 Provider 额度：
+
+```bash
+node workbench/cli.mjs test
+```
+
+详细的本地目录、Skill 锁同步、Provider 环境变量和真实冒烟命令见 [workbench/README.md](workbench/README.md)。
+
 **AI 短剧制作的 skill 集合**：从一本小说到直接喂生成管线的制作素材——拆角色、排大纲、出场景与道具设定、写剧本、切分镜。给 AI 编码 agent 用，**Claude Code 和 codex 都能跑**。
 
 整条管线长这样——**改编大纲收敛结构，剧本、场景、角色三者同步迭代，分镜只做输出不做新决定**：
