@@ -64,6 +64,8 @@ export async function sendFile(response, path, contentType) {
 
 export function contentTypeFor(path) {
   const lower = path.toLowerCase();
+  if (lower.endsWith('.css')) return 'text/css; charset=utf-8';
+  if (lower.endsWith('.js') || lower.endsWith('.mjs')) return 'text/javascript; charset=utf-8';
   if (lower.endsWith('.json')) return 'application/json; charset=utf-8';
   if (lower.endsWith('.md') || lower.endsWith('.markdown')) return 'text/markdown; charset=utf-8';
   if (lower.endsWith('.html')) return 'text/html; charset=utf-8';

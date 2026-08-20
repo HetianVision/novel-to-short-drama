@@ -84,6 +84,16 @@ test('health route reports local server and Codex state', async (t) => {
   assert.equal(typeof body.codex.available, 'boolean');
 });
 
+test('serves browser assets with executable MIME types', async (t) => {
+  const { base } = await withServer(t);
+  const css = await fetch(`${base}/styles.css`);
+  const js = await fetch(`${base}/app.js`);
+  assert.equal(css.status, 200);
+  assert.equal(css.headers.get('content-type'), 'text/css; charset=utf-8');
+  assert.equal(js.status, 200);
+  assert.equal(js.headers.get('content-type'), 'text/javascript; charset=utf-8');
+});
+
 test('creates a video job through the provider route after storyboard images exist', async (t) => {
   const { base, projectStore } = await withServer(t);
   const created = await postJson(base, '/api/projects', { title: '渡口视频' });
