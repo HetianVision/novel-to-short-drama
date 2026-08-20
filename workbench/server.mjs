@@ -18,10 +18,11 @@ import { REPO_ROOT, PROJECTS_ROOT, WORKBENCH_ROOT } from './lib/constants.mjs';
 import { createProjectStore } from './lib/project-store.mjs';
 import { createTaskStore } from './lib/task-store.mjs';
 import { TaskQueue } from './lib/task-queue.mjs';
-import { readiness, STAGE_DEFINITIONS } from './lib/task-definitions.mjs';
+import { readiness, STAGE_DEFINITIONS, IMAGE_OWNER_STAGES } from './lib/task-definitions.mjs';
 import { indexArtifacts } from './lib/artifact-index.mjs';
 import { resolveInside } from './lib/path-utils.mjs';
 import { createStageRunner } from './lib/stage-runner.mjs';
+import { buildImageTask, createImageRunner } from './lib/image-runner.mjs';
 
 const execFileAsync = promisify(execFile);
 const PUBLIC_ROOT = join(WORKBENCH_ROOT, 'public');
@@ -91,7 +92,18 @@ export function createServer({
     getTaskStore,
     codexBin,
   });
-  const queue = taskQueue ?? new TaskQueue({ runTask: taskRunner ?? defaultTaskRunner });
+  const defaultImageRunner = createImageRunner({
+    repoRoot,
+    skillsRoot: join(repoRoot, 'skills'),
+    skillLockPath: join(repoRoot, 'skills.lock.json'),
+    projectStore,
+    getTaskStore,
+    codexBin,
+  });
+  const defaultRunner = async (task, context) => task.type === 'image'
+    ? defaultImageRunner(task, context)
+    : defaultTaskRunner(task, context);
+  const queue = taskQueue ?? new TaskQueue({ runTask: taskRunner ?? defaultRunner });
 
   async function syncQueueEvent(event) {
     const task = event.task;
@@ -180,7 +192,31 @@ export function createServer({
   }
 
   async function createTask(project, type, options = {}, retryOf = null) {
-    const gate = readiness(project, type);
+    let definition = STAGE_DEFINITIONS[type];
+    let taskSpec = null;
+    if (type === 'image') {
+      const ownerStage = options.ownerStage;
+      if (!IMAGE_OWNER_STAGES.includes(ownerStage)) {
+        const error = new Error('Image task requires ownerStage: characters, art, or storyboard');
+        error.statusCode = 400;
+        throw error;
+      }
+      const ownerGate = readiness(project, ownerStage);
+      if (!ownerGate.ok) {
+        const error = new Error('Image owner stage is not ready');
+        error.statusCode = 409;
+        error.details = { missing: ownerGate.missing, warnings: ownerGate.warnings };
+        throw error;
+      }
+      taskSpec = buildImageTask({
+        projectId: project.id,
+        ownerStage,
+        assetIds: options.assetIds ?? [],
+        options,
+      });
+      definition = STAGE_DEFINITIONS.image;
+    }
+    const gate = type === 'image' ? { ok: true, missing: [], warnings: [] } : readiness(project, type);
     if (!gate.ok) {
       const error = new Error('Task dependencies are not ready');
       error.statusCode = 409;
@@ -188,15 +224,15 @@ export function createServer({
       throw error;
     }
     const store = getTaskStore(project);
-    const definition = STAGE_DEFINITIONS[type];
     const task = await store.create({
       id: `task-${randomUUID()}`,
       projectId: project.id,
       type,
       status: 'queued',
       options,
-      skillName: definition.skillName,
-      outputDir: definition.outputDirs[0] ?? null,
+      skillName: taskSpec?.skillName ?? definition.skillName,
+      outputDir: taskSpec?.outputDir ?? definition.outputDirs[0] ?? null,
+      ...(taskSpec ? { ownerStage: taskSpec.ownerStage, assetIds: taskSpec.assetIds } : {}),
       retryOf,
     });
     taskProjectIds.set(task.id, project.id);

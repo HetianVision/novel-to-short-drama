@@ -3,6 +3,8 @@ import { join } from 'node:path';
 
 const SUCCESSFUL = new Set(['succeeded', 'partial']);
 
+export const IMAGE_OWNER_STAGES = Object.freeze(['characters', 'art', 'storyboard']);
+
 function stateHasOutput(project, stage) {
   const state = project?.stageState?.[stage];
   if (state && SUCCESSFUL.has(state.status)) return true;
@@ -77,6 +79,7 @@ export const STAGE_DEFINITIONS = Object.freeze({
     skillName: null,
     outputDirs: [],
     artifactNames: [],
+    ownerStages: IMAGE_OWNER_STAGES,
   },
 });
 
