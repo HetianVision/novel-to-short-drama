@@ -23,6 +23,21 @@ function hasSource(project) {
   return existsSync(source) && readdirSync(source).length > 0;
 }
 
+function hasMedia(project, stage) {
+  if (!project?.root) return false;
+  const root = join(project.root, stage);
+  if (!existsSync(root)) return false;
+  const pending = [root];
+  while (pending.length) {
+    const current = pending.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      if (entry.isDirectory()) pending.push(join(current, entry.name));
+      else if (/\.(png|jpe?g|webp)$/i.test(entry.name)) return true;
+    }
+  }
+  return false;
+}
+
 export const STAGE_DEFINITIONS = Object.freeze({
   outline: {
     label: '生成大纲',
@@ -80,6 +95,13 @@ export const STAGE_DEFINITIONS = Object.freeze({
     outputDirs: [],
     artifactNames: [],
     ownerStages: IMAGE_OWNER_STAGES,
+  },
+  video: {
+    label: '生成视频',
+    skillName: null,
+    outputDirs: ['video'],
+    artifactNames: [],
+    upstreamStages: ['storyboard'],
   },
 });
 
@@ -139,6 +161,13 @@ export function readiness(project = {}, taskType) {
         !stateHasOutput(project, 'art') && 'art.json is optional for novel-storyboard',
       ].filter(Boolean),
     };
+  }
+
+  if (taskType === 'video') {
+    if (!stateHasOutput(project, 'storyboard')) return { ok: false, missing: ['storyboard.json'], warnings: [] };
+    return hasMedia(project, 'storyboard')
+      ? { ok: true, missing: [], warnings: [] }
+      : { ok: false, missing: ['storyboard images'], warnings: ['run image generation for the storyboard owner stage first'] };
   }
 
   return { ok: false, missing: ['ownerStage'], warnings: [] };

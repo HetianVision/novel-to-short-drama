@@ -18,6 +18,7 @@ const state = {
   selectedTaskSubscription: null,
   taskEvents: new Map(),
   skillSyncReady: false,
+  skillSyncToken: null,
 };
 
 class ApiError extends Error {
@@ -106,6 +107,7 @@ function renderSources() {
 
 function renderStages() {
   const project = state.project;
+  if ($('videoJobButton')) $('videoJobButton').disabled = !project || !project.readiness?.video?.ok;
   $('workflowStages').innerHTML = STAGES.map((stage, index) => {
     const gate = project?.readiness?.[stage.key] ?? { ok: false, missing: ['项目'] };
     const task = stageTask(project, stage.key);
@@ -274,7 +276,8 @@ async function uploadFiles(files) {
 async function checkSkills() {
   try {
     const result = await WorkbenchApi.checkSkillUpdate();
-    state.skillSyncReady = Boolean(result.changedFiles?.length);
+    state.skillSyncToken = result.confirmationToken ?? null;
+    state.skillSyncReady = Boolean(state.skillSyncToken);
     $('skillStatus').textContent = state.skillSyncReady ? '有更新' : '已同步';
     $('skillStatus').className = `status-pill ${state.skillSyncReady ? 'warning' : 'success'}`;
     $('skillStatusDetail').textContent = state.skillSyncReady ? `${result.changedFiles.length} 个文件有变化，确认后才会同步。` : '当前锁定版本与源仓库一致。';
@@ -283,9 +286,9 @@ async function checkSkills() {
 }
 
 async function syncSkills() {
-  if (!state.skillSyncReady) return;
-  if (!window.confirm('确认从 upstream 同步 Skill，并提交到自己的 origin？')) return;
-  try { const result = await WorkbenchApi.syncSkills('confirmed-by-user'); state.skillSyncReady = false; $('syncSkillsButton').disabled = true; $('skillStatus').textContent = '已同步'; $('skillStatusDetail').textContent = `${result.commit ?? '新版本'} 已提交。`; showToast('Skill 同步完成。'); }
+  if (!state.skillSyncReady || !state.skillSyncToken) return;
+  if (!window.confirm('确认从 upstream 同步 Skill，并在本地创建同步提交？')) return;
+  try { const result = await WorkbenchApi.syncSkills(state.skillSyncToken); state.skillSyncReady = false; state.skillSyncToken = null; $('syncSkillsButton').disabled = true; $('skillStatus').textContent = '已同步'; $('skillStatusDetail').textContent = `${result.commit ?? '新版本'} 已提交到 ${result.branch ?? '当前分支'}。`; showToast('Skill 同步完成。'); }
   catch (error) { showToast(error.message, 'error'); }
 }
 

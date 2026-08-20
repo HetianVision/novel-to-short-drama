@@ -4,6 +4,9 @@ import { createServer } from '../server.mjs';
 import { makeTempDir } from './helpers.mjs';
 import { createProjectStore } from '../lib/project-store.mjs';
 import { createTaskStore } from '../lib/task-store.mjs';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { writeJson } from './helpers.mjs';
 
 async function withServer(t) {
   const projectsRoot = await makeTempDir('http-api-projects-');
@@ -79,4 +82,19 @@ test('health route reports local server and Codex state', async (t) => {
   const body = await response.json();
   assert.equal(body.ok, true);
   assert.equal(typeof body.codex.available, 'boolean');
+});
+
+test('creates a video job through the provider route after storyboard images exist', async (t) => {
+  const { base, projectStore } = await withServer(t);
+  const created = await postJson(base, '/api/projects', { title: '渡口视频' });
+  const project = await projectStore.read(created.body.id);
+  await mkdir(join(project.root, 'storyboard', 'E01-01'), { recursive: true });
+  await mkdir(join(project.root, 'script'), { recursive: true });
+  await writeFile(join(project.root, 'storyboard', 'E01-01', 'f1.png'), 'frame');
+  await writeJson(join(project.root, 'storyboard', 'storyboard.json'), { episodes: [{ ep: 1, segments: [{ id: 'E01-01', cuts: [{ seconds: 6 }] }] }] });
+  await writeJson(join(project.root, 'script', 'script.json'), { episodes: [{ ep: 1, scenes: [] }] });
+  const response = await postJson(base, `/api/projects/${created.body.id}/video-jobs`, { provider: 'seedance', options: {} });
+  assert.equal(response.response.status, 202);
+  assert.equal(response.body.type, 'video');
+  assert.equal(response.body.provider, 'seedance');
 });

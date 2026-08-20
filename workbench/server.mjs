@@ -23,6 +23,9 @@ import { indexArtifacts } from './lib/artifact-index.mjs';
 import { resolveInside } from './lib/path-utils.mjs';
 import { createStageRunner } from './lib/stage-runner.mjs';
 import { buildImageTask, createImageRunner } from './lib/image-runner.mjs';
+import { buildVideoTask, createVideoRunner } from './lib/video-task-runner.mjs';
+import { createSkillSync } from './lib/sync-skills.mjs';
+import { loadProviderConfig } from './lib/providers/provider-config.mjs';
 
 const execFileAsync = promisify(execFile);
 const PUBLIC_ROOT = join(WORKBENCH_ROOT, 'public');
@@ -69,6 +72,12 @@ export function createServer({
   skillLock = null,
   codexBin = process.env.CODEX_BIN ?? 'codex',
   publicRoot = PUBLIC_ROOT,
+  videoRunner = null,
+  videoFetchImpl = globalThis.fetch,
+  videoDownloadFetchImpl = videoFetchImpl,
+  videoEnv = process.env,
+  videoAssetResolver = null,
+  skillSync = null,
 } = {}) {
   const taskStores = new Map();
   const taskProjectIds = new Map();
@@ -100,9 +109,25 @@ export function createServer({
     getTaskStore,
     codexBin,
   });
-  const defaultRunner = async (task, context) => task.type === 'image'
-    ? defaultImageRunner(task, context)
-    : defaultTaskRunner(task, context);
+  const defaultVideoRunner = videoRunner ?? createVideoRunner({
+      repoRoot,
+      projectStore,
+      getTaskStore,
+      fetchImpl: videoFetchImpl,
+      downloadFetchImpl: videoDownloadFetchImpl,
+      env: videoEnv,
+      assetResolver: videoAssetResolver,
+    });
+  const skillSyncService = skillSync ?? createSkillSync({
+    repoRoot,
+    skillsRoot: join(repoRoot, 'skills'),
+    lockPath: join(repoRoot, 'skills.lock.json'),
+  });
+  const defaultRunner = async (task, context) => {
+    if (task.type === 'image') return defaultImageRunner(task, context);
+    if (task.type === 'video') return defaultVideoRunner(task, context);
+    return defaultTaskRunner(task, context);
+  };
   const queue = taskQueue ?? new TaskQueue({ runTask: taskRunner ?? defaultRunner });
 
   async function syncQueueEvent(event) {
@@ -194,6 +219,11 @@ export function createServer({
   async function createTask(project, type, options = {}, retryOf = null) {
     let definition = STAGE_DEFINITIONS[type];
     let taskSpec = null;
+    if (!definition) {
+      const error = new Error(`Unknown task type: ${type}`);
+      error.statusCode = 400;
+      throw error;
+    }
     if (type === 'image') {
       const ownerStage = options.ownerStage;
       if (!IMAGE_OWNER_STAGES.includes(ownerStage)) {
@@ -216,7 +246,23 @@ export function createServer({
       });
       definition = STAGE_DEFINITIONS.image;
     }
-    const gate = type === 'image' ? { ok: true, missing: [], warnings: [] } : readiness(project, type);
+    if (type === 'video') {
+      if (!['minimax-h3', 'seedance'].includes(options.provider)) {
+        const error = new Error('Video task requires provider: minimax-h3 or seedance');
+        error.statusCode = 400;
+        throw error;
+      }
+      const gate = readiness(project, 'video');
+      if (!gate.ok) {
+        const error = new Error('Video task dependencies are not ready');
+        error.statusCode = 409;
+        error.details = { missing: gate.missing, warnings: gate.warnings };
+        throw error;
+      }
+      taskSpec = buildVideoTask({ projectId: project.id, provider: options.provider, options });
+      definition = STAGE_DEFINITIONS.video;
+    }
+    const gate = ['image'].includes(type) ? { ok: true, missing: [], warnings: [] } : readiness(project, type);
     if (!gate.ok) {
       const error = new Error('Task dependencies are not ready');
       error.statusCode = 409;
@@ -232,7 +278,9 @@ export function createServer({
       options,
       skillName: taskSpec?.skillName ?? definition.skillName,
       outputDir: taskSpec?.outputDir ?? definition.outputDirs[0] ?? null,
-      ...(taskSpec ? { ownerStage: taskSpec.ownerStage, assetIds: taskSpec.assetIds } : {}),
+      ...(taskSpec?.ownerStage ? { ownerStage: taskSpec.ownerStage } : {}),
+      ...(taskSpec?.assetIds ? { assetIds: taskSpec.assetIds } : {}),
+      ...(taskSpec?.provider ? { provider: taskSpec.provider } : {}),
       retryOf,
     });
     taskProjectIds.set(task.id, project.id);
@@ -264,6 +312,32 @@ export function createServer({
 
     if (method === 'GET' && pathname === '/api/health') {
       return sendJson(response, 200, { ok: true, codex: { available: await detectCodex(codexBin) } });
+    }
+
+    if (pathname === '/api/skills/status' && method === 'GET') {
+      return sendJson(response, 200, await skillSyncService.check());
+    }
+    if (pathname === '/api/skills/check-update' && method === 'POST') {
+      return sendJson(response, 200, await skillSyncService.check());
+    }
+    if (pathname === '/api/skills/sync' && method === 'POST') {
+      const body = await readJson(request);
+      return sendJson(response, 200, await skillSyncService.sync({ confirm: body.confirm, pushOrigin: body.pushOrigin === true }));
+    }
+    if (pathname === '/api/providers' && method === 'GET') {
+      const providers = [];
+      for (const provider of ['minimax-h3', 'seedance']) {
+        const config = await loadProviderConfig(provider, { providersRoot: join(repoRoot, 'providers') });
+        providers.push({
+          id: provider,
+          model: config.requestPolicy.defaultModel,
+          endpoint: config.requestPolicy.endpoint,
+          configured: Boolean(videoEnv[config.requestPolicy.apiKeyEnv]),
+          referencePolicy: config.referencePolicy,
+          requestPolicy: { ...config.requestPolicy, apiKeyEnv: undefined },
+        });
+      }
+      return sendJson(response, 200, providers);
     }
 
     if (pathname === '/api/projects' && method === 'GET') {
@@ -299,6 +373,11 @@ export function createServer({
         const task = await createTask(project, body.type, body.options ?? {});
         return sendJson(response, 202, task);
       }
+      if (suffix === 'video-jobs' && method === 'POST') {
+        const body = await readJson(request);
+        const task = await createTask(project, 'video', { ...(body.options ?? {}), provider: body.provider });
+        return sendJson(response, 202, task);
+      }
       if (suffix === 'artifacts' && method === 'GET') {
         return sendJson(response, 200, await indexArtifacts(project.root));
       }
@@ -331,10 +410,10 @@ export function createServer({
       return;
     }
 
-    const taskActionMatch = pathname.match(/^\/api\/tasks\/([^/]+)\/(cancel|retry)$/);
+    const taskActionMatch = pathname.match(/^\/api\/(tasks|video-jobs)\/([^/]+)\/(cancel|retry)$/);
     if (taskActionMatch && method === 'POST') {
-      const { project, store, task } = await resolveTask(taskActionMatch[1]);
-      if (taskActionMatch[2] === 'cancel') {
+      const { project, store, task } = await resolveTask(taskActionMatch[2]);
+      if (taskActionMatch[3] === 'cancel') {
         if (!queue.cancel(task.id)) return sendError(response, 409, 'Task is already terminal');
         await store.update(task.id, { status: 'cancelled', finishedAt: new Date().toISOString() });
         return sendJson(response, 200, await store.read(task.id));

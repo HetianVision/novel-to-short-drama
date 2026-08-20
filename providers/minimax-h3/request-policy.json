@@ -4,6 +4,7 @@
   "endpoint": "https://api.minimaxi.com/v1/video_generation",
   "method": "POST",
   "queryEndpoint": "https://api.minimaxi.com/v1/query/video_generation",
+  "fileEndpoint": "https://api.minimaxi.com/v1/files/retrieve",
   "defaultModel": "MiniMax-Hailuo-2.3",
   "apiKeyEnv": "MINIMAX_API_KEY",
   "durationValues": [6, 10],
