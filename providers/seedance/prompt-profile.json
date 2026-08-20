@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "provider": "seedance",
+  "language": "zh",
+  "maxPromptChars": 6000,
+  "format": "time-coded-shot-list",
+  "cameraMap": {
+    "Static Shot": "固定机位",
+    "Push In": "缓慢推进",
+    "Pull Out": "缓慢拉远",
+    "Tracking Shot": "跟随运动",
+    "Pan": "横向摇摄",
+    "Tilt": "俯仰摇摄"
+  },
+  "rules": [
+    "Write a new Seedance prompt from the canonical shot job.",
+    "Do not copy MiniMax H3 alignment syntax or its XML-like dialogue markers.",
+    "Use explicit time ranges, visual continuity, camera motion, and sound cues.",
+    "Keep the prompt concise and concrete; attached images are visual references, not prose instructions."
+  ]
+}

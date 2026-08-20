@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "provider": "seedance",
+  "mode": "reference_image",
+  "acceptedKinds": ["frame", "scene", "character", "prop"],
+  "imageRole": "reference_image",
+  "maxImages": 4,
+  "priority": ["frame", "scene", "character", "prop"]
+}

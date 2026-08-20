@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "provider": "seedance",
+  "endpoint": "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
+  "method": "POST",
+  "queryEndpoint": "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
+  "defaultModel": "doubao-seedance-1-0-pro-250528",
+  "apiKeyEnv": "ARK_API_KEY",
+  "durationMin": 2,
+  "durationMax": 12,
+  "resolutions": ["480p", "720p", "1080p"],
+  "defaultResolution": "1080p",
+  "ratios": ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9", "adaptive"],
+  "defaultRatio": "16:9",
+  "imageRole": "reference_image",
+  "watermark": false
+}

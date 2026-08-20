@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "provider": "minimax-h3",
+  "language": "zh",
+  "maxPromptChars": 2000,
+  "format": "timeline",
+  "cameraMap": {
+    "Static Shot": "[固定]",
+    "Push In": "[推进]",
+    "Pull Out": "[拉远]",
+    "Tracking Shot": "[跟随]",
+    "Pan": "[横移]",
+    "Tilt": "[俯仰]"
+  },
+  "rules": [
+    "Write a new MiniMax motion prompt from the canonical shot job.",
+    "Do not copy H3 alignment syntax, integrated_multimodal_description, or <d> blocks.",
+    "Describe a continuous shot timeline and preserve the attached first frame.",
+    "Keep dialogue and sound cues short enough for the requested duration."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "provider": "minimax-h3",
+  "endpoint": "https://api.minimaxi.com/v1/video_generation",
+  "method": "POST",
+  "queryEndpoint": "https://api.minimaxi.com/v1/query/video_generation",
+  "defaultModel": "MiniMax-Hailuo-2.3",
+  "apiKeyEnv": "MINIMAX_API_KEY",
+  "durationValues": [6, 10],
+  "defaultDuration": 6,
+  "resolutions": ["768P", "1080P"],
+  "defaultResolution": "768P",
+  "promptOptimizer": false,
+  "promptField": "prompt",
+  "firstFrameField": "first_frame_image",
+  "lastFrameField": "last_frame_image"
+}

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "provider": "minimax-h3",
+  "mode": "first_frame",
+  "acceptedKinds": ["frame"],
+  "firstFrameRole": "first_frame",
+  "lastFrameRole": "last_frame",
+  "maxImages": 1,
+  "includeLastFrame": false,
+  "descriptionKinds": ["character", "scene", "prop"]
+}
