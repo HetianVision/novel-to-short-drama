@@ -3,36 +3,47 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#151a1d">
+    <meta name="theme-color" content="#eceded">
     <title>短剧制作工作台</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar">
+      <header class="topbar report-header">
         <div class="brand-lockup">
-          <span class="brand-mark" aria-hidden="true">幕</span>
           <div>
             <p class="eyebrow">LOCAL SHORT-DRAMA PIPELINE</p>
-            <h1>短剧制作工作台</h1>
+            <div class="brand-title-row">
+              <h1>短剧制作工作台</h1>
+              <span class="brand-rule" aria-hidden="true"></span>
+              <span class="brand-subtitle">小说 · 资产 · 分镜 · 成片</span>
+            </div>
           </div>
         </div>
         <div class="topbar-meta">
-          <span class="connection-dot" id="connectionDot"></span>
-          <span id="connectionLabel">正在连接本地服务</span>
-          <button class="ghost-button" id="refreshButton" type="button">刷新状态</button>
+          <span class="connection-state">
+            <svg class="icon icon-sm connection-dot" id="connectionDot" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#timer-1"></use></svg>
+            <span id="connectionLabel">正在连接本地服务</span>
+          </span>
+          <button class="ghost-button" id="refreshButton" type="button">
+            <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#refresh-2"></use></svg>
+            <span>刷新状态</span>
+          </button>
         </div>
       </header>
 
       <main class="workbench-grid">
-        <aside class="workflow-rail" aria-label="工作流与项目">
+        <aside class="workflow-rail project-rail" aria-label="工作流与项目">
           <section class="project-switcher panel-block">
             <div class="section-heading">
               <div>
                 <p class="eyebrow">PROJECT DESK</p>
                 <h2>项目</h2>
               </div>
-              <button class="icon-button" id="newProjectButton" type="button" aria-label="新建项目">＋</button>
+              <button class="icon-button" id="newProjectButton" type="button" aria-label="新建项目">
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#folder-add"></use></svg>
+                <span>新建</span>
+              </button>
             </div>
             <select id="projectSelect" aria-label="选择项目">
               <option value="">还没有项目</option>
@@ -49,7 +60,7 @@
               <span class="material-count" id="sourceCount">0</span>
             </div>
             <label class="upload-zone" for="sourceInput">
-              <span class="upload-symbol" aria-hidden="true">↥</span>
+              <svg class="icon icon-lg upload-icon" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#document-upload"></use></svg>
               <span><strong>上传小说或资料</strong><small>TXT、Markdown、JSON、参考图</small></span>
               <input id="sourceInput" type="file" multiple>
             </label>
@@ -77,27 +88,33 @@
             </div>
             <p class="muted" id="skillStatusDetail">运行时只读，更新需要明确确认。</p>
             <div class="control-row">
-              <button class="quiet-button" id="checkSkillsButton" type="button">检查 Skill 更新</button>
-              <button class="quiet-button accent" id="syncSkillsButton" type="button" disabled>确认同步</button>
+              <button class="quiet-button" id="checkSkillsButton" type="button">
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#refresh-2"></use></svg>
+                <span>检查 Skill 更新</span>
+              </button>
+              <button class="quiet-button accent" id="syncSkillsButton" type="button" disabled>
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#rotate-right"></use></svg>
+                <span>确认同步</span>
+              </button>
             </div>
           </section>
         </aside>
 
-        <section class="artifact-workspace" aria-label="成果物查看">
+        <section class="artifact-workspace artifact-canvas" aria-label="成果物查看">
           <div class="workspace-header">
             <div>
               <p class="eyebrow">ARTIFACT VIEWER</p>
               <h2 id="workspaceTitle">等待选择项目</h2>
               <p class="workspace-subtitle" id="workspaceSubtitle">从左侧创建项目并上传资料，工作台会沿原流程逐步解锁。</p>
             </div>
-            <div class="workspace-stats" id="workspaceStats">
+            <div class="workspace-stats metric-strip" id="workspaceStats">
               <div><strong>—</strong><span>成果物</span></div>
               <div><strong>—</strong><span>运行任务</span></div>
               <div><strong>—</strong><span>Skill 锁</span></div>
             </div>
           </div>
 
-          <div class="artifact-toolbar">
+          <div class="artifact-toolbar section-rule">
             <div class="toolbar-tabs" role="tablist" aria-label="成果物类型">
               <button class="toolbar-tab active" data-filter="all" type="button">全部</button>
               <button class="toolbar-tab" data-filter="report" type="button">报告</button>
@@ -110,7 +127,10 @@
               <option value="minimax-h3">MiniMax H3</option>
               <option value="seedance">Seedance</option>
             </select>
-            <button class="quiet-button" id="videoJobButton" type="button" disabled>创建视频任务</button>
+            <button class="quiet-button" id="videoJobButton" type="button" disabled>
+              <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#video-play"></use></svg>
+              <span>创建视频任务</span>
+            </button>
           </div>
 
           <div class="artifact-layout">
@@ -123,13 +143,16 @@
                 <span class="material-count" id="artifactCount">0</span>
               </div>
               <div class="artifact-list" id="artifactList">
-                <div class="empty-state compact-empty"><span class="empty-glyph">◇</span><p>成果物会出现在这里。</p></div>
+                <div class="empty-state compact-empty">
+                  <svg class="icon icon-lg empty-icon" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#document-text"></use></svg>
+                  <p>成果物会出现在这里。</p>
+                </div>
               </div>
             </div>
 
             <div class="artifact-preview panel-block" id="artifactPreview">
               <div class="empty-state preview-empty">
-                <span class="empty-glyph large">◌</span>
+                <svg class="icon icon-xl empty-icon" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#gallery"></use></svg>
                 <p>选择一个报告、JSON、图片或视频。</p>
                 <small>每个阶段的原始产物都会保留在项目目录中。</small>
               </div>
@@ -137,17 +160,23 @@
           </div>
         </section>
 
-        <aside class="activity-column" aria-label="任务日志">
+        <aside class="activity-column run-inspector" aria-label="任务日志">
           <section class="activity-header">
             <p class="eyebrow">RUN MONITOR</p>
             <div class="activity-title-row">
               <h2>任务日志</h2>
-              <span class="live-indicator"><i></i>LIVE</span>
+              <span class="live-indicator">
+                <svg class="icon icon-xs" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#timer-1"></use></svg>
+                <span>LIVE</span>
+              </span>
             </div>
             <p class="muted" id="taskSummary">暂无运行中的任务</p>
           </section>
           <section class="task-log panel-block" id="taskLog" aria-live="polite">
-            <div class="empty-state log-empty"><span class="empty-glyph">∿</span><p>任务事件会实时显示。</p></div>
+            <div class="empty-state log-empty">
+              <svg class="icon icon-lg empty-icon" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#timer-1"></use></svg>
+              <p>任务事件会实时显示。</p>
+            </div>
           </section>
           <section class="run-detail panel-block" id="runDetail">
             <p class="eyebrow">SELECTED RUN</p>
@@ -158,8 +187,14 @@
               <div><dt>任务编号</dt><dd id="selectedTaskId">—</dd></div>
             </dl>
             <div class="control-row">
-              <button class="quiet-button" id="retryTaskButton" type="button" disabled>重新执行</button>
-              <button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>取消任务</button>
+              <button class="quiet-button" id="retryTaskButton" type="button" disabled>
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#rotate-right"></use></svg>
+                <span>重新执行</span>
+              </button>
+              <button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>
+                <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#close-circle"></use></svg>
+                <span>取消任务</span>
+              </button>
             </div>
             <div class="event-stream" id="eventStream" aria-live="polite">
               <p class="empty-inline">选择任务后显示逐条事件。</p>

@@ -21,3 +21,12 @@ test('browser app exposes the stable API and viewer entry points', async () => {
   assert.match(app, /EventSource/);
   assert.match(app, /iframe/);
 });
+
+test('static workbench uses local Iconsax icons and no decorative character icons', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.match(html, /iconsax\.svg#folder-add/);
+  assert.match(html, /iconsax\.svg#document-upload/);
+  for (const token of ['＋', '↥', '◇', '◌', '∿', '↗', '›', '幕']) {
+    assert.doesNotMatch(html, new RegExp(token));
+  }
+});
