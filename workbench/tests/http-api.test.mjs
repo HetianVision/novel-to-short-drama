@@ -88,10 +88,14 @@ test('serves browser assets with executable MIME types', async (t) => {
   const { base } = await withServer(t);
   const css = await fetch(`${base}/styles.css`);
   const js = await fetch(`${base}/app.js`);
+  const icons = await fetch(`${base}/icons/iconsax.svg`);
   assert.equal(css.status, 200);
   assert.equal(css.headers.get('content-type'), 'text/css; charset=utf-8');
   assert.equal(js.status, 200);
   assert.equal(js.headers.get('content-type'), 'text/javascript; charset=utf-8');
+  assert.equal(icons.status, 200);
+  assert.equal(icons.headers.get('content-type'), 'image/svg+xml');
+  assert.match(await icons.text(), /symbol id="folder-add"/);
 });
 
 test('creates a video job through the provider route after storyboard images exist', async (t) => {
