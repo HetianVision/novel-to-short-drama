@@ -318,6 +318,7 @@ select:hover { border-color: var(--seal-2); }
 
 .file-icon {
   justify-content: center;
+  gap: 4px;
   width: 31px;
   height: 27px;
   color: var(--seal);
@@ -388,7 +389,22 @@ select:hover { border-color: var(--seal-2); }
   white-space: nowrap;
 }
 
-.stage-status { flex: none; color: var(--muted); font-size: 9px; }
+.stage-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.stage-status.status-succeeded,
+.stage-status.status-partial { color: var(--ok); }
+.stage-status.status-running,
+.stage-status.status-queued { color: var(--seal-2); }
+.stage-status.status-failed,
+.stage-status.status-cancelled { color: var(--danger); }
+.stage-status.status-ready { color: var(--seal); }
 
 .stage-action {
   grid-column: 2;
@@ -565,6 +581,7 @@ select:hover { border-color: var(--seal-2); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   flex: none;
   width: 34px;
   height: 27px;

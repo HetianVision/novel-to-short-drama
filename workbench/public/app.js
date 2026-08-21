@@ -63,6 +63,33 @@ function $(id) { return document.getElementById(id); }
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 }
+
+const ICON_NAMES = new Set([
+  'folder-add', 'document-upload', 'folder-2', 'folder-open',
+  'document-text', 'gallery', 'video-play', 'play-circle',
+  'tick-circle', 'timer-1', 'refresh-2', 'rotate-right',
+  'close-circle', 'arrow-right-2', 'search-normal-1', 'filter',
+]);
+
+function icon(name, className = 'icon icon-sm') {
+  if (!ICON_NAMES.has(name)) throw new Error(`Unknown Iconsax icon: ${name}`);
+  return `<svg class="${className}" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#${name}"></use></svg>`;
+}
+
+function statusIcon(status) {
+  if (['succeeded', 'partial'].includes(status)) return 'tick-circle';
+  if (['running', 'queued'].includes(status)) return 'timer-1';
+  if (['failed', 'cancelled'].includes(status)) return 'close-circle';
+  if (status === 'ready') return 'play-circle';
+  return 'document-text';
+}
+
+function artifactIcon(type) {
+  if (type === 'image') return 'gallery';
+  if (type === 'video') return 'video-play';
+  return 'document-text';
+}
+
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -101,7 +128,7 @@ function renderSources() {
   const sources = state.project?.sources ?? [];
   $('sourceCount').textContent = sources.length;
   $('sourceList').innerHTML = sources.length
-    ? sources.map((source) => `<div class="source-item"><span class="file-icon">${escapeHtml((source.filename ?? '').split('.').pop()?.toUpperCase() ?? 'FILE')}</span><span><strong>${escapeHtml(source.filename)}</strong><small>${formatBytes(source.size ?? 0)} · ${escapeHtml(source.sha256?.slice(0, 8) ?? '')}</small></span></div>`).join('')
+    ? sources.map((source) => `<div class="source-item"><span class="file-icon">${icon('document-text', 'icon icon-xs')}<span>${escapeHtml((source.filename ?? '').split('.').pop()?.toUpperCase() ?? 'FILE')}</span></span><span><strong>${escapeHtml(source.filename)}</strong><small>${formatBytes(source.size ?? 0)} · ${escapeHtml(source.sha256?.slice(0, 8) ?? '')}</small></span></div>`).join('')
     : '<p class="empty-inline">尚未上传资料。</p>';
 }
 
@@ -114,10 +141,11 @@ function renderStages() {
     const status = task?.status ?? (gate.ok && stage.key !== 'image' ? 'ready' : 'idle');
     const disabled = !project || (stage.key !== 'image' && !gate.ok);
     const missing = gate.missing?.length ? `<small class="gate-note">待 ${escapeHtml(gate.missing.join('、'))}</small>` : '';
-    const button = `<button class="stage-action ${stage.key === 'image' ? 'image-action' : ''}" data-stage-action="${stage.key}" type="button" ${disabled ? 'disabled' : ''}>${escapeHtml(stage.label)}</button>`;
+    const actionIcon = stage.key === 'image' ? 'gallery' : 'play-circle';
+    const button = `<button class="stage-action ${stage.key === 'image' ? 'image-action' : ''}" data-stage-action="${stage.key}" type="button" ${disabled ? 'disabled' : ''}>${icon(actionIcon, 'icon icon-xs')}<span>${escapeHtml(stage.label)}</span></button>`;
     return `<article class="stage-card ${statusClass(status)} ${index === 0 ? 'first-stage' : ''}">
       <div class="stage-marker">${stage.mark}</div>
-      <div class="stage-copy"><div class="stage-title-row"><strong>${escapeHtml(stage.label)}</strong><span class="stage-status">${escapeHtml(status === 'ready' ? '可执行' : statusLabel(status))}</span></div><small>${escapeHtml(stage.skill)} · ${escapeHtml(stage.note)}</small>${missing}</div>
+      <div class="stage-copy"><div class="stage-title-row"><strong>${escapeHtml(stage.label)}</strong><span class="stage-status ${statusClass(status)}">${icon(statusIcon(status), 'icon icon-xs')}<span>${escapeHtml(status === 'ready' ? '可执行' : statusLabel(status))}</span></span></div><small>${escapeHtml(stage.skill)} · ${escapeHtml(stage.note)}</small>${missing}</div>
       ${button}
     </article>`;
   }).join('');
@@ -134,10 +162,10 @@ function renderStats() {
 function renderArtifactList() {
   const filtered = state.filter === 'all' ? state.artifacts : state.artifacts.filter((artifact) => artifact.type === state.filter);
   if (!filtered.length) {
-    $('artifactList').innerHTML = '<div class="empty-state compact-empty"><span class="empty-glyph">◇</span><p>这个筛选条件下还没有成果物。</p></div>';
+    $('artifactList').innerHTML = `<div class="empty-state compact-empty">${icon('document-text', 'icon icon-lg empty-icon')}<p>这个筛选条件下还没有成果物。</p></div>`;
     return;
   }
-  $('artifactList').innerHTML = filtered.map((artifact) => `<button class="artifact-row ${state.selectedArtifact?.relativePath === artifact.relativePath ? 'selected' : ''}" data-artifact-path="${escapeHtml(artifact.relativePath)}" type="button"><span class="artifact-type ${artifact.type}">${escapeHtml(artifact.type.toUpperCase().slice(0, 4))}</span><span class="artifact-row-copy"><strong>${escapeHtml(artifact.relativePath.split('/').pop())}</strong><small>${escapeHtml(artifact.relativePath)} · ${formatBytes(artifact.size)}</small></span><span class="row-arrow">↗</span></button>`).join('');
+  $('artifactList').innerHTML = filtered.map((artifact) => `<button class="artifact-row ${state.selectedArtifact?.relativePath === artifact.relativePath ? 'selected' : ''}" data-artifact-path="${escapeHtml(artifact.relativePath)}" type="button"><span class="artifact-type ${artifact.type}">${icon(artifactIcon(artifact.type), 'icon icon-xs')}<span>${escapeHtml(artifact.type.toUpperCase().slice(0, 4))}</span></span><span class="artifact-row-copy"><strong>${escapeHtml(artifact.relativePath.split('/').pop())}</strong><small>${escapeHtml(artifact.relativePath)} · ${formatBytes(artifact.size)}</small></span><span class="row-arrow">${icon('arrow-right-2', 'icon icon-xs')}</span></button>`).join('');
   document.querySelectorAll('[data-artifact-path]').forEach((button) => button.addEventListener('click', () => openArtifact(button.dataset.artifactPath)));
 }
 
@@ -165,7 +193,9 @@ async function openArtifact(relativePath) {
 function renderTaskLog() {
   const tasks = [...state.tasks].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
   $('taskSummary').textContent = tasks.length ? `${tasks.filter((task) => ['queued', 'running'].includes(task.status)).length} 个任务正在排队或运行` : '暂无运行中的任务';
-  $('taskLog').innerHTML = tasks.length ? tasks.map((task) => `<button class="task-row ${state.selectedTask?.id === task.id ? 'selected' : ''}" data-task-id="${escapeHtml(task.id)}" type="button"><span class="task-dot ${statusClass(task.status)}"></span><span class="task-copy"><strong>${escapeHtml(task.type)}</strong><small>${escapeHtml(statusLabel(task.status))} · ${escapeHtml(new Date(task.createdAt).toLocaleTimeString())}</small></span><span class="row-arrow">›</span></button>`).join('') : '<div class="empty-state log-empty"><span class="empty-glyph">∿</span><p>任务事件会实时显示。</p></div>';
+  $('taskLog').innerHTML = tasks.length
+    ? tasks.map((task) => `<button class="task-row ${state.selectedTask?.id === task.id ? 'selected' : ''}" data-task-id="${escapeHtml(task.id)}" type="button"><span class="task-dot ${statusClass(task.status)}">${icon(statusIcon(task.status), 'icon icon-sm')}</span><span class="task-copy"><strong>${escapeHtml(task.type)}</strong><small>${escapeHtml(statusLabel(task.status))} · ${escapeHtml(new Date(task.createdAt).toLocaleTimeString())}</small></span><span class="row-arrow">${icon('arrow-right-2', 'icon icon-xs')}</span></button>`).join('')
+    : `<div class="empty-state log-empty">${icon('timer-1', 'icon icon-lg empty-icon')}<p>任务事件会实时显示。</p></div>`;
   document.querySelectorAll('[data-task-id]').forEach((button) => button.addEventListener('click', () => selectTask(button.dataset.taskId)));
   if (state.selectedTask) {
     $('selectedTaskTitle').textContent = `${state.selectedTask.type} · ${statusLabel(state.selectedTask.status)}`;

@@ -30,3 +30,12 @@ test('static workbench uses local Iconsax icons and no decorative character icon
     assert.doesNotMatch(html, new RegExp(token));
   }
 });
+
+test('dynamic workbench rendering uses the fixed Iconsax helper', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /function icon\(name/);
+  assert.match(app, /iconsax\.svg#/);
+  for (const token of ['↗', '›', '◇', '◌', '∿']) {
+    assert.doesNotMatch(app, new RegExp(token));
+  }
+});
