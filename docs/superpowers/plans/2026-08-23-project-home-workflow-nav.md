@@ -25,7 +25,6 @@
 **Files:**
 - Create: `workbench/public/router.mjs`
 - Create: `workbench/tests/router.test.mjs`
-- Modify: `workbench/tests/ui-smoke.test.mjs`
 
 **Interfaces:**
 - `router.mjs` exports `STAGE_KEYS`, `parseHash(hash)`, `workflowHash(projectId, stage)`, and `defaultStage(stageState)`.
@@ -65,16 +64,16 @@ Expected: FAIL because `workbench/public/router.mjs` does not exist.
 
 Implement `STAGE_KEYS` as `['outline', 'characters', 'art', 'script', 'storyboard', 'image', 'video']`. Decode only the project id and stage path segments, accept only stage keys, and use `#/` as the fallback for every invalid route. `defaultStage` returns the first stage without a terminal `succeeded` or `partial` state and returns `video` when all stages are terminal.
 
-- [ ] **Step 4: Run the route and UI smoke tests**
+- [ ] **Step 4: Run the route test and existing UI smoke tests**
 
 Run: `node --test workbench/tests/router.test.mjs workbench/tests/ui-smoke.test.mjs`
 
-Expected: PASS after updating the UI smoke assertions to require the router import, seven stage labels, and Hash route tokens.
+Expected: PASS; the new route tests pass and existing UI smoke tests remain green. New shell and route-import assertions belong to Task 2.
 
 - [ ] **Step 5: Commit the route boundary**
 
 ```bash
-git add workbench/public/router.mjs workbench/tests/router.test.mjs workbench/tests/ui-smoke.test.mjs
+git add workbench/public/router.mjs workbench/tests/router.test.mjs
 git commit -m "feat(workbench): add hash route model"
 ```
 
