@@ -43,6 +43,18 @@ test('workbench exposes the hash route boundary', async () => {
   }
 });
 
+test('workflow stages are navigation controls, not automatic task actions', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /function renderWorkflowTopbar/);
+  assert.match(app, /function navigate\(/);
+  assert.match(app, /data-stage-nav/);
+  assert.match(app, /addEventListener\(['"]hashchange['"]/);
+  for (const label of ['大纲', '角色', '美术', '剧本', '分镜', '图片', '成片']) assert.match(app, new RegExp(label));
+  const stageNavigation = app.match(/if \(button\.dataset\.stageNav\)[\s\S]{0,180}/)?.[0] ?? '';
+  assert.match(stageNavigation, /navigate\(workflowHash/);
+  assert.doesNotMatch(stageNavigation, /createTask/);
+});
+
 test('dynamic workbench rendering uses the fixed Iconsax helper', async () => {
   const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(app, /function icon\(name/);
