@@ -11,6 +11,7 @@ test('parses home and workflow hashes', () => {
 test('rejects malformed routes and chooses the first incomplete stage', () => {
   assert.deepEqual(parseHash('#/projects/demo/other'), { view: 'home' });
   assert.deepEqual(parseHash('#/projects/demo/workflow/unknown'), { view: 'home' });
+  assert.deepEqual(parseHash('#/projects/demo/workflow/image'), { view: 'home' });
   assert.equal(defaultStage({ outline: { status: 'succeeded' }, characters: { status: 'running' } }), 'characters');
   assert.equal(workflowHash('demo', 'storyboard'), '#/projects/demo/workflow/storyboard');
 });

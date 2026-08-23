@@ -6,9 +6,14 @@ const STAGES = [
   { key: 'art', label: '生成美术', shortLabel: '美术', skill: 'novel-art', note: '场景与道具', mark: '03', icon: 'gallery' },
   { key: 'script', label: '生成剧本', shortLabel: '剧本', skill: 'novel-script', note: '场次与节拍', mark: '04', icon: 'document-text' },
   { key: 'storyboard', label: '生成分镜', shortLabel: '分镜', skill: 'novel-storyboard', note: '段、切与首帧', mark: '05', icon: 'gallery' },
-  { key: 'image', label: '生成图片', shortLabel: '图片', skill: 'Codex imagegen', note: '归属阶段的参考资产', mark: '06', icon: 'gallery' },
-  { key: 'video', label: '成片', shortLabel: '成片', skill: 'Seedance / MiniMax H3', note: '视频模型最终任务', mark: '07', icon: 'video-play' },
+  { key: 'video', label: '成片', shortLabel: '成片', skill: 'Seedance / MiniMax H3', note: '视频模型最终任务', mark: '06', icon: 'video-play' },
 ];
+
+const IMAGE_STAGE_COPY = Object.freeze({
+  characters: { label: '生成角色设定图', note: '角色页内可选出图，作为后续视频参考资产。' },
+  art: { label: '生成场景/道具设定图', note: '美术页内可选出图，保持场景与道具的视觉统一。' },
+  storyboard: { label: '生成分镜图', note: '分镜页内可选出图，生成首帧与子分镜参考。' },
+});
 
 const SKILL_CATALOG = [
   { key: 'novel-outline', label: '大纲', description: '从小说提炼主题、冲突、分集与叙事骨架。', output: 'outline-report.html' },
@@ -126,10 +131,16 @@ function setTopbarMode(mode) {
   const workflowTopbar = $('workflowTopbar');
   const topbar = $('appTopbar');
   const projectLabel = $('workflowTopbarProject');
+  const taskLogButton = $('taskLogToggle');
   const workflowMode = mode === 'workflow';
   if (workflowTopbar) workflowTopbar.hidden = !workflowMode;
   if (topbar) topbar.classList.toggle('workflow-mode', workflowMode);
   if (projectLabel) projectLabel.textContent = workflowMode ? (state.project?.title ?? '未命名项目') : '—';
+  if (taskLogButton) {
+    taskLogButton.hidden = !workflowMode;
+    taskLogButton.setAttribute('aria-expanded', String(workflowMode && state.taskLogOpen));
+    taskLogButton.classList.toggle('active', workflowMode && state.taskLogOpen);
+  }
 }
 
 function stageTask(project, stageKey) {
@@ -145,7 +156,6 @@ function stageDefinition(stageKey) {
 }
 
 function stageGate(project, stageKey) {
-  if (stageKey === 'image') return project ? { ok: true, missing: [], warnings: [] } : { ok: false, missing: ['项目'], warnings: [] };
   return project?.readiness?.[stageKey] ?? { ok: false, missing: ['项目'], warnings: [] };
 }
 
@@ -174,7 +184,7 @@ function projectUpdatedText(project) {
 function projectCard(project) {
   const count = completedStageCount(project);
   const latestStage = STAGE_KEYS.map((stageKey) => stageStatus(project, stageKey)).find((status) => ['running', 'queued', 'failed'].includes(status));
-  const status = latestStage ? stageStatusText(latestStage) : `${count}/7 阶段完成`;
+  const status = latestStage ? stageStatusText(latestStage) : `${count}/6 阶段完成`;
   return `<button class="project-card panel-block" data-project-open="${escapeHtml(project.id)}" type="button" aria-label="进入 ${escapeHtml(project.title)}">
     <div class="project-card-mark">${icon('folder-open', 'icon icon-lg')}</div>
     <div class="project-card-copy"><p class="eyebrow">SHORT-DRAMA PROJECT</p><h3>${escapeHtml(project.title)}</h3><p>${escapeHtml(project.sources?.length ?? 0)} 份输入资料 · ${escapeHtml(projectUpdatedText(project))}</p></div>
@@ -224,10 +234,11 @@ function renderSources() {
 function renderWorkflowTopbar() {
   const nav = $('workflowNav');
   if (!nav) return;
-  nav.innerHTML = STAGES.map((stage) => {
+  nav.innerHTML = STAGES.map((stage, index) => {
     const status = stageStatus(state.project, stage.key);
     const active = state.activeStage === stage.key;
-    return `<button class="stage-nav-item ${active ? 'active' : ''} ${statusClass(status)}" data-stage-nav="${stage.key}" type="button" aria-current="${active ? 'step' : 'false'}"><span class="stage-nav-number">${stage.mark}</span><span class="stage-nav-copy"><strong>${escapeHtml(stage.shortLabel)}</strong><small>${icon(statusIcon(status), 'icon icon-xs')}${escapeHtml(stageStatusText(status))}</small></span></button>`;
+    const connector = index ? `<span class="stage-nav-connector" aria-hidden="true">${icon('arrow-right-2', 'icon icon-xs')}</span>` : '';
+    return `${connector}<button class="stage-nav-item ${active ? 'active' : ''} ${statusClass(status)}" data-stage-nav="${stage.key}" type="button" aria-current="${active ? 'step' : 'false'}" aria-label="${escapeHtml(stage.shortLabel)} · ${escapeHtml(stageStatusText(status))}"><span class="stage-nav-number">${stage.mark}</span><span class="stage-nav-copy"><strong>${escapeHtml(stage.shortLabel)}</strong></span></button>`;
   }).join('');
 }
 
@@ -249,6 +260,22 @@ function stageReportArtifact(stageKey) {
   return stageArtifacts(stageKey).find((artifact) => artifact.type === 'report') ?? null;
 }
 
+function imageTask(project, ownerStage) {
+  return [...state.tasks]
+    .filter((task) => task.projectId === project?.id && task.type === 'image' && (task.options?.ownerStage ?? task.ownerStage) === ownerStage)
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
+}
+
+function renderOwnerImageAction(ownerStage) {
+  const copy = IMAGE_STAGE_COPY[ownerStage];
+  if (!copy || !state.project) return '';
+  const task = imageTask(state.project, ownerStage);
+  const status = task?.status ?? 'ready';
+  const running = ['queued', 'running'].includes(status);
+  const label = running ? '图片任务运行中' : ['succeeded', 'partial'].includes(status) ? '重新生成图片' : copy.label;
+  return `<div class="owner-image-action" data-owner-stage="${ownerStage}"><div><p class="eyebrow">OPTIONAL IMAGE ASSET</p><strong>${escapeHtml(copy.label)}</strong><small>${escapeHtml(copy.note)}</small></div><button class="quiet-button" data-image-action="${ownerStage}" type="button" ${running ? 'disabled' : ''}>${icon(running ? 'timer-1' : 'gallery', 'icon icon-sm')}<span>${escapeHtml(label)}</span></button></div>`;
+}
+
 function renderStageWorkspace() {
   const stage = stageDefinition(state.activeStage);
   const project = state.project;
@@ -258,19 +285,18 @@ function renderStageWorkspace() {
   const report = stageReportArtifact(stage.key);
   const completed = ['succeeded', 'partial'].includes(status) && Boolean(report);
   const isVideo = stage.key === 'video';
-  const disabled = isVideo ? !gate.ok : !project || (stage.key !== 'image' && !gate.ok);
+  const disabled = isVideo ? !gate.ok : !project || !gate.ok;
   const warnings = gate.warnings?.length ? `<div class="gate-warning">${icon('timer-1', 'icon icon-xs')}<span>${escapeHtml(gate.warnings.join('；'))}</span></div>` : '';
   const missing = gate.missing?.length ? `<p class="gate-note">前置条件：${escapeHtml(gate.missing.join('、'))}</p>` : '';
   const action = isVideo
     ? renderVideoWorkspace(disabled)
     : `<button class="primary-button" data-stage-action="${stage.key}" type="button" ${disabled ? 'disabled' : ''}>${icon(stage.icon === 'gallery' ? 'gallery' : 'play-circle', 'icon icon-sm')}<span>${completed ? '重新执行' : '开始执行'}${escapeHtml(stage.label.replace('生成', ''))}</span></button>`;
-  const taskInfo = task ? `<span class="stage-run-state ${statusClass(task.status)}">${icon(statusIcon(task.status), 'icon icon-xs')} ${escapeHtml(statusLabel(task.status))}</span>` : `<span class="stage-run-state ${statusClass(status)}">${icon(statusIcon(status), 'icon icon-xs')} ${escapeHtml(stageStatusText(status))}</span>`;
   const workspace = $('stageWorkspace');
   if (!workspace) return;
   const output = completed
-    ? `<div class="stage-output-heading"><div><p class="eyebrow">ORIGINAL SKILL REPORT</p><h3>${escapeHtml(report.relativePath.split('/').pop())}</h3></div><span class="material-count">HTML</span></div><div class="report-viewer"><iframe title="${escapeHtml(report.relativePath)}" src="${WorkbenchApi.artifactUrl(project.id, report.relativePath)}"></iframe></div>`
+    ? `${renderOwnerImageAction(stage.key)}<div class="report-viewer"><iframe title="${escapeHtml(report.relativePath)}" src="${WorkbenchApi.artifactUrl(project.id, report.relativePath)}"></iframe></div>`
     : `<div class="stage-start-view panel-block"><div><p class="eyebrow">RUN THIS STEP</p><h3>${task?.status === 'running' ? '正在执行当前步骤' : task?.status === 'queued' ? '任务已排队' : '准备开始当前步骤'}</h3>${missing}${warnings}</div>${action}</div>`;
-  workspace.innerHTML = `<div class="stage-workspace-header"><div><p class="eyebrow">CURRENT STAGE · ${escapeHtml(stage.mark)}</p><h2>${escapeHtml(stage.label)}</h2><p class="workspace-subtitle">${escapeHtml(stage.skill)} · ${escapeHtml(stage.note)}</p></div><div class="stage-workspace-status">${taskInfo}</div></div>${output}`;
+  workspace.innerHTML = output;
 }
 
 function renderWorkflow() {
@@ -279,7 +305,6 @@ function renderWorkflow() {
   setTopbarMode('workflow');
   const taskLogHidden = state.taskLogOpen ? '' : ' hidden';
   $('appRoot').innerHTML = `<section class="workflow-page page-shell">
-    <header class="workflow-context"><button class="back-button" data-go-home type="button">${icon('arrow-right-2', 'icon icon-sm')}<span>项目首页</span></button><div class="workflow-title"><p class="eyebrow">PROJECT WORKFLOW</p><h2>${escapeHtml(state.project.title)}</h2><p>按原 Skill 链推进制作，点击顶部步骤只切换工作区，执行按钮才会创建任务。</p></div><div class="workflow-actions"><div class="workflow-metrics"><strong>${state.artifacts.length}</strong><span>成果物</span><strong>${state.tasks.filter((task) => ['queued', 'running'].includes(task.status)).length}</strong><span>运行中</span></div><button class="quiet-button task-log-toggle" id="taskLogToggle" data-task-log-toggle type="button" aria-expanded="${state.taskLogOpen ? 'true' : 'false'}">${icon('timer-1', 'icon icon-sm')}<span>任务日志</span></button></div></header>
     <div class="workflow-body ${state.taskLogOpen ? 'task-log-open' : ''}"><section class="stage-workspace artifact-canvas" id="stageWorkspace" aria-label="步骤工作区"></section><aside id="runInspector" class="activity-column run-inspector" aria-label="任务日志${taskLogHidden}"><section class="activity-header"><p class="eyebrow">RUN MONITOR</p><div class="activity-title-row"><h2>任务日志</h2><span class="live-indicator">${icon('timer-1', 'icon icon-xs')}<span>LIVE</span></span></div><p class="muted" id="taskSummary">暂无运行中的任务</p></section><section class="task-log panel-block" id="taskLog" aria-live="polite"></section><section class="run-detail panel-block" id="runDetail"><p class="eyebrow">SELECTED RUN</p><h3 id="selectedTaskTitle">尚未选择任务</h3><dl class="run-facts"><div><dt>状态</dt><dd id="selectedTaskStatus">—</dd></div><div><dt>使用 Skill</dt><dd id="selectedTaskSkill">—</dd></div><div><dt>任务编号</dt><dd id="selectedTaskId">—</dd></div></dl><div class="control-row"><button class="quiet-button" id="retryTaskButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>重新执行</span></button><button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>${icon('close-circle', 'icon icon-sm')}<span>取消任务</span></button></div><div class="event-stream" id="eventStream" aria-live="polite"></div></section><div class="footer-note">本地运行 · Skill 只读 · 产物可追溯</div></aside></div>
   </section>`;
   const runInspector = $('runInspector');
@@ -294,7 +319,6 @@ function renderWorkflow() {
 
 function artifactBelongsToStage(artifact, stageKey) {
   const path = String(artifact.relativePath ?? '');
-  if (stageKey === 'image') return (artifact.type === 'image' && ['characters/', 'art/', 'storyboard/'].some((prefix) => path.startsWith(prefix))) || path === '.workbench/report.html';
   if (stageKey === 'video') return artifact.type === 'video' || path.startsWith('video/') || path === '.workbench/report.html';
   return path.startsWith(`${stageKey}/`);
 }
@@ -476,11 +500,10 @@ async function refreshCurrent() {
   else renderHome();
 }
 
-async function runStage(type) {
+async function runStage(type, options = {}) {
   if (!state.project) return showToast('请先创建项目。', 'error');
-  let options = {};
   if (type === 'image') {
-    const ownerStage = window.prompt('图片归属阶段：characters、art 或 storyboard', 'art');
+    const ownerStage = options.ownerStage;
     if (!['characters', 'art', 'storyboard'].includes(ownerStage)) return showToast('图片任务需要归属角色、美术或分镜阶段。', 'error');
     options = { ownerStage };
   }
@@ -489,7 +512,7 @@ async function runStage(type) {
       ? await WorkbenchApi.createVideoJob(state.project.id, 'minimax-h3', {})
       : await WorkbenchApi.createTask(state.project.id, type, options);
     state.tasks.unshift(task); selectTask(task.id); renderWorkflowTopbar(); renderStageWorkspace(); renderTaskLog();
-    showToast(`${type}任务已排队。`);
+    showToast(`${type === 'image' ? IMAGE_STAGE_COPY[options.ownerStage]?.label ?? '图片' : type}任务已排队。`);
   } catch (error) { showToast(error.message, 'error'); }
 }
 
@@ -610,6 +633,7 @@ function handleClick(event) {
   if (button.dataset.projectOpen) return navigate(workflowHash(button.dataset.projectOpen));
   if (button.dataset.goHome !== undefined) return navigate('#/');
   if (button.dataset.stageNav) return navigate(workflowHash(state.project.id, button.dataset.stageNav));
+  if (button.dataset.imageAction) return runStage('image', { ownerStage: button.dataset.imageAction });
   if (button.dataset.stageAction) return runStage(button.dataset.stageAction);
   if (button.dataset.taskLogToggle !== undefined) return toggleTaskLog();
   if (button.dataset.taskId) return selectTask(button.dataset.taskId);

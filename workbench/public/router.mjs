@@ -4,7 +4,6 @@ export const STAGE_KEYS = Object.freeze([
   'art',
   'script',
   'storyboard',
-  'image',
   'video',
 ]);
 
