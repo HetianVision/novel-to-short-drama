@@ -10,28 +10,28 @@
   <body>
     <div class="app-shell">
       <header class="topbar report-header" id="appTopbar">
-        <div class="brand-lockup" id="topbarBrand">
-          <div>
-            <p class="eyebrow">LOCAL SHORT-DRAMA PIPELINE</p>
-            <div class="brand-title-row">
-              <h1>短剧制作工作台</h1>
-              <span class="brand-rule" aria-hidden="true"></span>
-              <span class="brand-subtitle">小说 · 资产 · 分镜 · 成片</span>
-            </div>
-          </div>
-        </div>
-        <div class="workflow-topbar" id="workflowTopbar" hidden>
-          <div class="workflow-topbar-project">
-            <button class="workflow-project-back" data-go-home type="button" aria-label="返回项目首页">
-              <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#arrow-right-2"></use></svg>
-            </button>
+        <div class="workflow-head-left">
+          <div class="brand-lockup" id="topbarBrand">
             <div>
-              <p class="eyebrow">CURRENT PROJECT</p>
-              <strong id="workflowTopbarProject">—</strong>
+              <p class="eyebrow">LOCAL SHORT-DRAMA PIPELINE</p>
+              <div class="brand-title-row">
+                <h1>短剧制作工作台</h1>
+                <span class="brand-rule" aria-hidden="true"></span>
+                <span class="brand-subtitle">小说 · 资产 · 分镜 · 成片</span>
+              </div>
             </div>
           </div>
-          <nav class="stage-nav topbar-stage-nav" id="workflowNav" aria-label="制作流程"></nav>
+          <span class="workflow-head-divider" aria-hidden="true"></span>
+          <div class="workflow-topbar" id="workflowTopbar" hidden>
+            <div class="workflow-topbar-project">
+              <div>
+                <p class="eyebrow">CURREN PROJECT</p>
+                <strong id="workflowTopbarProject">—</strong>
+              </div>
+            </div>
+          </div>
         </div>
+        <nav class="stage-nav topbar-stage-nav" id="workflowNav" aria-label="制作流程" hidden></nav>
         <div class="topbar-meta">
           <button class="quiet-button topbar-task-log" id="taskLogToggle" data-task-log-toggle type="button" aria-expanded="false" hidden>
             <svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#timer-1"></use></svg>

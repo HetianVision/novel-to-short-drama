@@ -58,6 +58,22 @@ test('project workflow stages live in the first-level topbar', async () => {
   assert.doesNotMatch(app, /<div class="stage-workspace-header"/);
 });
 
+test('workflow header matches the Figma head geometry and typography', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const styles = await readFile(new URL('../public/styles.css', import.meta.url), 'utf8');
+  assert.match(html, /class="workflow-head-left"/);
+  assert.match(html, /class="workflow-head-divider"/);
+  assert.match(html, /CURREN PROJECT/);
+  assert.doesNotMatch(html, /workflow-project-back/);
+  assert.match(styles, /--dinish:\s*["']DINish["']/);
+  assert.match(styles, /\.topbar\.workflow-mode\s*\{[^}]*height:\s*64px[^}]*padding:\s*16px 32px[^}]*background:\s*#fff[^}]*border-bottom:\s*1px solid var\(--seal\)/s);
+  assert.match(styles, /\.workflow-head-left\s*\{[^}]*width:\s*352px/);
+  assert.match(styles, /\.workflow-topbar-project\s*\{[^}]*width:\s*164px/);
+  assert.match(styles, /\.topbar-stage-nav\s*\{[^}]*width:\s*528px/);
+  assert.match(styles, /\.topbar\.workflow-mode \.brand-lockup \.eyebrow[\s\S]{0,320}font-family:\s*var\(--dinish\)/);
+  assert.match(styles, /\.topbar\.workflow-mode \.stage-nav-number\s*\{[^}]*font-family:\s*var\(--dinish\)/s);
+});
+
 test('workbench layout fills the browser viewport', async () => {
   const styles = await readFile(new URL('../public/styles.css', import.meta.url), 'utf8');
   assert.match(styles, /\.app-shell\s*\{[^}]*min-height:\s*100dvh/);

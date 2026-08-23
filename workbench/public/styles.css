@@ -16,6 +16,7 @@
   --danger: #9d3e35;
   --danger-soft: rgba(157, 62, 53, 0.08);
   --serif: "Songti SC", "Noto Serif SC", "STSong", serif;
+  --dinish: "DINish", "DIN Next", "DIN Alternate", "Arial Narrow", var(--mono);
   --sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Noto Sans SC", sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-family: var(--sans);
@@ -1193,128 +1194,11 @@ select:hover { border-color: var(--seal-2); }
 }
 
 @media (max-width: 860px) {
-  .topbar.workflow-mode { align-items: center; flex-direction: row; flex-wrap: wrap; }
-  .topbar.workflow-mode .workflow-topbar { order: 3; flex-basis: 100%; min-height: 50px; }
-  .topbar.workflow-mode .topbar-stage-nav { margin-top: 0; margin-bottom: 0; }
   .home-skill-panel { align-items: flex-start; flex-direction: column; }
   .home-skill-panel .section-heading,
   .home-skill-panel .muted,
   .home-skill-panel .control-row { width: 100%; }
 }
-
-@media (max-width: 640px) {
-  .workflow-topbar { gap: 8px; }
-  .workflow-topbar-project { flex-basis: 112px; padding-left: 9px; }
-  .workflow-topbar-project strong { font-size: 14px; }
-  .topbar-stage-nav .stage-nav-item { padding-right: 8px; padding-left: 8px; }
-}
-
-/* Figma workflow header: the routed production workspace owns the first-level navigation. */
-.topbar.workflow-mode {
-  position: relative;
-  min-height: 64px;
-  height: 64px;
-  padding: 16px 32px;
-  gap: 20px;
-  background: #fff;
-  border-bottom: 1px solid var(--seal);
-}
-
-.topbar.workflow-mode .brand-lockup { flex: 0 0 auto; }
-.topbar.workflow-mode .brand-title-row { gap: 0; }
-.topbar.workflow-mode .brand-rule { width: 1px; height: 28px; margin-left: 17px; background: var(--rule-strong); }
-.topbar.workflow-mode .brand-subtitle { display: none; }
-.topbar.workflow-mode h1 { font-size: 20px; }
-
-.topbar.workflow-mode .workflow-topbar {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 16px;
-}
-
-.topbar.workflow-mode .workflow-topbar-project {
-  display: flex;
-  align-items: center;
-  flex: 0 1 168px;
-  gap: 8px;
-  min-width: 126px;
-  padding-left: 14px;
-  border-left: 0;
-}
-
-.workflow-project-back {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 21px;
-  height: 21px;
-  padding: 0;
-  color: var(--seal);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.workflow-project-back .icon { transform: rotate(180deg); }
-.workflow-project-back:hover { color: var(--ink); }
-.workflow-topbar-project > div { min-width: 0; }
-.topbar.workflow-mode .workflow-topbar-project .eyebrow { margin-bottom: 3px; }
-.topbar.workflow-mode .workflow-topbar-project strong { display: block; overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
-
-.topbar.workflow-mode .topbar-stage-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  min-width: 0;
-  gap: 0;
-  margin: 0;
-  overflow: visible;
-  border: 0;
-}
-
-.topbar.workflow-mode .stage-nav-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  min-height: 30px;
-  padding: 5px 10px 5px 7px;
-  color: var(--seal);
-  background: var(--seal-soft);
-  border: 0;
-  border-radius: 999px;
-  text-align: left;
-}
-
-.topbar.workflow-mode .stage-nav-item:hover { background: rgba(138, 51, 36, 0.15); }
-.topbar.workflow-mode .stage-nav-item.active { color: #fff; background: var(--seal); box-shadow: none; }
-.topbar.workflow-mode .stage-nav-item.status-succeeded,
-.topbar.workflow-mode .stage-nav-item.status-partial,
-.topbar.workflow-mode .stage-nav-item.status-running,
-.topbar.workflow-mode .stage-nav-item.status-queued,
-.topbar.workflow-mode .stage-nav-item.status-failed,
-.topbar.workflow-mode .stage-nav-item.status-cancelled { color: var(--seal); }
-.topbar.workflow-mode .stage-nav-item.active.status-succeeded,
-.topbar.workflow-mode .stage-nav-item.active.status-partial,
-.topbar.workflow-mode .stage-nav-item.active.status-running,
-.topbar.workflow-mode .stage-nav-item.active.status-queued,
-.topbar.workflow-mode .stage-nav-item.active.status-failed,
-.topbar.workflow-mode .stage-nav-item.active.status-cancelled { color: #fff; }
-.topbar.workflow-mode .stage-nav-number { color: currentColor; font-size: 8px; opacity: 0.72; }
-.topbar.workflow-mode .stage-nav-copy { display: block; }
-.topbar.workflow-mode .stage-nav-copy strong { font-size: 10px; font-weight: 700; }
-.stage-nav-connector { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 17px; color: var(--seal-2); }
-.stage-nav-connector .icon { width: 12px; height: 12px; }
-
-.topbar-task-log { gap: 6px; padding: 6px 0; color: var(--muted); background: transparent; }
-.topbar-task-log[hidden] { display: none; }
-.topbar-task-log:hover,
-.topbar-task-log.active { color: var(--seal); }
-.topbar.workflow-mode .connection-state { display: none; }
-.topbar.workflow-mode .topbar-meta { gap: 15px; }
 
 .workflow-page { padding: 0; }
 .workflow-body { gap: 0; }
@@ -1331,19 +1215,7 @@ select:hover { border-color: var(--seal-2); }
 .report-viewer { height: calc(100dvh - 104px); min-height: 640px; margin-top: 0; overflow: hidden; border: 0; }
 .report-viewer iframe { min-height: 640px; }
 
-@media (max-width: 1180px) {
-  .topbar.workflow-mode { padding-right: 24px; padding-left: 24px; }
-  .topbar.workflow-mode .workflow-topbar { gap: 10px; }
-  .topbar.workflow-mode .workflow-topbar-project { flex-basis: 140px; min-width: 110px; padding-left: 8px; }
-  .topbar.workflow-mode .stage-nav-item { padding-right: 7px; padding-left: 6px; }
-  .stage-nav-connector { flex-basis: 11px; }
-}
-
 @media (max-width: 860px) {
-  .topbar.workflow-mode { height: auto; min-height: 64px; align-items: center; flex-direction: row; flex-wrap: wrap; }
-  .topbar.workflow-mode .workflow-topbar { order: 3; flex-basis: 100%; min-height: 42px; overflow-x: auto; }
-  .topbar.workflow-mode .topbar-stage-nav { justify-content: flex-start; overflow-x: auto; }
-  .topbar.workflow-mode .connection-state { display: inline-flex; }
   .workflow-page { padding: 0; }
   .stage-workspace { padding: 17px 18px 32px; }
   .report-viewer { height: calc(100dvh - 156px); min-height: 540px; }
@@ -1351,15 +1223,295 @@ select:hover { border-color: var(--seal-2); }
 }
 
 @media (max-width: 640px) {
-  .topbar.workflow-mode { padding: 13px 16px; }
-  .topbar.workflow-mode .brand-title-row { align-items: center; flex-direction: row; }
-  .topbar.workflow-mode h1 { font-size: 18px; }
-  .topbar.workflow-mode .brand-lockup .eyebrow { display: none; }
-  .topbar.workflow-mode .workflow-topbar-project { flex-basis: 130px; min-width: 0; }
-  .topbar.workflow-mode .workflow-topbar-project strong { font-size: 14px; }
-  .topbar.workflow-mode .stage-nav-item { min-height: 28px; padding-right: 7px; padding-left: 5px; }
-  .topbar.workflow-mode .stage-nav-copy strong { font-size: 9px; }
   .owner-image-action { align-items: flex-start; flex-direction: column; gap: 8px; }
   .owner-image-action .quiet-button { width: 100%; }
   .stage-start-view { min-height: calc(100dvh - 180px); padding: 18px 0; }
+}
+
+/* Figma head calibration: 1920px frame, 64px header, three fixed groups. */
+.workflow-head-left {
+  display: flex;
+  align-items: center;
+  flex: 0 0 352px;
+  width: 352px;
+  min-width: 0;
+  height: 32px;
+  gap: 12px;
+}
+
+.topbar:not(.workflow-mode) .workflow-head-left {
+  flex: 0 1 auto;
+  width: auto;
+  height: auto;
+  gap: 0;
+}
+
+.topbar.workflow-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 64px;
+  height: 64px;
+  padding: 16px 32px;
+  gap: 0;
+  background: #fff;
+  border-bottom: 1px solid var(--seal);
+}
+
+.topbar.workflow-mode .brand-lockup {
+  flex: 0 0 164px;
+  width: 164px;
+  height: 32px;
+  min-width: 0;
+}
+
+.topbar.workflow-mode .brand-lockup > div,
+.topbar.workflow-mode .brand-title-row {
+  display: block;
+  width: 164px;
+  min-width: 0;
+}
+
+.topbar.workflow-mode .brand-lockup > div { height: 32px; }
+.topbar.workflow-mode .brand-title-row { height: 20px; }
+
+.topbar.workflow-mode .brand-lockup .eyebrow,
+.topbar.workflow-mode .workflow-topbar-project .eyebrow {
+  width: 164px;
+  height: 12px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--seal);
+  font-family: var(--dinish);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  line-height: 12px;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.topbar.workflow-mode .workflow-topbar-project .eyebrow {
+  letter-spacing: 0.1em;
+}
+
+.topbar.workflow-mode h1,
+.topbar.workflow-mode .workflow-topbar-project strong {
+  display: block;
+  width: 164px;
+  height: 20px;
+  margin: 0;
+  overflow: hidden;
+  color: #000;
+  font-family: "Songti TC", "Songti SC", "STSong", "Noto Serif CJK TC", serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  line-height: 20px;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.topbar.workflow-mode .brand-rule,
+.topbar.workflow-mode .brand-subtitle { display: none; }
+
+.workflow-head-divider {
+  display: none;
+  flex: 0 0 0;
+  width: 0;
+  height: 32px;
+  border-left: 1px solid var(--seal);
+}
+
+.topbar.workflow-mode .workflow-head-divider { display: block; }
+
+.topbar-task-log[hidden] { display: none !important; }
+.workflow-topbar[hidden],
+.topbar-stage-nav[hidden] { display: none !important; }
+
+.topbar.workflow-mode .workflow-topbar {
+  display: flex;
+  align-items: center;
+  flex: 0 0 164px;
+  width: 164px;
+  min-width: 164px;
+  height: 32px;
+  gap: 0;
+}
+
+.topbar.workflow-mode .workflow-topbar-project {
+  display: grid;
+  align-content: center;
+  flex: 0 0 164px;
+  width: 164px;
+  min-width: 164px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+}
+
+.topbar.workflow-mode .workflow-topbar-project > div { min-width: 0; }
+
+.topbar.workflow-mode .topbar-stage-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 528px;
+  width: 528px;
+  min-width: 528px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+}
+
+.topbar.workflow-mode .stage-nav-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 68px;
+  width: 68px;
+  height: 28px;
+  min-height: 28px;
+  min-width: 68px;
+  margin: 0;
+  padding: 4px 8px 4px 4px;
+  gap: 6px;
+  color: var(--seal);
+  background: rgba(138, 51, 36, 0.12);
+  border: 0;
+  border-radius: 24px;
+  box-shadow: none;
+  text-align: left;
+}
+
+.topbar.workflow-mode .stage-nav-item:hover { background: rgba(138, 51, 36, 0.2); }
+.topbar.workflow-mode .stage-nav-item.active { color: #fff; background: var(--seal); }
+.topbar.workflow-mode .stage-nav-item.status-succeeded,
+.topbar.workflow-mode .stage-nav-item.status-partial,
+.topbar.workflow-mode .stage-nav-item.status-running,
+.topbar.workflow-mode .stage-nav-item.status-queued,
+.topbar.workflow-mode .stage-nav-item.status-failed,
+.topbar.workflow-mode .stage-nav-item.status-cancelled { color: var(--seal); }
+.topbar.workflow-mode .stage-nav-item.active.status-succeeded,
+.topbar.workflow-mode .stage-nav-item.active.status-partial,
+.topbar.workflow-mode .stage-nav-item.active.status-running,
+.topbar.workflow-mode .stage-nav-item.active.status-queued,
+.topbar.workflow-mode .stage-nav-item.active.status-failed,
+.topbar.workflow-mode .stage-nav-item.active.status-cancelled { color: #fff; }
+
+.topbar.workflow-mode .stage-nav-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  color: var(--seal);
+  background: #fff;
+  border-radius: 16px;
+  font-family: var(--dinish);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 20px;
+  opacity: 1;
+  text-align: center;
+}
+
+.topbar.workflow-mode .stage-nav-copy {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.topbar.workflow-mode .stage-nav-copy strong {
+  display: block;
+  overflow: hidden;
+  color: currentColor;
+  font-family: var(--dinish);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 20px;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.stage-nav-connector {
+  display: block;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 0;
+  border-top: 1px dashed var(--seal);
+}
+
+.topbar.workflow-mode .topbar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 202px;
+  width: 202px;
+  height: 32px;
+  gap: 20px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.topbar.workflow-mode .connection-state { display: none; }
+.topbar.workflow-mode .topbar-task-log,
+.topbar.workflow-mode #refreshButton {
+  gap: 6px;
+  min-height: 20px;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  font-size: 10px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.topbar.workflow-mode .topbar-task-log:hover,
+.topbar.workflow-mode .topbar-task-log.active,
+.topbar.workflow-mode #refreshButton:hover { color: var(--seal); }
+
+@media (max-width: 1180px) and (min-width: 861px) {
+  .topbar.workflow-mode { padding-right: 24px; padding-left: 24px; }
+  .topbar.workflow-mode .workflow-head-left { flex-basis: 300px; width: 300px; gap: 10px; }
+  .topbar.workflow-mode .brand-lockup,
+  .topbar.workflow-mode .brand-lockup > div,
+  .topbar.workflow-mode .brand-title-row,
+  .topbar.workflow-mode .brand-lockup .eyebrow,
+  .topbar.workflow-mode h1 { width: 140px; }
+  .topbar.workflow-mode .workflow-topbar,
+  .topbar.workflow-mode .workflow-topbar-project,
+  .topbar.workflow-mode .workflow-topbar-project .eyebrow,
+  .topbar.workflow-mode .workflow-topbar-project strong { flex-basis: 140px; width: 140px; min-width: 140px; }
+  .topbar.workflow-mode .topbar-stage-nav { flex-basis: 460px; width: 460px; min-width: 460px; }
+  .topbar.workflow-mode .topbar-meta { flex-basis: 180px; width: 180px; gap: 12px; }
+}
+
+@media (max-width: 860px) {
+  .topbar.workflow-mode {
+    height: auto;
+    min-height: 64px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 13px 16px;
+    row-gap: 12px;
+  }
+  .topbar.workflow-mode .workflow-head-left { flex: 1 1 auto; width: auto; }
+  .topbar.workflow-mode .topbar-stage-nav {
+    order: 3;
+    flex: 1 0 100%;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+  .topbar.workflow-mode .topbar-meta { flex: 0 0 auto; width: auto; }
 }

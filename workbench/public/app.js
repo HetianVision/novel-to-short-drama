@@ -129,11 +129,13 @@ function setConnection(online, label = online ? '本地服务已连接' : '本�
 }
 function setTopbarMode(mode) {
   const workflowTopbar = $('workflowTopbar');
+  const workflowNav = $('workflowNav');
   const topbar = $('appTopbar');
   const projectLabel = $('workflowTopbarProject');
   const taskLogButton = $('taskLogToggle');
   const workflowMode = mode === 'workflow';
   if (workflowTopbar) workflowTopbar.hidden = !workflowMode;
+  if (workflowNav) workflowNav.hidden = !workflowMode;
   if (topbar) topbar.classList.toggle('workflow-mode', workflowMode);
   if (projectLabel) projectLabel.textContent = workflowMode ? (state.project?.title ?? '未命名项目') : '—';
   if (taskLogButton) {
@@ -237,7 +239,7 @@ function renderWorkflowTopbar() {
   nav.innerHTML = STAGES.map((stage, index) => {
     const status = stageStatus(state.project, stage.key);
     const active = state.activeStage === stage.key;
-    const connector = index ? `<span class="stage-nav-connector" aria-hidden="true">${icon('arrow-right-2', 'icon icon-xs')}</span>` : '';
+    const connector = index ? '<span class="stage-nav-connector" aria-hidden="true"></span>' : '';
     return `${connector}<button class="stage-nav-item ${active ? 'active' : ''} ${statusClass(status)}" data-stage-nav="${stage.key}" type="button" aria-current="${active ? 'step' : 'false'}" aria-label="${escapeHtml(stage.shortLabel)} · ${escapeHtml(stageStatusText(status))}"><span class="stage-nav-number">${stage.mark}</span><span class="stage-nav-copy"><strong>${escapeHtml(stage.shortLabel)}</strong></span></button>`;
   }).join('');
 }
