@@ -113,6 +113,15 @@ function setConnection(online, label = online ? '本地服务已连接' : '本�
   $('connectionDot').classList.toggle('online', online);
   $('connectionLabel').textContent = label;
 }
+function setTopbarMode(mode) {
+  const workflowTopbar = $('workflowTopbar');
+  const topbar = $('appTopbar');
+  const projectLabel = $('workflowTopbarProject');
+  const workflowMode = mode === 'workflow';
+  if (workflowTopbar) workflowTopbar.hidden = !workflowMode;
+  if (topbar) topbar.classList.toggle('workflow-mode', workflowMode);
+  if (projectLabel) projectLabel.textContent = workflowMode ? (state.project?.title ?? '未命名项目') : '—';
+}
 
 function stageTask(project, stageKey) {
   return [...state.tasks].filter((task) => task.projectId === project?.id && task.type === stageKey).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0];
@@ -172,6 +181,7 @@ function renderHome() {
   state.artifacts = [];
   state.selectedTask = null;
   state.selectedArtifact = null;
+  setTopbarMode('home');
   const appRoot = $('appRoot');
   if (!appRoot) return;
   const hasProjects = state.projects.length > 0;
@@ -180,11 +190,13 @@ function renderHome() {
       <div><p class="eyebrow">PROJECT DIRECTORY</p><h2>项目</h2><p>从小说和资料开始，沿原 Skill 链完成短剧前期制作。</p></div>
       ${hasProjects ? `<button class="primary-button" id="newProjectButton" type="button">${icon('folder-add', 'icon icon-sm')}<span>新建项目</span></button>` : ''}
     </header>
+    <section class="home-utilities" aria-label="工作台技能设置"><div class="utility-panel panel-block home-skill-panel"><div class="section-heading compact"><div><p class="eyebrow">LOCKED SKILLS</p><h3>Skill 版本</h3></div><span class="status-pill neutral" id="skillStatus">检查中</span></div><p class="muted" id="skillStatusDetail">运行时只读，更新需要明确确认。</p><div class="control-row"><button class="quiet-button" id="checkSkillsButton" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#refresh-2"></use></svg><span>检查更新</span></button><button class="quiet-button accent" id="syncSkillsButton" type="button" disabled><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#rotate-right"></use></svg><span>确认同步</span></button></div></div></section>
     <section class="project-directory panel-block" aria-label="项目列表">
       <div class="section-heading compact"><div><p class="eyebrow">YOUR PROJECTS</p><h3>${hasProjects ? '最近项目' : '还没有项目'}</h3></div><span class="material-count">${state.projects.length}</span></div>
       ${hasProjects ? `<div class="project-list">${state.projects.map(projectCard).join('')}</div>` : `<div class="empty-home"><div class="empty-home-mark">${icon('folder-add', 'icon icon-xl')}</div><p>创建第一个短剧项目，开始整理小说、角色、美术和分镜成果物。</p><button class="primary-button" id="newProjectButton" type="button">${icon('folder-add', 'icon icon-sm')}<span>新建项目</span></button></div>`}
     </section>
   </section>`;
+  void checkSkills();
 }
 
 function renderSources() {
@@ -238,10 +250,10 @@ function renderStageWorkspace() {
 function renderWorkflow() {
   if (!state.project || !$('appRoot')) return renderHome();
   state.view = 'workflow';
+  setTopbarMode('workflow');
   $('appRoot').innerHTML = `<section class="workflow-page page-shell">
     <header class="workflow-context"><button class="back-button" data-go-home type="button">${icon('arrow-right-2', 'icon icon-sm')}<span>项目首页</span></button><div class="workflow-title"><p class="eyebrow">PROJECT WORKFLOW</p><h2>${escapeHtml(state.project.title)}</h2><p>按原 Skill 链推进制作，点击顶部步骤只切换工作区，执行按钮才会创建任务。</p></div><div class="workflow-metrics"><strong>${state.artifacts.length}</strong><span>成果物</span><strong>${state.tasks.filter((task) => ['queued', 'running'].includes(task.status)).length}</strong><span>运行中</span></div></header>
-    <nav class="stage-nav" id="workflowNav" aria-label="制作流程"></nav>
-    <section class="workflow-utilities"><div class="utility-panel panel-block"><div><p class="eyebrow">SOURCE MATERIAL</p><h3>输入资料 <span class="material-count" id="sourceCount">0</span></h3></div><label class="upload-zone compact-upload" for="sourceInput">${icon('document-upload', 'icon icon-md upload-icon')}<span><strong>上传小说或资料</strong><small>TXT、Markdown、JSON、参考图</small></span><input id="sourceInput" type="file" multiple></label><div class="source-list" id="sourceList"></div></div><div class="utility-panel panel-block"><div class="section-heading compact"><div><p class="eyebrow">LOCKED SKILLS</p><h3>Skill 版本</h3></div><span class="status-pill neutral" id="skillStatus">检查中</span></div><p class="muted" id="skillStatusDetail">运行时只读，更新需要明确确认。</p><div class="control-row"><button class="quiet-button" id="checkSkillsButton" type="button">${icon('refresh-2', 'icon icon-sm')}<span>检查更新</span></button><button class="quiet-button accent" id="syncSkillsButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>确认同步</span></button></div></div></section>
+    <section class="workflow-utilities"><div class="utility-panel panel-block"><div><p class="eyebrow">SOURCE MATERIAL</p><h3>输入资料 <span class="material-count" id="sourceCount">0</span></h3></div><label class="upload-zone compact-upload" for="sourceInput">${icon('document-upload', 'icon icon-md upload-icon')}<span><strong>上传小说或资料</strong><small>TXT、Markdown、JSON、参考图</small></span><input id="sourceInput" type="file" multiple></label><div class="source-list" id="sourceList"></div></div></section>
     <div class="workflow-body"><section class="stage-workspace artifact-canvas" id="stageWorkspace" aria-label="步骤工作区"></section><aside class="activity-column run-inspector" aria-label="任务日志"><section class="activity-header"><p class="eyebrow">RUN MONITOR</p><div class="activity-title-row"><h2>任务日志</h2><span class="live-indicator">${icon('timer-1', 'icon icon-xs')}<span>LIVE</span></span></div><p class="muted" id="taskSummary">暂无运行中的任务</p></section><section class="task-log panel-block" id="taskLog" aria-live="polite"></section><section class="run-detail panel-block" id="runDetail"><p class="eyebrow">SELECTED RUN</p><h3 id="selectedTaskTitle">尚未选择任务</h3><dl class="run-facts"><div><dt>状态</dt><dd id="selectedTaskStatus">—</dd></div><div><dt>使用 Skill</dt><dd id="selectedTaskSkill">—</dd></div><div><dt>任务编号</dt><dd id="selectedTaskId">—</dd></div></dl><div class="control-row"><button class="quiet-button" id="retryTaskButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>重新执行</span></button><button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>${icon('close-circle', 'icon icon-sm')}<span>取消任务</span></button></div><div class="event-stream" id="eventStream" aria-live="polite"></div></section><div class="footer-note">本地运行 · Skill 只读 · 产物可追溯</div></aside></div>
   </section>`;
   renderWorkflowTopbar();
@@ -541,6 +553,7 @@ function handleChange(event) {
 
 $('appRoot').addEventListener('click', handleClick);
 $('appRoot').addEventListener('change', handleChange);
+$('appTopbar').addEventListener('click', handleClick);
 $('refreshButton').addEventListener('click', handleClick);
 window.addEventListener('hashchange', () => { void handleRoute(); });
 boot();
