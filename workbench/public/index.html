@@ -41,6 +41,15 @@
       <main class="app-root" id="appRoot" aria-live="polite"></main>
     </div>
     <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+    <dialog class="project-dialog" id="newProjectDialog">
+      <form id="newProjectForm">
+        <div class="dialog-heading"><p class="eyebrow">NEW PROJECT</p><h2>新建项目</h2><p>先上传小说或资料，工作流才能读取并生成后续成果物。</p></div>
+        <label class="field-label" for="projectTitleInput">项目名称<input id="projectTitleInput" name="title" type="text" required placeholder="例如：渡口"></label>
+        <label class="dialog-upload-zone" for="sourceFileInput"><svg class="icon icon-md" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#document-upload"></use></svg><span><strong>上传小说或资料</strong><small>TXT、Markdown、JSON 或其他文本资料</small></span><input id="sourceFileInput" name="source" type="file" required accept=".txt,.md,.markdown,.json,text/plain,text/markdown,application/json"></label>
+        <p class="dialog-error" id="newProjectError" role="alert"></p>
+        <div class="dialog-actions"><button class="quiet-button" data-dialog-close type="button">取消</button><button class="primary-button" id="createProjectSubmit" type="submit"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#folder-add"></use></svg><span>创建项目</span></button></div>
+      </form>
+    </dialog>
     <script type="module" src="/app.js"></script>
   </body>
 </html>

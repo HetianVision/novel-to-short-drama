@@ -347,7 +347,23 @@ export function createServer({
     }
     if (pathname === '/api/projects' && method === 'POST') {
       const body = await readJson(request);
-      const project = await projectStore.create({ title: body.title, id: body.id });
+      const source = body.source;
+      if (!source || typeof source.filename !== 'string' || typeof source.contentBase64 !== 'string') {
+        return sendError(response, 400, 'source file is required');
+      }
+      const encoded = source.contentBase64.trim();
+      if (!encoded || encoded.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(encoded)) {
+        return sendError(response, 400, 'source file content is invalid');
+      }
+      const bytes = Buffer.from(encoded, 'base64');
+      if (!bytes.byteLength || bytes.toString('base64').replace(/=+$/, '') !== encoded.replace(/=+$/, '')) {
+        return sendError(response, 400, 'source file content is invalid');
+      }
+      const project = await projectStore.create({
+        title: body.title,
+        id: body.id,
+        source: { filename: source.filename, bytes },
+      });
       return sendJson(response, 201, await readProjectPayload(project));
     }
 

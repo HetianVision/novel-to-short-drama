@@ -23,6 +23,13 @@ async function withServer(t) {
   return { base, projectStore };
 }
 
+function projectPayload(title = '渡口', filename = 'novel.txt', content = '小说正文') {
+  return {
+    title,
+    source: { filename, contentBase64: Buffer.from(content).toString('base64') },
+  };
+}
+
 async function postJson(base, path, value) {
   const response = await fetch(`${base}${path}`, {
     method: 'POST',
@@ -34,7 +41,7 @@ async function postJson(base, path, value) {
 
 test('creates project and uploads raw source', async (t) => {
   const { base } = await withServer(t);
-  const created = await postJson(base, '/api/projects', { title: '渡口' });
+  const created = await postJson(base, '/api/projects', projectPayload('渡口', 'seed.txt'));
   assert.equal(created.response.status, 201);
   const source = await fetch(`${base}/api/projects/${created.body.id}/sources?filename=novel.txt`, {
     method: 'POST', body: '小说正文', headers: { 'content-type': 'text/plain' },
@@ -43,9 +50,24 @@ test('creates project and uploads raw source', async (t) => {
   assert.equal((await source.json()).relativePath, 'source/novel.txt');
 });
 
+test('project creation rejects a missing source and stores the uploaded source atomically', async (t) => {
+  const { base } = await withServer(t);
+  const missing = await postJson(base, '/api/projects', { title: '无资料项目' });
+  assert.equal(missing.response.status, 400);
+  const created = await postJson(base, '/api/projects', {
+    title: '带资料项目',
+    source: {
+      filename: 'novel.txt',
+      contentBase64: Buffer.from('小说正文').toString('base64'),
+    },
+  });
+  assert.equal(created.response.status, 201);
+  assert.deepEqual(created.body.sources.map((source) => source.relativePath), ['source/novel.txt']);
+});
+
 test('blocks storyboard before script exists', async (t) => {
   const { base } = await withServer(t);
-  const created = await postJson(base, '/api/projects', { title: '渡口' });
+  const created = await postJson(base, '/api/projects', projectPayload());
   const response = await postJson(base, `/api/projects/${created.body.id}/tasks`, { type: 'storyboard', options: {} });
   assert.equal(response.response.status, 409);
   assert.deepEqual(response.body.missing, ['script.json']);
@@ -53,15 +75,14 @@ test('blocks storyboard before script exists', async (t) => {
 
 test('artifact route rejects traversal', async (t) => {
   const { base } = await withServer(t);
-  const created = await postJson(base, '/api/projects', { title: '渡口' });
+  const created = await postJson(base, '/api/projects', projectPayload());
   const response = await fetch(`${base}/api/projects/${created.body.id}/artifacts/..%2F..%2Fpackage.json`);
   assert.equal(response.status, 400);
 });
 
 test('SSE emits stored task events', async (t) => {
   const { base, projectStore } = await withServer(t);
-  const created = await postJson(base, '/api/projects', { title: '渡口' });
-  await fetch(`${base}/api/projects/${created.body.id}/sources?filename=novel.txt`, { method: 'POST', body: '小说正文' });
+  const created = await postJson(base, '/api/projects', projectPayload());
   const task = await postJson(base, `/api/projects/${created.body.id}/tasks`, { type: 'outline', options: {} });
   const project = await projectStore.read(created.body.id);
   const store = createTaskStore(project.root);
@@ -100,7 +121,7 @@ test('serves browser assets with executable MIME types', async (t) => {
 
 test('creates a video job through the provider route after storyboard images exist', async (t) => {
   const { base, projectStore } = await withServer(t);
-  const created = await postJson(base, '/api/projects', { title: '渡口视频' });
+  const created = await postJson(base, '/api/projects', projectPayload('渡口视频'));
   const project = await projectStore.read(created.body.id);
   await mkdir(join(project.root, 'storyboard', 'E01-01'), { recursive: true });
   await mkdir(join(project.root, 'script'), { recursive: true });

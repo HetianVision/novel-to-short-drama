@@ -65,8 +65,15 @@ export function createProjectStore({ projectsRoot, now = () => new Date().toISOS
     return { ...metadata, root: projectPath };
   }
 
-  async function create({ id, title }) {
+  async function create({ id, title, source = null }) {
     if (typeof title !== 'string' || !title.trim()) throw new Error('Project title is required');
+    const sourceInput = source
+      ? { filename: source.filename, bytes: normalizeBytes(source.bytes) }
+      : null;
+    if (sourceInput) {
+      assertSafeFileName(sourceInput.filename);
+      if (!sourceInput.bytes.byteLength) throw new Error('Source file is empty');
+    }
     await mkdir(root, { recursive: true });
 
     let projectId = id ? assertSafeId(id) : slugFromTitle(title);
@@ -91,12 +98,27 @@ export function createProjectStore({ projectsRoot, now = () => new Date().toISOS
     await mkdir(join(projectPath, '.workbench', 'runs'), { recursive: true });
 
     const timestamp = asTimestamp(now);
+    let sourceRecord = null;
+    if (sourceInput) {
+      const sourceDirectory = resolveInside(projectPath, 'source');
+      const destination = resolveInside(sourceDirectory, sourceInput.filename);
+      const tempPath = `${destination}.${process.pid}.${randomUUID()}.tmp`;
+      await writeFile(tempPath, sourceInput.bytes, { flag: 'wx' });
+      await rename(tempPath, destination);
+      sourceRecord = {
+        filename: sourceInput.filename,
+        relativePath: relative(projectPath, destination).split(sep).join('/'),
+        size: sourceInput.bytes.byteLength,
+        sha256: sha256(sourceInput.bytes),
+        updatedAt: timestamp,
+      };
+    }
     const metadata = {
       id: projectId,
       title: title.trim(),
       createdAt: timestamp,
       updatedAt: timestamp,
-      sources: [],
+      sources: sourceRecord ? [sourceRecord] : [],
       stageState: {},
     };
     await writeJsonAtomic(join(projectPath, '.workbench', 'project.json'), metadata);

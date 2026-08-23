@@ -10,6 +10,15 @@ const STAGES = [
   { key: 'video', label: '成片', shortLabel: '成片', skill: 'Seedance / MiniMax H3', note: '视频模型最终任务', mark: '07', icon: 'video-play' },
 ];
 
+const SKILL_CATALOG = [
+  { key: 'novel-outline', label: '大纲', description: '从小说提炼主题、冲突、分集与叙事骨架。', output: 'outline-report.html' },
+  { key: 'novel-characters', label: '角色', description: '建立人物关系、人物弧光与视觉角色设定。', output: 'report.html' },
+  { key: 'novel-art', label: '美术', description: '整理场景、道具、时代与视觉统一性。', output: 'art-report.html' },
+  { key: 'novel-script', label: '剧本', description: '将大纲、角色和美术资产转成可拍摄剧本。', output: 'script-report.html' },
+  { key: 'novel-storyboard', label: '分镜', description: '把剧本拆成段、切、机位与首帧需求。', output: 'storyboard-report.html' },
+  { key: 'shot-recipes', label: '镜头配方', description: '为视频模型整理镜头提示词与参考资产约束。', output: 'shot-recipes' },
+];
+
 const state = {
   view: 'home',
   route: { view: 'home' },
@@ -25,6 +34,7 @@ const state = {
   taskEvents: new Map(),
   skillSyncReady: false,
   skillSyncToken: null,
+  taskLogOpen: false,
   loadToken: 0,
 };
 
@@ -47,8 +57,7 @@ async function request(path, options = {}) {
 const WorkbenchApi = {
   listProjects: () => request('/api/projects'),
   getProject: (projectId) => request(`/api/projects/${encodeURIComponent(projectId)}`),
-  createProject: (title) => request('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title }) }),
-  uploadSource: (projectId, file) => request(`/api/projects/${encodeURIComponent(projectId)}/sources?filename=${encodeURIComponent(file.name)}`, { method: 'POST', body: file }),
+  createProject: (title, source) => request('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ title, source }) }),
   listTasks: (projectId) => request(`/api/projects/${encodeURIComponent(projectId)}/tasks`),
   createTask: (projectId, type, options = {}) => request(`/api/projects/${encodeURIComponent(projectId)}/tasks`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type, options }) }),
   cancelTask: (taskId) => request(`/api/tasks/${encodeURIComponent(taskId)}/cancel`, { method: 'POST' }),
@@ -166,12 +175,12 @@ function projectCard(project) {
   const count = completedStageCount(project);
   const latestStage = STAGE_KEYS.map((stageKey) => stageStatus(project, stageKey)).find((status) => ['running', 'queued', 'failed'].includes(status));
   const status = latestStage ? stageStatusText(latestStage) : `${count}/7 阶段完成`;
-  return `<article class="project-card panel-block" data-project-card="${escapeHtml(project.id)}">
+  return `<button class="project-card panel-block" data-project-open="${escapeHtml(project.id)}" type="button" aria-label="进入 ${escapeHtml(project.title)}">
     <div class="project-card-mark">${icon('folder-open', 'icon icon-lg')}</div>
     <div class="project-card-copy"><p class="eyebrow">SHORT-DRAMA PROJECT</p><h3>${escapeHtml(project.title)}</h3><p>${escapeHtml(project.sources?.length ?? 0)} 份输入资料 · ${escapeHtml(projectUpdatedText(project))}</p></div>
     <div class="project-card-progress"><strong>${escapeHtml(status)}</strong><small>Skill 流程</small></div>
-    <button class="row-arrow project-open" data-project-open="${escapeHtml(project.id)}" type="button" aria-label="进入 ${escapeHtml(project.title)}">${icon('arrow-right-2', 'icon icon-sm')}</button>
-  </article>`;
+    <span class="project-card-arrow" aria-hidden="true">${icon('arrow-right-2', 'icon icon-sm')}</span>
+  </button>`;
 }
 
 function renderHome() {
@@ -190,10 +199,14 @@ function renderHome() {
       <div><p class="eyebrow">PROJECT DIRECTORY</p><h2>项目</h2><p>从小说和资料开始，沿原 Skill 链完成短剧前期制作。</p></div>
       ${hasProjects ? `<button class="primary-button" id="newProjectButton" type="button">${icon('folder-add', 'icon icon-sm')}<span>新建项目</span></button>` : ''}
     </header>
-    <section class="home-utilities" aria-label="工作台技能设置"><div class="utility-panel panel-block home-skill-panel"><div class="section-heading compact"><div><p class="eyebrow">LOCKED SKILLS</p><h3>Skill 版本</h3></div><span class="status-pill neutral" id="skillStatus">检查中</span></div><p class="muted" id="skillStatusDetail">运行时只读，更新需要明确确认。</p><div class="control-row"><button class="quiet-button" id="checkSkillsButton" type="button"><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#refresh-2"></use></svg><span>检查更新</span></button><button class="quiet-button accent" id="syncSkillsButton" type="button" disabled><svg class="icon icon-sm" aria-hidden="true" focusable="false"><use href="/icons/iconsax.svg#rotate-right"></use></svg><span>确认同步</span></button></div></div></section>
     <section class="project-directory panel-block" aria-label="项目列表">
       <div class="section-heading compact"><div><p class="eyebrow">YOUR PROJECTS</p><h3>${hasProjects ? '最近项目' : '还没有项目'}</h3></div><span class="material-count">${state.projects.length}</span></div>
       ${hasProjects ? `<div class="project-list">${state.projects.map(projectCard).join('')}</div>` : `<div class="empty-home"><div class="empty-home-mark">${icon('folder-add', 'icon icon-xl')}</div><p>创建第一个短剧项目，开始整理小说、角色、美术和分镜成果物。</p><button class="primary-button" id="newProjectButton" type="button">${icon('folder-add', 'icon icon-sm')}<span>新建项目</span></button></div>`}
+    </section>
+    <section class="skills-directory panel-block" aria-label="全部 Skill">
+      <div class="section-heading compact"><div><p class="eyebrow">ALL SKILLS</p><h3>全部 Skill</h3><p class="muted">Skill 目录锁定在本地版本，更新检查与同步也在这里完成。</p></div><span class="material-count">${SKILL_CATALOG.length}</span></div>
+      <div class="skill-list">${SKILL_CATALOG.map((skill) => `<article class="skill-row"><div class="skill-row-mark">${icon('folder-2', 'icon icon-sm')}</div><div class="skill-row-copy"><strong>${escapeHtml(skill.label)}</strong><small>${escapeHtml(skill.key)} · ${escapeHtml(skill.output)}</small><p>${escapeHtml(skill.description)}</p></div><span class="status-pill neutral">锁定</span></article>`).join('')}</div>
+      <div class="skill-sync-panel"><div><p class="eyebrow">LOCKED SKILLS</p><strong>Skill 版本</strong><p class="muted" id="skillStatusDetail">运行时只读，更新需要明确确认。</p></div><div class="skill-sync-actions"><span class="status-pill neutral" id="skillStatus">检查中</span><button class="quiet-button" id="checkSkillsButton" type="button">${icon('refresh-2', 'icon icon-sm')}<span>检查更新</span></button><button class="quiet-button accent" id="syncSkillsButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>确认同步</span></button></div></div>
     </section>
   </section>`;
   void checkSkills();
@@ -219,7 +232,21 @@ function renderWorkflowTopbar() {
 }
 
 function renderVideoWorkspace(disabled) {
-  return `<div class="video-action-row"><select id="providerSelect" class="provider-select" aria-label="视频模型"><option value="minimax-h3">MiniMax H3</option><option value="seedance">Seedance</option></select><button class="primary-button" id="videoJobButton" type="button" ${disabled ? 'disabled' : ''}>${icon('video-play', 'icon icon-sm')}<span>创建视频任务</span></button></div>`;
+  return `<button class="primary-button" data-stage-action="video" type="button" ${disabled ? 'disabled' : ''}>${icon('video-play', 'icon icon-sm')}<span>开始执行成片</span></button>`;
+}
+
+function stageArtifacts(stageKey) {
+  const task = stageTask(state.project, stageKey);
+  const taskArtifactIds = new Set(task?.artifactIds ?? []);
+  if (taskArtifactIds.size) {
+    const taskArtifacts = state.artifacts.filter((artifact) => taskArtifactIds.has(artifact.relativePath));
+    if (taskArtifacts.length) return taskArtifacts;
+  }
+  return state.artifacts.filter((artifact) => artifactBelongsToStage(artifact, stageKey));
+}
+
+function stageReportArtifact(stageKey) {
+  return stageArtifacts(stageKey).find((artifact) => artifact.type === 'report') ?? null;
 }
 
 function renderStageWorkspace() {
@@ -228,44 +255,47 @@ function renderStageWorkspace() {
   const gate = stageGate(project, stage.key);
   const task = stageTask(project, stage.key);
   const status = stageStatus(project, stage.key);
-  const completed = ['succeeded', 'partial'].includes(status);
+  const report = stageReportArtifact(stage.key);
+  const completed = ['succeeded', 'partial'].includes(status) && Boolean(report);
   const isVideo = stage.key === 'video';
   const disabled = isVideo ? !gate.ok : !project || (stage.key !== 'image' && !gate.ok);
   const warnings = gate.warnings?.length ? `<div class="gate-warning">${icon('timer-1', 'icon icon-xs')}<span>${escapeHtml(gate.warnings.join('；'))}</span></div>` : '';
   const missing = gate.missing?.length ? `<p class="gate-note">前置条件：${escapeHtml(gate.missing.join('、'))}</p>` : '';
   const action = isVideo
     ? renderVideoWorkspace(disabled)
-    : `<button class="primary-button" data-stage-action="${stage.key}" type="button" ${disabled ? 'disabled' : ''}>${icon(stage.icon === 'gallery' ? 'gallery' : 'play-circle', 'icon icon-sm')}<span>${completed ? '重新执行' : '执行'}${escapeHtml(stage.label.replace('生成', ''))}</span></button>`;
+    : `<button class="primary-button" data-stage-action="${stage.key}" type="button" ${disabled ? 'disabled' : ''}>${icon(stage.icon === 'gallery' ? 'gallery' : 'play-circle', 'icon icon-sm')}<span>${completed ? '重新执行' : '开始执行'}${escapeHtml(stage.label.replace('生成', ''))}</span></button>`;
   const taskInfo = task ? `<span class="stage-run-state ${statusClass(task.status)}">${icon(statusIcon(task.status), 'icon icon-xs')} ${escapeHtml(statusLabel(task.status))}</span>` : `<span class="stage-run-state ${statusClass(status)}">${icon(statusIcon(status), 'icon icon-xs')} ${escapeHtml(stageStatusText(status))}</span>`;
   const workspace = $('stageWorkspace');
   if (!workspace) return;
-  workspace.innerHTML = `<div class="stage-workspace-header"><div><p class="eyebrow">CURRENT STAGE · ${escapeHtml(stage.mark)}</p><h2>${escapeHtml(stage.label)}</h2><p class="workspace-subtitle">${escapeHtml(stage.skill)} · ${escapeHtml(stage.note)}</p></div><div class="stage-workspace-status">${taskInfo}</div></div>
-    <div class="stage-action-panel panel-block"><div><p class="eyebrow">RUN THIS STEP</p><h3>${completed ? '已有成果，可重新生成' : '准备执行当前步骤'}</h3>${missing}${warnings}</div>${action}</div>
-    <div class="stage-output-heading"><div><p class="eyebrow">STAGE OUTPUTS</p><h3>本步骤成果物</h3></div><span class="material-count" id="artifactCount">0</span></div>
-    <div class="artifact-toolbar section-rule"><div class="toolbar-tabs" role="tablist" aria-label="成果物类型"><button class="toolbar-tab active" data-filter="all" type="button">全部</button><button class="toolbar-tab" data-filter="report" type="button">报告</button><button class="toolbar-tab" data-filter="json" type="button">JSON</button><button class="toolbar-tab" data-filter="markdown" type="button">Markdown</button><button class="toolbar-tab" data-filter="image" type="button">图片</button><button class="toolbar-tab" data-filter="video" type="button">视频</button></div></div>
-    <div class="artifact-layout" data-artifact-stage="${stage.key}"><div class="artifact-catalog panel-block"><div class="artifact-list" id="artifactList"></div></div><div class="artifact-preview panel-block" id="artifactPreview"><div class="empty-state preview-empty">${icon('gallery', 'icon icon-xl empty-icon')}<p>选择一个成果物查看。</p><small>报告、JSON、Markdown、图片和视频都会保留在项目目录中。</small></div></div></div>`;
-  renderArtifactList();
+  const output = completed
+    ? `<div class="stage-output-heading"><div><p class="eyebrow">ORIGINAL SKILL REPORT</p><h3>${escapeHtml(report.relativePath.split('/').pop())}</h3></div><span class="material-count">HTML</span></div><div class="report-viewer"><iframe title="${escapeHtml(report.relativePath)}" src="${WorkbenchApi.artifactUrl(project.id, report.relativePath)}"></iframe></div>`
+    : `<div class="stage-start-view panel-block"><div><p class="eyebrow">RUN THIS STEP</p><h3>${task?.status === 'running' ? '正在执行当前步骤' : task?.status === 'queued' ? '任务已排队' : '准备开始当前步骤'}</h3>${missing}${warnings}</div>${action}</div>`;
+  workspace.innerHTML = `<div class="stage-workspace-header"><div><p class="eyebrow">CURRENT STAGE · ${escapeHtml(stage.mark)}</p><h2>${escapeHtml(stage.label)}</h2><p class="workspace-subtitle">${escapeHtml(stage.skill)} · ${escapeHtml(stage.note)}</p></div><div class="stage-workspace-status">${taskInfo}</div></div>${output}`;
 }
 
 function renderWorkflow() {
   if (!state.project || !$('appRoot')) return renderHome();
   state.view = 'workflow';
   setTopbarMode('workflow');
+  const taskLogHidden = state.taskLogOpen ? '' : ' hidden';
   $('appRoot').innerHTML = `<section class="workflow-page page-shell">
-    <header class="workflow-context"><button class="back-button" data-go-home type="button">${icon('arrow-right-2', 'icon icon-sm')}<span>项目首页</span></button><div class="workflow-title"><p class="eyebrow">PROJECT WORKFLOW</p><h2>${escapeHtml(state.project.title)}</h2><p>按原 Skill 链推进制作，点击顶部步骤只切换工作区，执行按钮才会创建任务。</p></div><div class="workflow-metrics"><strong>${state.artifacts.length}</strong><span>成果物</span><strong>${state.tasks.filter((task) => ['queued', 'running'].includes(task.status)).length}</strong><span>运行中</span></div></header>
-    <section class="workflow-utilities"><div class="utility-panel panel-block"><div><p class="eyebrow">SOURCE MATERIAL</p><h3>输入资料 <span class="material-count" id="sourceCount">0</span></h3></div><label class="upload-zone compact-upload" for="sourceInput">${icon('document-upload', 'icon icon-md upload-icon')}<span><strong>上传小说或资料</strong><small>TXT、Markdown、JSON、参考图</small></span><input id="sourceInput" type="file" multiple></label><div class="source-list" id="sourceList"></div></div></section>
-    <div class="workflow-body"><section class="stage-workspace artifact-canvas" id="stageWorkspace" aria-label="步骤工作区"></section><aside class="activity-column run-inspector" aria-label="任务日志"><section class="activity-header"><p class="eyebrow">RUN MONITOR</p><div class="activity-title-row"><h2>任务日志</h2><span class="live-indicator">${icon('timer-1', 'icon icon-xs')}<span>LIVE</span></span></div><p class="muted" id="taskSummary">暂无运行中的任务</p></section><section class="task-log panel-block" id="taskLog" aria-live="polite"></section><section class="run-detail panel-block" id="runDetail"><p class="eyebrow">SELECTED RUN</p><h3 id="selectedTaskTitle">尚未选择任务</h3><dl class="run-facts"><div><dt>状态</dt><dd id="selectedTaskStatus">—</dd></div><div><dt>使用 Skill</dt><dd id="selectedTaskSkill">—</dd></div><div><dt>任务编号</dt><dd id="selectedTaskId">—</dd></div></dl><div class="control-row"><button class="quiet-button" id="retryTaskButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>重新执行</span></button><button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>${icon('close-circle', 'icon icon-sm')}<span>取消任务</span></button></div><div class="event-stream" id="eventStream" aria-live="polite"></div></section><div class="footer-note">本地运行 · Skill 只读 · 产物可追溯</div></aside></div>
+    <header class="workflow-context"><button class="back-button" data-go-home type="button">${icon('arrow-right-2', 'icon icon-sm')}<span>项目首页</span></button><div class="workflow-title"><p class="eyebrow">PROJECT WORKFLOW</p><h2>${escapeHtml(state.project.title)}</h2><p>按原 Skill 链推进制作，点击顶部步骤只切换工作区，执行按钮才会创建任务。</p></div><div class="workflow-actions"><div class="workflow-metrics"><strong>${state.artifacts.length}</strong><span>成果物</span><strong>${state.tasks.filter((task) => ['queued', 'running'].includes(task.status)).length}</strong><span>运行中</span></div><button class="quiet-button task-log-toggle" id="taskLogToggle" data-task-log-toggle type="button" aria-expanded="${state.taskLogOpen ? 'true' : 'false'}">${icon('timer-1', 'icon icon-sm')}<span>任务日志</span></button></div></header>
+    <div class="workflow-body ${state.taskLogOpen ? 'task-log-open' : ''}"><section class="stage-workspace artifact-canvas" id="stageWorkspace" aria-label="步骤工作区"></section><aside id="runInspector" class="activity-column run-inspector" aria-label="任务日志${taskLogHidden}"><section class="activity-header"><p class="eyebrow">RUN MONITOR</p><div class="activity-title-row"><h2>任务日志</h2><span class="live-indicator">${icon('timer-1', 'icon icon-xs')}<span>LIVE</span></span></div><p class="muted" id="taskSummary">暂无运行中的任务</p></section><section class="task-log panel-block" id="taskLog" aria-live="polite"></section><section class="run-detail panel-block" id="runDetail"><p class="eyebrow">SELECTED RUN</p><h3 id="selectedTaskTitle">尚未选择任务</h3><dl class="run-facts"><div><dt>状态</dt><dd id="selectedTaskStatus">—</dd></div><div><dt>使用 Skill</dt><dd id="selectedTaskSkill">—</dd></div><div><dt>任务编号</dt><dd id="selectedTaskId">—</dd></div></dl><div class="control-row"><button class="quiet-button" id="retryTaskButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>重新执行</span></button><button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>${icon('close-circle', 'icon icon-sm')}<span>取消任务</span></button></div><div class="event-stream" id="eventStream" aria-live="polite"></div></section><div class="footer-note">本地运行 · Skill 只读 · 产物可追溯</div></aside></div>
   </section>`;
+  const runInspector = $('runInspector');
+  if (runInspector) {
+    runInspector.hidden = !state.taskLogOpen;
+    runInspector.setAttribute('aria-label', '任务日志');
+  }
   renderWorkflowTopbar();
-  renderSources();
   renderStageWorkspace();
   renderTaskLog();
 }
 
 function artifactBelongsToStage(artifact, stageKey) {
   const path = String(artifact.relativePath ?? '');
-  if (stageKey === 'image') return artifact.type === 'image' && ['characters/', 'art/', 'storyboard/'].some((prefix) => path.startsWith(prefix));
-  if (stageKey === 'video') return artifact.type === 'video' || path.startsWith('video/');
+  if (stageKey === 'image') return (artifact.type === 'image' && ['characters/', 'art/', 'storyboard/'].some((prefix) => path.startsWith(prefix))) || path === '.workbench/report.html';
+  if (stageKey === 'video') return artifact.type === 'video' || path.startsWith('video/') || path === '.workbench/report.html';
   return path.startsWith(`${stageKey}/`);
 }
 
@@ -333,11 +363,25 @@ function renderTaskLog() {
   }
 }
 
+function toggleTaskLog() {
+  state.taskLogOpen = !state.taskLogOpen;
+  const inspector = $('runInspector');
+  const button = $('taskLogToggle');
+  const workflowBody = document.querySelector('.workflow-body');
+  if (inspector) inspector.hidden = !state.taskLogOpen;
+  if (workflowBody) workflowBody.classList.toggle('task-log-open', state.taskLogOpen);
+  if (button) {
+    button.setAttribute('aria-expanded', String(state.taskLogOpen));
+    button.classList.toggle('active', state.taskLogOpen);
+  }
+}
+
 function clearTaskSelection() {
   if (state.selectedTaskSubscription) state.selectedTaskSubscription();
   state.selectedTaskSubscription = null;
   state.selectedTask = null;
   state.selectedArtifact = null;
+  state.taskLogOpen = false;
 }
 
 function navigate(path) {
@@ -363,6 +407,9 @@ function renderTaskEvent(event) {
     renderWorkflowTopbar();
     renderStageWorkspace();
     renderTaskLog();
+    if (['succeeded', 'partial', 'failed', 'cancelled'].includes(event.status)) {
+      void refreshProject().catch((error) => showToast(error.message, 'error'));
+    }
   }
 }
 
@@ -438,7 +485,9 @@ async function runStage(type) {
     options = { ownerStage };
   }
   try {
-    const task = await WorkbenchApi.createTask(state.project.id, type, options);
+    const task = type === 'video'
+      ? await WorkbenchApi.createVideoJob(state.project.id, 'minimax-h3', {})
+      : await WorkbenchApi.createTask(state.project.id, type, options);
     state.tasks.unshift(task); selectTask(task.id); renderWorkflowTopbar(); renderStageWorkspace(); renderTaskLog();
     showToast(`${type}任务已排队。`);
   } catch (error) { showToast(error.message, 'error'); }
@@ -461,23 +510,62 @@ function selectTask(taskId) {
   if (state.selectedTask) subscribeTask(taskId);
 }
 
-async function createProject() {
-  const title = window.prompt('给这个短剧项目取一个名字：', '渡口');
-  if (!title?.trim()) return;
-  try {
-    const project = await WorkbenchApi.createProject(title.trim());
-    state.projects = await WorkbenchApi.listProjects();
-    navigate(workflowHash(project.id));
-    showToast('项目已创建。');
-  } catch (error) { showToast(error.message, 'error'); }
+async function fileToBase64(file) {
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
 }
 
-async function uploadFiles(files) {
-  if (!state.project) return showToast('请先创建项目，再上传资料。', 'error');
-  for (const file of files) {
-    try { await WorkbenchApi.uploadSource(state.project.id, file); showToast(`${file.name} 已上传。`); } catch (error) { showToast(`${file.name}：${error.message}`, 'error'); }
+function setProjectDialogError(message = '') {
+  const error = $('newProjectError');
+  if (error) error.textContent = message;
+}
+
+function openNewProjectDialog() {
+  const dialog = $('newProjectDialog');
+  const form = $('newProjectForm');
+  if (!dialog || !form) return;
+  form.reset();
+  setProjectDialogError('');
+  if (typeof dialog.showModal === 'function') dialog.showModal();
+  else dialog.setAttribute('open', '');
+}
+
+async function createProject(title, file) {
+  if (!title?.trim()) throw new Error('项目名称不能为空。');
+  if (!file) throw new Error('创建项目必须上传小说或资料。');
+  const project = await WorkbenchApi.createProject(title.trim(), {
+    filename: file.name,
+    contentBase64: await fileToBase64(file),
+  });
+  state.projects = await WorkbenchApi.listProjects();
+  const dialog = $('newProjectDialog');
+  if (dialog?.open) dialog.close();
+  navigate(workflowHash(project.id));
+  showToast('项目已创建。');
+}
+
+async function submitNewProject(event) {
+  event.preventDefault();
+  const title = $('projectTitleInput')?.value ?? '';
+  const file = $('sourceFileInput')?.files?.[0] ?? null;
+  const submit = $('createProjectSubmit');
+  if (!title.trim()) return setProjectDialogError('请填写项目名称。');
+  if (!file) return setProjectDialogError('请选择小说或资料文件。');
+  setProjectDialogError('');
+  if (submit) submit.disabled = true;
+  try {
+    await createProject(title, file);
+  } catch (error) {
+    setProjectDialogError(error.message);
+  } finally {
+    if (submit) submit.disabled = false;
   }
-  await refreshProject();
 }
 
 async function checkSkills() {
@@ -518,11 +606,12 @@ window.WorkbenchApp = { renderProject, renderTaskEvent, renderHome, renderWorkfl
 function handleClick(event) {
   const button = event.target.closest('button');
   if (!button) return;
-  if (button.id === 'newProjectButton') return createProject();
+  if (button.id === 'newProjectButton') return openNewProjectDialog();
   if (button.dataset.projectOpen) return navigate(workflowHash(button.dataset.projectOpen));
   if (button.dataset.goHome !== undefined) return navigate('#/');
   if (button.dataset.stageNav) return navigate(workflowHash(state.project.id, button.dataset.stageNav));
   if (button.dataset.stageAction) return runStage(button.dataset.stageAction);
+  if (button.dataset.taskLogToggle !== undefined) return toggleTaskLog();
   if (button.dataset.taskId) return selectTask(button.dataset.taskId);
   if (button.dataset.artifactPath) return openArtifact(button.dataset.artifactPath);
   if (button.dataset.filter) {
@@ -535,25 +624,17 @@ function handleClick(event) {
   if (button.id === 'syncSkillsButton') return syncSkills();
   if (button.id === 'retryTaskButton') return retrySelected();
   if (button.id === 'cancelTaskButton') return cancelSelected();
-  if (button.id === 'videoJobButton') {
-    if (!state.project) return;
-    return WorkbenchApi.createVideoJob(state.project.id, $('providerSelect').value, {})
-      .then(() => { showToast('视频任务已创建。'); return refreshProject(); })
-      .catch((error) => showToast(error.message, 'error'));
-  }
   return undefined;
 }
 
-function handleChange(event) {
-  if (event.target.id === 'sourceInput') {
-    void uploadFiles([...event.target.files]);
-    event.target.value = '';
-  }
-}
-
 $('appRoot').addEventListener('click', handleClick);
-$('appRoot').addEventListener('change', handleChange);
 $('appTopbar').addEventListener('click', handleClick);
 $('refreshButton').addEventListener('click', handleClick);
+$('newProjectForm')?.addEventListener('submit', submitNewProject);
+$('newProjectDialog')?.addEventListener('click', (event) => {
+  if (event.target.closest('[data-dialog-close]')) {
+    $('newProjectDialog').close();
+  }
+});
 window.addEventListener('hashchange', () => { void handleRoute(); });
 boot();

@@ -91,10 +91,13 @@ test('stage workspaces own execution and artifact presentation', async () => {
   assert.match(app, /function renderStageWorkspace/);
   assert.match(app, /function renderVideoWorkspace/);
   assert.match(app, /data-stage-action/);
-  assert.match(app, /data-artifact-stage/);
+  assert.match(app, /function stageReportArtifact/);
+  assert.match(app, /class="report-viewer"/);
+  assert.doesNotMatch(app, /artifact-toolbar/);
+  assert.doesNotMatch(app, /artifact-catalog/);
   assert.match(app, /createTask/);
   assert.match(app, /createVideoJob/);
-  assert.match(app, /点击顶部步骤只切换工作区，执行按钮才会创建任务/);
+  assert.match(app, /开始执行/);
 });
 
 test('dynamic workbench rendering uses the fixed Iconsax helper', async () => {
@@ -104,4 +107,46 @@ test('dynamic workbench rendering uses the fixed Iconsax helper', async () => {
   for (const token of ['↗', '›', '◇', '◌', '∿']) {
     assert.doesNotMatch(app, new RegExp(token));
   }
+});
+
+test('new projects require a source file before creation', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(html, /id="newProjectDialog"/);
+  assert.match(html, /id="newProjectForm"/);
+  assert.match(html, /id="sourceFileInput"/);
+  assert.match(app, /function fileToBase64/);
+  assert.match(app, /function createProject\(title, file\)/);
+  assert.match(app, /contentBase64/);
+  assert.doesNotMatch(app, /uploadSource\(/);
+});
+
+test('home projects use full-card grid navigation and an all-skills module', async () => {
+  const styles = await readFile(new URL('../public/styles.css', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /data-project-open/);
+  assert.doesNotMatch(app, /<button class="row-arrow project-open/);
+  assert.match(app, /skills-directory/);
+  assert.match(app, /全部 Skill/);
+  assert.match(app, /SKILL_CATALOG/);
+  assert.match(styles, /\.project-list\s*\{[^}]*grid-template-columns:\s*repeat\(auto-fill/);
+});
+
+test('workflow detail removes source module and keeps task log behind a toggle', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(app, /SOURCE MATERIAL/);
+  assert.match(app, /id="taskLogToggle"/);
+  assert.match(app, /function toggleTaskLog/);
+  assert.match(app, /const taskLogHidden/);
+  assert.match(app, /runInspector.hidden/);
+});
+
+test('completed stages directly embed the original report page', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /function stageReportArtifact/);
+  assert.match(app, /class="report-viewer"/);
+  assert.match(app, /<iframe/);
+  assert.match(app, /开始执行/);
+  assert.doesNotMatch(app, /artifact-toolbar/);
+  assert.doesNotMatch(app, /artifact-catalog/);
 });
