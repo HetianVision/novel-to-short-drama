@@ -8,10 +8,8 @@ test('index includes all approved task actions and artifact panes', async () => 
   for (const label of ['生成大纲', '生成角色', '生成美术', '生成剧本', '生成分镜', '生成图片']) {
     assert.match(app, new RegExp(label));
   }
-  assert.match(html, /任务日志/);
-  assert.match(html, /成果物/);
-  assert.match(html, /上传小说或资料/);
-  assert.match(html, /检查 Skill 更新/);
+  assert.match(html, /id="appRoot"/);
+  for (const label of ['任务日志', '成果物', '上传小说或资料', '检查更新']) assert.match(app, new RegExp(label));
 });
 
 test('browser app exposes the stable API and viewer entry points', async () => {
@@ -24,10 +22,24 @@ test('browser app exposes the stable API and viewer entry points', async () => {
 
 test('static workbench uses local Iconsax icons and no decorative character icons', async () => {
   const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.match(html, /iconsax\.svg#folder-add/);
-  assert.match(html, /iconsax\.svg#document-upload/);
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(html, /iconsax\.svg#timer-1/);
+  assert.match(app, /['"]folder-add['"]/);
+  assert.match(app, /['"]document-upload['"]/);
   for (const token of ['＋', '↥', '◇', '◌', '∿', '↗', '›', '幕']) {
     assert.doesNotMatch(html, new RegExp(token));
+  }
+});
+
+test('workbench exposes the hash route boundary', async () => {
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(html, /id="appRoot"/);
+  assert.match(app, /from ['"]\.\/router\.mjs['"]/);
+  assert.match(app, /renderHome/);
+  assert.match(app, /renderWorkflow/);
+  for (const token of ['workflowHash', 'hashchange']) {
+    assert.match(app, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
 });
 
