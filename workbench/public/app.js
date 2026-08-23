@@ -206,6 +206,10 @@ function renderWorkflowTopbar() {
   }).join('');
 }
 
+function renderVideoWorkspace(disabled) {
+  return `<div class="video-action-row"><select id="providerSelect" class="provider-select" aria-label="视频模型"><option value="minimax-h3">MiniMax H3</option><option value="seedance">Seedance</option></select><button class="primary-button" id="videoJobButton" type="button" ${disabled ? 'disabled' : ''}>${icon('video-play', 'icon icon-sm')}<span>创建视频任务</span></button></div>`;
+}
+
 function renderStageWorkspace() {
   const stage = stageDefinition(state.activeStage);
   const project = state.project;
@@ -218,7 +222,7 @@ function renderStageWorkspace() {
   const warnings = gate.warnings?.length ? `<div class="gate-warning">${icon('timer-1', 'icon icon-xs')}<span>${escapeHtml(gate.warnings.join('；'))}</span></div>` : '';
   const missing = gate.missing?.length ? `<p class="gate-note">前置条件：${escapeHtml(gate.missing.join('、'))}</p>` : '';
   const action = isVideo
-    ? `<div class="video-action-row"><select id="providerSelect" class="provider-select" aria-label="视频模型"><option value="minimax-h3">MiniMax H3</option><option value="seedance">Seedance</option></select><button class="primary-button" id="videoJobButton" type="button" ${disabled ? 'disabled' : ''}>${icon('video-play', 'icon icon-sm')}<span>创建视频任务</span></button></div>`
+    ? renderVideoWorkspace(disabled)
     : `<button class="primary-button" data-stage-action="${stage.key}" type="button" ${disabled ? 'disabled' : ''}>${icon(stage.icon === 'gallery' ? 'gallery' : 'play-circle', 'icon icon-sm')}<span>${completed ? '重新执行' : '执行'}${escapeHtml(stage.label.replace('生成', ''))}</span></button>`;
   const taskInfo = task ? `<span class="stage-run-state ${statusClass(task.status)}">${icon(statusIcon(task.status), 'icon icon-xs')} ${escapeHtml(statusLabel(task.status))}</span>` : `<span class="stage-run-state ${statusClass(status)}">${icon(statusIcon(status), 'icon icon-xs')} ${escapeHtml(stageStatusText(status))}</span>`;
   const workspace = $('stageWorkspace');
@@ -227,7 +231,7 @@ function renderStageWorkspace() {
     <div class="stage-action-panel panel-block"><div><p class="eyebrow">RUN THIS STEP</p><h3>${completed ? '已有成果，可重新生成' : '准备执行当前步骤'}</h3>${missing}${warnings}</div>${action}</div>
     <div class="stage-output-heading"><div><p class="eyebrow">STAGE OUTPUTS</p><h3>本步骤成果物</h3></div><span class="material-count" id="artifactCount">0</span></div>
     <div class="artifact-toolbar section-rule"><div class="toolbar-tabs" role="tablist" aria-label="成果物类型"><button class="toolbar-tab active" data-filter="all" type="button">全部</button><button class="toolbar-tab" data-filter="report" type="button">报告</button><button class="toolbar-tab" data-filter="json" type="button">JSON</button><button class="toolbar-tab" data-filter="markdown" type="button">Markdown</button><button class="toolbar-tab" data-filter="image" type="button">图片</button><button class="toolbar-tab" data-filter="video" type="button">视频</button></div></div>
-    <div class="artifact-layout"><div class="artifact-catalog panel-block"><div class="artifact-list" id="artifactList"></div></div><div class="artifact-preview panel-block" id="artifactPreview"><div class="empty-state preview-empty">${icon('gallery', 'icon icon-xl empty-icon')}<p>选择一个成果物查看。</p><small>报告、JSON、Markdown、图片和视频都会保留在项目目录中。</small></div></div></div>`;
+    <div class="artifact-layout" data-artifact-stage="${stage.key}"><div class="artifact-catalog panel-block"><div class="artifact-list" id="artifactList"></div></div><div class="artifact-preview panel-block" id="artifactPreview"><div class="empty-state preview-empty">${icon('gallery', 'icon icon-xl empty-icon')}<p>选择一个成果物查看。</p><small>报告、JSON、Markdown、图片和视频都会保留在项目目录中。</small></div></div></div>`;
   renderArtifactList();
 }
 
@@ -235,7 +239,7 @@ function renderWorkflow() {
   if (!state.project || !$('appRoot')) return renderHome();
   state.view = 'workflow';
   $('appRoot').innerHTML = `<section class="workflow-page page-shell">
-    <header class="workflow-context"><button class="back-button" data-go-home type="button">${icon('arrow-right-2', 'icon icon-sm')}<span>项目首页</span></button><div class="workflow-title"><p class="eyebrow">PROJECT WORKFLOW</p><h2>${escapeHtml(state.project.title)}</h2><p>按原 Skill 链推进制作，点击步骤进入对应工作区。</p></div><div class="workflow-metrics"><strong>${state.artifacts.length}</strong><span>成果物</span><strong>${state.tasks.filter((task) => ['queued', 'running'].includes(task.status)).length}</strong><span>运行中</span></div></header>
+    <header class="workflow-context"><button class="back-button" data-go-home type="button">${icon('arrow-right-2', 'icon icon-sm')}<span>项目首页</span></button><div class="workflow-title"><p class="eyebrow">PROJECT WORKFLOW</p><h2>${escapeHtml(state.project.title)}</h2><p>按原 Skill 链推进制作，点击顶部步骤只切换工作区，执行按钮才会创建任务。</p></div><div class="workflow-metrics"><strong>${state.artifacts.length}</strong><span>成果物</span><strong>${state.tasks.filter((task) => ['queued', 'running'].includes(task.status)).length}</strong><span>运行中</span></div></header>
     <nav class="stage-nav" id="workflowNav" aria-label="制作流程"></nav>
     <section class="workflow-utilities"><div class="utility-panel panel-block"><div><p class="eyebrow">SOURCE MATERIAL</p><h3>输入资料 <span class="material-count" id="sourceCount">0</span></h3></div><label class="upload-zone compact-upload" for="sourceInput">${icon('document-upload', 'icon icon-md upload-icon')}<span><strong>上传小说或资料</strong><small>TXT、Markdown、JSON、参考图</small></span><input id="sourceInput" type="file" multiple></label><div class="source-list" id="sourceList"></div></div><div class="utility-panel panel-block"><div class="section-heading compact"><div><p class="eyebrow">LOCKED SKILLS</p><h3>Skill 版本</h3></div><span class="status-pill neutral" id="skillStatus">检查中</span></div><p class="muted" id="skillStatusDetail">运行时只读，更新需要明确确认。</p><div class="control-row"><button class="quiet-button" id="checkSkillsButton" type="button">${icon('refresh-2', 'icon icon-sm')}<span>检查更新</span></button><button class="quiet-button accent" id="syncSkillsButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>确认同步</span></button></div></div></section>
     <div class="workflow-body"><section class="stage-workspace artifact-canvas" id="stageWorkspace" aria-label="步骤工作区"></section><aside class="activity-column run-inspector" aria-label="任务日志"><section class="activity-header"><p class="eyebrow">RUN MONITOR</p><div class="activity-title-row"><h2>任务日志</h2><span class="live-indicator">${icon('timer-1', 'icon icon-xs')}<span>LIVE</span></span></div><p class="muted" id="taskSummary">暂无运行中的任务</p></section><section class="task-log panel-block" id="taskLog" aria-live="polite"></section><section class="run-detail panel-block" id="runDetail"><p class="eyebrow">SELECTED RUN</p><h3 id="selectedTaskTitle">尚未选择任务</h3><dl class="run-facts"><div><dt>状态</dt><dd id="selectedTaskStatus">—</dd></div><div><dt>使用 Skill</dt><dd id="selectedTaskSkill">—</dd></div><div><dt>任务编号</dt><dd id="selectedTaskId">—</dd></div></dl><div class="control-row"><button class="quiet-button" id="retryTaskButton" type="button" disabled>${icon('rotate-right', 'icon icon-sm')}<span>重新执行</span></button><button class="quiet-button danger" id="cancelTaskButton" type="button" disabled>${icon('close-circle', 'icon icon-sm')}<span>取消任务</span></button></div><div class="event-stream" id="eventStream" aria-live="polite"></div></section><div class="footer-note">本地运行 · Skill 只读 · 产物可追溯</div></aside></div>

@@ -55,6 +55,17 @@ test('workflow stages are navigation controls, not automatic task actions', asyn
   assert.doesNotMatch(stageNavigation, /createTask/);
 });
 
+test('stage workspaces own execution and artifact presentation', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /function renderStageWorkspace/);
+  assert.match(app, /function renderVideoWorkspace/);
+  assert.match(app, /data-stage-action/);
+  assert.match(app, /data-artifact-stage/);
+  assert.match(app, /createTask/);
+  assert.match(app, /createVideoJob/);
+  assert.match(app, /点击顶部步骤只切换工作区，执行按钮才会创建任务/);
+});
+
 test('dynamic workbench rendering uses the fixed Iconsax helper', async () => {
   const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(app, /function icon\(name/);
