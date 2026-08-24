@@ -73,7 +73,7 @@ const WorkbenchApi = {
     return () => source.close();
   },
   listArtifacts: (projectId) => request(`/api/projects/${encodeURIComponent(projectId)}/artifacts`),
-  artifactUrl: (projectId, relativePath) => `/api/projects/${encodeURIComponent(projectId)}/artifacts/${encodeURIComponent(relativePath)}`,
+  artifactUrl: (projectId, relativePath) => `/api/projects/${encodeURIComponent(projectId)}/artifacts/${String(relativePath).split('/').map((segment) => encodeURIComponent(segment)).join('/')}`,
   createVideoJob: (projectId, provider, options = {}) => request(`/api/projects/${encodeURIComponent(projectId)}/video-jobs`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ provider, options }) }),
   cancelVideoJob: (jobId) => request(`/api/video-jobs/${encodeURIComponent(jobId)}/cancel`, { method: 'POST' }),
   checkSkillUpdate: () => request('/api/skills/check-update', { method: 'POST' }),

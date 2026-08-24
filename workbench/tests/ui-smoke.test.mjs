@@ -183,3 +183,9 @@ test('completed stages directly embed the original report page', async () => {
   assert.doesNotMatch(app, /artifact-toolbar/);
   assert.doesNotMatch(app, /artifact-catalog/);
 });
+
+test('artifact URLs preserve directory boundaries for relative report assets', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(app, /artifactUrl:.*relativePath/);
+  assert.doesNotMatch(app, /artifacts\/\$\{encodeURIComponent\(relativePath\)\}/);
+});
