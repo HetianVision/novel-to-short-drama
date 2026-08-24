@@ -83,6 +83,14 @@ test('workbench layout fills the browser viewport', async () => {
   assert.match(styles, /\.topbar-task-log\[hidden\]\s*\{\s*display:\s*none/);
 });
 
+test('topbar stays pinned while page content scrolls', async () => {
+  const styles = await readFile(new URL('../public/styles.css', import.meta.url), 'utf8');
+  const topbar = styles.match(/\.topbar\s*\{[^}]*\}/)?.[0] ?? '';
+  assert.match(topbar, /position:\s*sticky/);
+  assert.match(topbar, /top:\s*0/);
+  assert.match(topbar, /z-index:\s*\d+/);
+});
+
 test('Skill update controls live on the project home', async () => {
   const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
   const homeRender = app.match(/function renderHome\(\) \{[\s\S]*?\n\}/)?.[0] ?? '';

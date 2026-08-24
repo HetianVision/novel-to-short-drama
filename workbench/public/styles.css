@@ -89,6 +89,9 @@ input:focus-visible + * {
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   min-height: 70px;
   justify-content: space-between;
   gap: 28px;
