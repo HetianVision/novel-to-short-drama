@@ -26,6 +26,7 @@ import { buildImageTask, createImageRunner } from './lib/image-runner.mjs';
 import { buildVideoTask, createVideoRunner } from './lib/video-task-runner.mjs';
 import { createSkillSync } from './lib/sync-skills.mjs';
 import { loadProviderConfig } from './lib/providers/provider-config.mjs';
+import { importSkillTestProject } from './lib/project-importer.mjs';
 
 const execFileAsync = promisify(execFile);
 const PUBLIC_ROOT = join(WORKBENCH_ROOT, 'public');
@@ -78,6 +79,7 @@ export function createServer({
   videoEnv = process.env,
   videoAssetResolver = null,
   skillSync = null,
+  skillTestRoot = join(repoRoot, 'skill-test'),
 } = {}) {
   const taskStores = new Map();
   const taskProjectIds = new Map();
@@ -323,6 +325,16 @@ export function createServer({
     if (pathname === '/api/skills/sync' && method === 'POST') {
       const body = await readJson(request);
       return sendJson(response, 200, await skillSyncService.sync({ confirm: body.confirm, pushOrigin: body.pushOrigin === true }));
+    }
+    if (pathname === '/api/projects/import-skill-test' && method === 'POST') {
+      const body = await readJson(request);
+      const project = await importSkillTestProject({
+        sourceRoot: skillTestRoot,
+        projectStore,
+        projectId: body.id ?? 'yidi-jimao',
+        title: body.title ?? '一地鸡毛',
+      });
+      return sendJson(response, 201, await readProjectPayload(project));
     }
     if (pathname === '/api/providers' && method === 'GET') {
       const providers = [];
